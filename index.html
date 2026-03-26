@@ -201,10 +201,23 @@
     }
   </style>
 
-  <!-- ON AIR sync via Firebase REST API -->
-  <script>
-    window._isLive = false;
-    const FIREBASE_URL = 'https://kladyxland-default-rtdb.europe-west1.firebasedatabase.app/onair/live.json';
+  <!-- ON AIR sync -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDmAf2CZILbYKR72XYd3iCj3pQgnqFYTp8",
+      authDomain: "kladyxland.firebaseapp.com",
+      databaseURL: "https://kladyxland-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "kladyxland",
+      storageBucket: "kladyxland.firebasestorage.app",
+      messagingSenderId: "178078059030",
+      appId: "1:178078059030:web:8d8a0271b23a7aca2b4337"
+    });
+
+    const db = getDatabase(app);
+    const liveRef = ref(db, 'onair/live');
 
     function applyLiveState(state) {
       const dot = document.getElementById('onair-dot');
@@ -233,26 +246,14 @@
       }
     }
 
-    function fetchLiveState() {
-      fetch(FIREBASE_URL)
-        .then(r => r.json())
-        .then(val => applyLiveState(val === true))
-        .catch(() => {});
-    }
+    onValue(liveRef, (snapshot) => {
+      applyLiveState(snapshot.val() === true);
+    });
 
     window.toggleBroadcast = function() {
       const newState = !window._isLive;
-      fetch(FIREBASE_URL, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(newState)
-      })
-      .then(() => applyLiveState(newState))
-      .catch(e => console.error('Firebase error:', e));
+      set(liveRef, newState).catch(e => alert('Chyba: ' + e.message));
     };
-
-    fetchLiveState();
-    setInterval(fetchLiveState, 5000);
   </script>
 
 </head>
