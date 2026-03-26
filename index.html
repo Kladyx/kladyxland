@@ -291,6 +291,7 @@
       <a href="#" class="nbtn nbtn-back" onclick="hideAll();return false;">⟵ Zpět</a>
       <a href="#" class="nbtn on" id="nb-home"     onclick="show('home');return false;">Home</a>
       <a href="#" class="nbtn"    id="nb-hardware" onclick="show('hardware');return false;">Hardware</a>
+      <a href="#" class="nbtn"    id="nb-gallery"  onclick="show('gallery');return false;">📸 Galerie</a>
 
     </div>
   </nav>
@@ -309,7 +310,8 @@
           <span class="onair-dot" id="onair-dot"></span>
           <span class="onair-text" id="onair-text">ON AIR</span>
         </div>
-        <button class="broadcast-toggle" id="broadcast-btn" onclick="openModal('broadcast')">▶ START BROADCAST</button>
+        <button class="broadcast-toggle edit-only" id="broadcast-btn" onclick="toggleBroadcast()" style="display:none;">▶ START BROADCAST</button>
+        <button class="broadcast-toggle" id="broadcast-unlock-btn" onclick="openModal('broadcast')" style="font-size:.45rem;padding:4px 10px;background:rgba(0,245,255,.05);border-color:rgba(0,245,255,.15);color:rgba(0,245,255,.3);">🔒</button>
 
         <button class="broadcast-toggle edit-only" id="mic-btn" onclick="toggleMic()" style="margin-top:4px;display:none;background:rgba(0,100,255,.15);border-color:rgba(0,150,255,.5);color:#44aaff;">🎙 ANALYZÉR OFF</button>
         <div class="signal-status">
@@ -360,7 +362,7 @@
         </div>
         <div class="card">
           <h3>Broadcasting from the Dark Side of Sound</h3>
-          <p id="intro-text">Vítej v KLADYXLAND: LIVE – DETECTED. Hraju elektronickou hudbu a hity uplynulých let, ke kterým máme společné vzpomínky. Každé vysílání je návrat k trackům, které nás provázely v klubech, v rádiu i doma ve sluchátkách.</p>
+          <p id="intro-text">Vítej v KLADYXLAND: LIVE – DETECTED. Hraju elektronickou hudbu a hity uplynulých let, ke kterým máme společné vzpomínky. Každé vysílání je návrat k trackům, které nás provázely v klubech, v rádiu i doma ve sluchátkách. 🎵 🎧 🎶</p>
           <textarea id="intro-edit" class="text-edit-area" style="display:none;" rows="4"></textarea>
           <button class="btn-add-save text-save-btn" id="intro-save-btn" style="display:none;margin-top:8px;" onclick="saveIntro()">✓ Uložit úvod</button>
         </div>
@@ -408,6 +410,18 @@
 
 
 
+    <div class="section" id="s-gallery">
+      <div class="content-wrap single">
+        <div class="stitle">
+          📸 GALERIE
+          <button class="edit-btn edit-only" id="gallery-add-btn" style="display:none;" onclick="document.getElementById('gallery-upload').click()">➕ Přidat foto</button>
+          <input type="file" id="gallery-upload" accept="image/*" style="display:none;" onchange="addGalleryPhoto(this)"/>
+        </div>
+        <div id="gallery-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;"></div>
+        <div id="gallery-empty" style="color:rgba(0,245,255,.3);text-align:center;padding:40px;font-family:Orbitron,monospace;font-size:.6rem;letter-spacing:.1em;">NO TRANSMISSIONS CAPTURED YET</div>
+      </div>
+    </div>
+
   </div>
 
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; INDEPENDENT PRIVATE PROJECT &nbsp;·&nbsp; Designed & Developed by Michal Kovalčík · 2026</footer>
@@ -427,12 +441,12 @@
 
   function enableEdit(section){
     document.body.classList.add('edit-mode');
-    const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='block';
+    const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='block';const galBtn=document.getElementById('gallery-add-btn');if(galBtn)galBtn.style.display='inline-block';document.getElementById('gallery-grid').querySelectorAll('.edit-only').forEach(el=>el.style.display='block');
     populateTextEdits();
     if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
-    if(section==='broadcast'){toggleBroadcast();disableEdit();}
+    if(section==='broadcast'){const bb=document.getElementById('broadcast-btn');bb.style.display='block';document.getElementById('broadcast-unlock-btn').style.display='none';toggleBroadcast();}
   }
-  function disableEdit(){document.body.classList.remove('edit-mode');const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='none';const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();}
+  function disableEdit(){document.body.classList.remove('edit-mode');const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='none';const galBtn2=document.getElementById('gallery-add-btn');if(galBtn2)galBtn2.style.display='none';document.getElementById('gallery-grid').querySelectorAll('.edit-only').forEach(el=>el.style.display='none');const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();}
 
 
 
@@ -462,7 +476,7 @@
   loadTexts();
   function addRow(){const brand=document.getElementById('new-brand').value.trim();const name=document.getElementById('new-name').value.trim();const cat=document.getElementById('new-cat').value.trim();if(!brand||!name){alert('Zadej značku a model!');return;}const tbody=document.getElementById('hw-tbody');const num=tbody.rows.length+1;const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(num).padStart(2,'0')+'</td><td class="hw-brand-col" style="color:#aaddff;">'+brand+'</td><td class="hw-name-col">'+name+'</td><td class="hw-cat">'+cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);document.getElementById('new-brand').value='';document.getElementById('new-name').value='';document.getElementById('new-cat').value='';renumber();saveHw();}
   function delRow(btn){btn.closest('tr').remove();renumber();saveHw();}
-  function renumber(){const rows=document.getElementById('hw-tbody').rows;for(let i=0;i<rows.length;i++)rows[i].cells[0].textContent=String(i+1).padStart(2,'0');}
+  function renumber(){const t=document.getElementById('hw-tbody');if(!t)return;const rows=t.rows;for(let i=0;i<rows.length;i++)rows[i].cells[0].textContent=String(i+1).padStart(2,'0');}
   function saveHw(){const rows=document.getElementById('hw-tbody').rows;const data=[];for(let r of rows)data.push({brand:r.cells[1].textContent,brandStyle:r.cells[1].getAttribute('style')||'',brandClass:r.cells[1].className,name:r.cells[2].textContent,cat:r.cells[3].textContent});localStorage.setItem('kladyx_hw',JSON.stringify(data));}
   function loadHw(){const saved=localStorage.getItem('kladyx_hw');if(!saved)return;try{const data=JSON.parse(saved);const tbody=document.getElementById('hw-tbody');tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+item.brandClass+'" style="'+item.brandStyle+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}catch(e){}}
 
@@ -592,6 +606,53 @@
   // NAVIGATION
   function hideAll(){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));disableEdit();window.scrollTo({top:0,behavior:"smooth"});}
   function show(name){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));document.getElementById("s-"+name).classList.add("on");const nb=document.getElementById("nb-"+name);if(nb)nb.classList.add("on");document.querySelector(".sections").scrollIntoView({behavior:"smooth"});}
+
+  // GALLERY
+  function loadGallery(){
+    const saved=localStorage.getItem('kladyx_gallery');
+    const grid=document.getElementById('gallery-grid');
+    const empty=document.getElementById('gallery-empty');
+    grid.innerHTML='';
+    if(!saved||JSON.parse(saved).length===0){empty.style.display='block';return;}
+    empty.style.display='none';
+    JSON.parse(saved).forEach((src,i)=>{
+      const wrap=document.createElement('div');
+      wrap.style.cssText='position:relative;aspect-ratio:1;overflow:hidden;border:1px solid rgba(0,245,255,.2);';
+      wrap.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="openLightbox(\''+i+'\')">'
+        +'<button class="edit-only" onclick="deletePhoto('+i+')" style="display:none;position:absolute;top:4px;right:4px;background:rgba(255,0,0,.7);border:none;color:#fff;cursor:pointer;padding:2px 6px;font-size:.7rem;">✕</button>';
+      grid.appendChild(wrap);
+    });
+    if(document.body.classList.contains('edit-mode')){
+      grid.querySelectorAll('.edit-only').forEach(el=>el.style.display='block');
+    }
+  }
+  function addGalleryPhoto(input){
+    const file=input.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const saved=JSON.parse(localStorage.getItem('kladyx_gallery')||'[]');
+      saved.push(e.target.result);
+      localStorage.setItem('kladyx_gallery',JSON.stringify(saved));
+      loadGallery();
+    };
+    reader.readAsDataURL(file);
+    input.value='';
+  }
+  function deletePhoto(i){
+    const saved=JSON.parse(localStorage.getItem('kladyx_gallery')||'[]');
+    saved.splice(i,1);
+    localStorage.setItem('kladyx_gallery',JSON.stringify(saved));
+    loadGallery();
+  }
+  function openLightbox(i){
+    const saved=JSON.parse(localStorage.getItem('kladyx_gallery')||'[]');
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.innerHTML='<img src="'+saved[i]+'" style="max-width:90vw;max-height:90vh;object-fit:contain;">';
+    overlay.onclick=()=>overlay.remove();
+    document.body.appendChild(overlay);
+  }
+  loadGallery();
 </script>
 </body>
 </html>
