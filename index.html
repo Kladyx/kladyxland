@@ -231,6 +231,7 @@
       if (state) {
         dot.classList.add('live');
         text.classList.add('live');
+        text.textContent = 'ON AIR';
         btn.classList.add('live');
         btn.textContent = '■ STOP BROADCAST';
         if (watchBtn) { watchBtn.style.background = 'linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow = '0 0 25px rgba(0,255,100,.7)'; }
@@ -239,6 +240,7 @@
       } else {
         dot.classList.remove('live');
         text.classList.remove('live');
+        text.textContent = 'OFFLINE';
         btn.classList.remove('live');
         btn.textContent = '▶ START BROADCAST';
         if (watchBtn) { watchBtn.style.background = 'linear-gradient(135deg,#cc0000,#ff2200)'; watchBtn.style.boxShadow = '0 0 22px rgba(255,0,0,.6)'; }
@@ -263,7 +265,9 @@
     // Zpristupnit toggleBroadcast globalne
     window.toggleBroadcast = function() {
       const newState = !window._isLive;
-      window.firebaseSetLive(newState);
+      if (typeof window.firebaseSetLive === 'function') {
+        window.firebaseSetLive(newState);
+      }
     };
   </script>
 
@@ -421,16 +425,32 @@
   (async()=>{_pwHash=await hashPw("Thefree8417");})();
   let pendingSection=null;
 
-  function openModal(section){pendingSection=section;document.getElementById('modal').classList.add('visible');document.getElementById('pw-input').value='';document.getElementById('pw-err').classList.remove('visible');setTimeout(()=>document.getElementById('pw-input').focus(),100);}
-  function closeModal(){document.getElementById('modal').classList.remove('visible');pendingSection=null;}
-  async function checkPw(){const val=document.getElementById('pw-input').value;const h=await hashPw(val);if(h===_pwHash){closeModal();enableEdit(pendingSection);}else{document.getElementById('pw-err').classList.add('visible');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}}
+  function openModal(section){
+    pendingSection=section;document.getElementById('modal').classList.add('visible');document.getElementById('pw-input').value='';document.getElementById('pw-err').classList.remove('visible');setTimeout(()=>document.getElementById('pw-input').focus(),100);
+  }
+  function closeModal(){
+    document.getElementById('modal').classList.remove('visible');pendingSection=null;
+  }
+  async function checkPw(){
+    const val=document.getElementById('pw-input').value;
+    const h=await hashPw(val);
+    if(h===_pwHash){
+      const section = pendingSection;
+      closeModal();
+      enableEdit(section);
+    }else{
+      document.getElementById('pw-err').classList.add('visible');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();
+    }
+  }
 
   function enableEdit(section){
     document.body.classList.add('edit-mode');
     const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='block';
     populateTextEdits();
     if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
-    if(section==='broadcast'){toggleBroadcast();}
+    if(section==='broadcast'){
+      toggleBroadcast();
+    }
   }
   function disableEdit(){document.body.classList.remove('edit-mode');const micBtn=document.getElementById('mic-btn');if(micBtn)micBtn.style.display='none';const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();}
 
@@ -465,16 +485,6 @@
   function renumber(){const rows=document.getElementById('hw-tbody').rows;for(let i=0;i<rows.length;i++)rows[i].cells[0].textContent=String(i+1).padStart(2,'0');}
   function saveHw(){const rows=document.getElementById('hw-tbody').rows;const data=[];for(let r of rows)data.push({brand:r.cells[1].textContent,brandStyle:r.cells[1].getAttribute('style')||'',brandClass:r.cells[1].className,name:r.cells[2].textContent,cat:r.cells[3].textContent});localStorage.setItem('kladyx_hw',JSON.stringify(data));}
   function loadHw(){const saved=localStorage.getItem('kladyx_hw');if(!saved)return;try{const data=JSON.parse(saved);const tbody=document.getElementById('hw-tbody');tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+item.brandClass+'" style="'+item.brandStyle+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}catch(e){}}
-
-  // BROADCAST - Firebase synchronizace
-  window._isLive = false;
-
-  function toggleBroadcast() {
-    const newState = !window._isLive;
-    if (window.firebaseSetLive) {
-      window.firebaseSetLive(newState);
-    }
-  }
 
 
   // DIGI HODINY
