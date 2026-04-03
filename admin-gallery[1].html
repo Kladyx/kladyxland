@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KLADYXLAND – Správa fotek</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      background:linear-gradient(135deg,#000a23,#001040);
+      color:#cce5ff;
+      font-family:'Exo 2',sans-serif;
+      min-height:100vh;
+      padding:20px;
+    }
+    .container{max-width:500px;margin:0 auto;}
+    .header{text-align:center;margin-bottom:30px;}
+    .header h1{
+      font-family:'Orbitron',monospace;
+      font-size:1.5rem;
+      color:#00f5ff;
+      text-shadow:0 0 12px rgba(0,245,255,.6);
+      letter-spacing:.1em;
+      margin-bottom:10px;
+    }
+    .header p{font-size:.9rem;color:rgba(0,245,255,.5);}
+    
+    /* PŘIHLÁŠENÍ */
+    .login-box{
+      background:rgba(0,15,45,.9);
+      border:1px solid rgba(0,245,255,.3);
+      border-radius:6px;
+      padding:30px;
+      display:flex;
+      flex-direction:column;
+      gap:15px;
+    }
+    .login-box.hidden{display:none;}
+    .login-input{
+      width:100%;
+      font-family:'Exo 2',sans-serif;
+      font-size:1rem;
+      background:rgba(0,10,40,.9);
+      border:1px solid rgba(0,245,255,.3);
+      color:#cce5ff;
+      padding:12px;
+      border-radius:3px;
+      outline:none;
+    }
+    .login-input:focus{border-color:rgba(0,245,255,.7);}
+    .login-btn{
+      font-family:'Orbitron',monospace;
+      font-size:.9rem;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      background:rgba(0,200,100,.2);
+      border:1px solid rgba(0,255,150,.5);
+      color:#44ff99;
+      padding:12px;
+      border-radius:3px;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .login-btn:hover{background:rgba(0,255,100,.3);}
+    .login-err{color:#ff6666;font-size:.85rem;text-align:center;display:none;}
+    .login-err.show{display:block;}
+    
+    /* ADMIN PANEL */
+    .admin-panel{display:none;flex-direction:column;gap:20px;}
+    .admin-panel.active{display:flex;}
+    
+    .upload-section{
+      background:rgba(0,15,45,.9);
+      border:1px solid rgba(0,245,255,.3);
+      border-radius:6px;
+      padding:20px;
+    }
+    .upload-area{
+      border:2px dashed rgba(0,245,255,.5);
+      border-radius:6px;
+      padding:30px;
+      text-align:center;
+      cursor:pointer;
+      transition:all .2s;
+      background:rgba(0,30,80,.3);
+    }
+    .upload-area:hover{
+      border-color:rgba(0,255,150,.7);
+      background:rgba(0,40,100,.4);
+    }
+    .upload-area.drag{
+      border-color:rgba(0,255,100,.9);
+      background:rgba(0,50,120,.5);
+    }
+    .upload-area p{
+      font-size:1rem;
+      margin-bottom:10px;
+      color:#00ff99;
+    }
+    .upload-area small{
+      font-size:.8rem;
+      color:rgba(0,245,255,.5);
+      display:block;
+    }
+    .upload-input{display:none;}
+    
+    .progress{
+      width:100%;
+      height:8px;
+      background:rgba(0,245,255,.1);
+      border-radius:4px;
+      overflow:hidden;
+      margin-top:15px;
+      display:none;
+    }
+    .progress.active{display:block;}
+    .progress-bar{
+      height:100%;
+      background:linear-gradient(90deg,#00ff99,#00ffcc);
+      width:0%;
+      transition:width .1s;
+    }
+    .progress-text{
+      font-size:.75rem;
+      color:rgba(0,245,255,.6);
+      margin-top:8px;
+      text-align:center;
+    }
+    
+    /* FOTKY */
+    .photos-section{
+      background:rgba(0,15,45,.9);
+      border:1px solid rgba(0,245,255,.3);
+      border-radius:6px;
+      padding:20px;
+    }
+    .photos-title{
+      font-family:'Orbitron',monospace;
+      font-size:.9rem;
+      color:#00f5ff;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      margin-bottom:15px;
+      text-shadow:0 0 8px rgba(0,245,255,.4);
+    }
+    .photos-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+      gap:12px;
+    }
+    .photo-item{
+      position:relative;
+      aspect-ratio:1;
+      background:rgba(0,10,40,.6);
+      border:1px solid rgba(0,245,255,.2);
+      border-radius:4px;
+      overflow:hidden;
+    }
+    .photo-item img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .photo-delete{
+      position:absolute;
+      top:4px;
+      right:4px;
+      background:rgba(200,0,0,.85);
+      border:none;
+      color:#fff;
+      padding:4px 8px;
+      font-size:.7rem;
+      cursor:pointer;
+      border-radius:2px;
+      opacity:0;
+      transition:opacity .2s;
+    }
+    .photo-item:hover .photo-delete{opacity:1;}
+    .photo-delete:hover{background:rgba(255,0,0,.95);}
+    .photos-empty{
+      text-align:center;
+      padding:30px;
+      color:rgba(0,245,255,.4);
+      font-size:.9rem;
+    }
+    .photos-loading{
+      text-align:center;
+      padding:20px;
+      color:rgba(0,245,255,.5);
+      font-size:.85rem;
+    }
+    
+    /* LOGOUT */
+    .logout-btn{
+      font-family:'Orbitron',monospace;
+      font-size:.8rem;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      background:rgba(200,0,0,.2);
+      border:1px solid rgba(255,100,100,.5);
+      color:#ff8888;
+      padding:10px 20px;
+      border-radius:3px;
+      cursor:pointer;
+      transition:all .2s;
+      width:100%;
+    }
+    .logout-btn:hover{background:rgba(255,0,0,.2);}
+    
+    .msg{
+      padding:12px;
+      border-radius:3px;
+      text-align:center;
+      font-size:.9rem;
+      margin-bottom:15px;
+      display:none;
+    }
+    .msg.show{display:block;}
+    .msg.success{background:rgba(0,200,100,.15);border:1px solid rgba(0,255,150,.4);color:#66ff99;}
+    .msg.error{background:rgba(200,0,0,.15);border:1px solid rgba(255,100,100,.4);color:#ff8888;}
+
+    @media(max-width:600px){
+      body{padding:12px;}
+      .header h1{font-size:1.2rem;}
+      .login-box,.upload-section,.photos-section{padding:16px;}
+      .photos-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>⬡ FOTKY</h1>
+    <p>Správa galerie KLADYXLAND</p>
+  </div>
+
+  <!-- PŘIHLÁŠENÍ -->
+  <div class="login-box" id="loginBox">
+    <input type="password" class="login-input" id="pwInput" placeholder="Zadej heslo..." onkeydown="if(event.key==='Enter')handleLogin()">
+    <button class="login-btn" onclick="handleLogin()">✓ Přihlásit se</button>
+    <div class="login-err" id="loginErr">❌ Špatné heslo</div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-panel" id="adminPanel">
+    <div id="msgBox" class="msg"></div>
+
+    <!-- UPLOAD -->
+    <div class="upload-section">
+      <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('fileInput').click()">
+        <p>📤 Přetáhni fotku nebo klikni</p>
+        <small>JPG, PNG, max 10 MB</small>
+      </div>
+      <input type="file" id="fileInput" class="upload-input" accept="image/*" onchange="handleFileSelect()">
+      <div class="progress" id="progress">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText"></div>
+    </div>
+
+    <!-- FOTKY -->
+    <div class="photos-section">
+      <div class="photos-title">Nahrané fotky</div>
+      <div id="photosLoading" class="photos-loading">Načítám...</div>
+      <div id="photosGrid" class="photos-grid" style="display:none;"></div>
+      <div id="photosEmpty" class="photos-empty" style="display:none;">Žádné fotky.</div>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">✕ Odhlásit se</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, listAll, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+  import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDmAf2CZILbYKR72XYd3iCj3pQgnqFYTp8",
+    authDomain: "kladyxland.firebaseapp.com",
+    databaseURL: "https://kladyxland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kladyxland",
+    storageBucket: "kladyxland.firebasestorage.app",
+    messagingSenderId: "178078059030",
+    appId: "1:178078059030:web:8d8a0271b23a7aca2b4337"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const storage = getStorage(app);
+  const auth = getAuth(app);
+
+  window.storage = storage;
+  window.storageRef = storageRef;
+  window.uploadBytesResumable = uploadBytesResumable;
+  window.getDownloadURL = getDownloadURL;
+  window.listAll = listAll;
+  window.deleteObject = deleteObject;
+
+  // PASSWORD
+  const _pwHash = '8fc165a050529a0627ce47fc06a7586631e563f05c51cbe68d8eb8763706afc0';
+
+  window.handleLogin = async function() {
+    const pw = document.getElementById('pwInput').value;
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    if (hash === _pwHash) {
+      try {
+        await signInWithEmailAndPassword(auth, 'kovalcikmichal@post.cz', pw);
+      } catch (e) {
+        showMsg('Chyba Firebase Auth: ' + e.message, 'error');
+        return;
+      }
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('adminPanel').classList.add('active');
+      document.getElementById('pwInput').value = '';
+      loadPhotos();
+    } else {
+      document.getElementById('loginErr').classList.add('show');
+      setTimeout(() => document.getElementById('loginErr').classList.remove('show'), 2000);
+    }
+  };
+
+  window.logout = function() {
+    signOut(auth);
+    document.getElementById('adminPanel').classList.remove('active');
+    document.getElementById('loginBox').style.display = 'flex';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('fileInput').value = '';
+  };
+
+  window.handleDragOver = function(e) {
+    e.preventDefault();
+    document.getElementById('uploadArea').classList.add('drag');
+  };
+
+  window.handleDragLeave = function(e) {
+    document.getElementById('uploadArea').classList.remove('drag');
+  };
+
+  window.handleDrop = function(e) {
+    e.preventDefault();
+    document.getElementById('uploadArea').classList.remove('drag');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById('fileInput').files = files;
+      handleFileSelect();
+    }
+  };
+
+  window.handleFileSelect = async function() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      showMsg('Fotka je příliš velká (max 10 MB)', 'error');
+      return;
+    }
+
+    const fileName = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileRef = window.storageRef(window.storage, 'gallery/' + fileName);
+
+    const uploadTask = window.uploadBytesResumable(fileRef, file);
+
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        document.getElementById('progress').classList.add('active');
+        document.getElementById('progressBar').style.width = progress + '%';
+        document.getElementById('progressText').textContent = Math.round(progress) + '%';
+      },
+      (error) => {
+        showMsg('Chyba: ' + error.message, 'error');
+        document.getElementById('progress').classList.remove('active');
+      },
+      () => {
+        showMsg('✓ Fotka nahrána!', 'success');
+        document.getElementById('fileInput').value = '';
+        document.getElementById('progress').classList.remove('active');
+        setTimeout(loadPhotos, 500);
+      }
+    );
+  };
+
+  async function loadPhotos() {
+    const grid = document.getElementById('photosGrid');
+    const empty = document.getElementById('photosEmpty');
+    const loading = document.getElementById('photosLoading');
+
+    loading.style.display = 'block';
+    grid.style.display = 'none';
+    empty.style.display = 'none';
+
+    try {
+      const result = await window.listAll(window.storageRef(window.storage, 'gallery/'));
+      
+      if (result.items.length === 0) {
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      grid.innerHTML = '';
+      for (const item of result.items) {
+        try {
+          const url = await window.getDownloadURL(item);
+          const div = document.createElement('div');
+          div.className = 'photo-item';
+          div.innerHTML = `
+            <img src="${url}" alt="Foto" loading="lazy">
+            <button class="photo-delete" onclick="deletePhoto('${item.name}')">✕ Smazat</button>
+          `;
+          grid.appendChild(div);
+        } catch (e) {
+          console.error('Chyba:', e);
+        }
+      }
+
+      loading.style.display = 'none';
+      grid.style.display = 'grid';
+    } catch (error) {
+      console.error('Chyba:', error);
+      loading.style.display = 'none';
+      empty.style.display = 'block';
+    }
+  }
+
+  window.deletePhoto = async function(fileName) {
+    if (!confirm('Smazat tuto fotku?')) return;
+    
+    try {
+      const fileRef = window.storageRef(window.storage, 'gallery/' + fileName);
+      await window.deleteObject(fileRef);
+      showMsg('✓ Fotka smazána', 'success');
+      loadPhotos();
+    } catch (error) {
+      showMsg('Chyba: ' + error.message, 'error');
+    }
+  };
+
+  function showMsg(text, type) {
+    const msgBox = document.getElementById('msgBox');
+    msgBox.textContent = text;
+    msgBox.className = 'msg show ' + type;
+    setTimeout(() => msgBox.classList.remove('show'), 3000);
+  }
+
+  // Zaměř na heslo
+  setTimeout(() => document.getElementById('pwInput').focus(), 100);
+</script>
+
+</body>
+</html>
