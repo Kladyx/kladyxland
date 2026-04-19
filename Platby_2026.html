@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PLATBY 2026 – KLADYXLAND</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0c10; --panel:#0e1118; --border:rgba(0,245,255,.15);
+  --accent:#00f5ff; --accent2:#00ff88; --warn:#ff4466;
+  --text:#c8d8e8; --muted:rgba(200,216,232,.4);
+  --paid-bg:rgba(0,255,136,.07); --paid-border:rgba(0,255,136,.35);
+  --unpaid-bg:rgba(255,68,102,.07); --unpaid-border:rgba(255,68,102,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);font-family:'Share Tech Mono',monospace;
+  color:var(--text);min-height:100vh;padding:20px 14px 50px;
+  background-image:
+    radial-gradient(ellipse at 20% 0%,rgba(0,245,255,.04) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 100%,rgba(0,255,136,.04) 0%,transparent 60%);
+}
+header{text-align:center;margin-bottom:20px;animation:fadeDown .4s ease both;}
+.title-top{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:3px;}
+.title-year{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.3em;color:var(--accent);opacity:.6;}
+.ver-badge{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.08em;color:rgba(0,255,136,.55);border:1px solid rgba(0,255,136,.2);padding:2px 7px;border-radius:3px;}
+header h1{font-family:'Orbitron',monospace;font-size:1.55rem;font-weight:900;letter-spacing:.12em;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hline{margin:8px auto 0;width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.month-bar{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;max-width:900px;margin:0 auto 20px;}
+.month-btn{font-family:'Share Tech Mono',monospace;font-size:.63rem;letter-spacing:.05em;padding:5px 10px;border-radius:5px;border:1px solid rgba(0,245,255,.2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;text-transform:uppercase;}
+.month-btn:hover{border-color:var(--accent);color:var(--text);}
+.month-btn.active{background:rgba(0,245,255,.1);border-color:var(--accent);color:var(--accent);}
+.month-label{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:.15em;color:var(--accent);text-align:center;margin-bottom:16px;opacity:.8;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:11px;max-width:900px;margin:0 auto 20px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:13px 15px;display:flex;flex-direction:column;gap:7px;animation:fadeUp .35s ease both;transition:border-color .2s,box-shadow .2s;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .2s;}
+.card:hover{border-color:rgba(0,245,255,.3);box-shadow:0 0 16px rgba(0,245,255,.06);}
+.card:hover::before{opacity:1;}
+.card.paid{border-color:var(--paid-border);background:linear-gradient(135deg,var(--panel),var(--paid-bg));}
+.card.unpaid{border-color:var(--unpaid-border);background:linear-gradient(135deg,var(--panel),var(--unpaid-bg));}
+.card-top{display:flex;align-items:center;gap:7px;}
+.card-num{font-size:.58rem;color:var(--muted);min-width:20px;flex-shrink:0;}
+.card-name{font-size:.78rem;font-weight:700;color:var(--text);flex:1;letter-spacing:.03em;}
+.card-amount{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:var(--accent);white-space:nowrap;}
+.card-note{font-size:.62rem;color:var(--muted);min-height:13px;}
+.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;}
+.toggle-btn{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.07em;padding:5px 11px;border-radius:4px;border:1px solid;cursor:pointer;transition:all .15s;text-transform:uppercase;background:transparent;}
+.toggle-btn.paid-btn{color:var(--accent2);border-color:var(--paid-border);}
+.toggle-btn.unpaid-btn{color:var(--warn);border-color:var(--unpaid-border);}
+.toggle-btn:hover{opacity:.75;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.paid .status-dot{background:var(--accent2);box-shadow:0 0 6px var(--accent2);}
+.unpaid .status-dot{background:var(--warn);box-shadow:0 0 6px var(--warn);}
+.delete-btn{background:rgba(255,68,102,.12);border:1px solid rgba(255,68,102,.3);border-radius:4px;color:var(--warn);cursor:pointer;font-size:.7rem;padding:2px 7px;line-height:1;transition:all .15s;flex-shrink:0;}
+.delete-btn:hover{background:rgba(255,68,102,.25);}
+.amount-edit-wrap{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.amount-inp{font-family:'Orbitron',monospace;font-size:.75rem;background:rgba(0,0,0,.4);border:1px solid var(--accent);border-radius:4px;color:var(--accent);padding:3px 8px;width:90px;outline:none;}
+.amount-ok{font-family:'Share Tech Mono',monospace;font-size:.6rem;padding:4px 8px;border-radius:4px;border:1px solid rgba(0,255,136,.4);color:var(--accent2);background:rgba(0,255,136,.08);cursor:pointer;}
+.amount-ok:hover{background:rgba(0,255,136,.18);}
+.empty-msg{grid-column:1/-1;text-align:center;padding:28px;font-size:.7rem;color:var(--muted);letter-spacing:.06em;}
+.add-section{max-width:900px;margin:0 auto 18px;}
+.add-toggle{display:flex;align-items:center;gap:9px;font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.13em;color:var(--accent);background:transparent;border:1px dashed rgba(0,245,255,.25);border-radius:7px;padding:11px 18px;cursor:pointer;width:100%;transition:all .2s;text-transform:uppercase;}
+.add-toggle:hover{background:rgba(0,245,255,.05);border-color:var(--accent);}
+.add-form{display:none;background:var(--panel);border:1px solid rgba(0,245,255,.2);border-radius:8px;padding:18px;margin-top:9px;gap:11px;flex-direction:column;}
+.add-form.open{display:flex;animation:fadeUp .25s ease both;}
+.add-form-title{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;}
+.add-row{display:flex;gap:9px;flex-wrap:wrap;}
+.add-input{font-family:'Share Tech Mono',monospace;font-size:.76rem;background:rgba(255,255,255,.04);border:1px solid rgba(0,245,255,.2);border-radius:5px;color:var(--text);padding:8px 12px;outline:none;transition:border-color .2s;flex:1;min-width:110px;}
+.add-input::placeholder{color:var(--muted);}
+.add-input:focus{border-color:var(--accent);}
+.amount-input{max-width:135px;}
+.add-submit{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.3);color:var(--accent);border-radius:5px;padding:8px 18px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.add-submit:hover{background:rgba(0,245,255,.2);}
+.summary{max-width:900px;margin:0 auto;background:var(--panel);border:1px solid rgba(0,245,255,.2);border-radius:8px;padding:18px 22px;}
+.summary-title{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.18em;color:var(--muted);margin-bottom:13px;text-transform:uppercase;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.73rem;}
+.sum-label{color:var(--muted);}
+.sum-val{font-family:'Orbitron',monospace;font-weight:700;}
+.sum-val.paid-val{color:var(--accent2);}
+.sum-val.unpaid-val{color:var(--warn);}
+.summary-total{display:flex;justify-content:space-between;align-items:center;padding-top:13px;margin-top:7px;border-top:1px solid rgba(0,245,255,.2);}
+.total-label{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:.1em;color:var(--accent);}
+.total-amount{font-family:'Orbitron',monospace;font-size:1.25rem;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.progress-bar{margin-top:13px;background:rgba(255,255,255,.06);border-radius:4px;height:5px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s ease;}
+.progress-label{margin-top:4px;font-size:.58rem;color:var(--muted);text-align:right;letter-spacing:.06em;}
+.ei-section{max-width:900px;margin:16px auto 0;background:var(--panel);border:1px solid rgba(0,245,255,.12);border-radius:8px;padding:18px 22px;}
+.ei-title{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.18em;color:var(--muted);margin-bottom:14px;text-transform:uppercase;}
+.ei-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:8px;}
+.ei-btn{font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:9px 15px;cursor:pointer;transition:all .15s;border:1px solid;white-space:nowrap;background:transparent;}
+.ei-btn.export-btn{border-color:rgba(0,245,255,.3);color:var(--accent);background:rgba(0,245,255,.07);}
+.ei-btn.export-btn:hover{background:rgba(0,245,255,.15);}
+.ei-btn.import-btn{border-color:rgba(0,255,136,.3);color:var(--accent2);background:rgba(0,255,136,.07);}
+.ei-btn.import-btn:hover{background:rgba(0,255,136,.15);}
+.ei-btn.copy-btn{border-color:rgba(255,255,255,.12);color:var(--muted);}
+.ei-btn.copy-btn:hover{color:var(--text);}
+.ei-desc{font-size:.63rem;color:var(--muted);flex:1;}
+.ei-textarea{font-family:'Share Tech Mono',monospace;font-size:.66rem;background:rgba(0,0,0,.3);border:1px solid rgba(0,245,255,.2);border-radius:5px;color:var(--text);padding:10px 12px;outline:none;width:100%;resize:vertical;min-height:65px;transition:border-color .2s;display:none;margin-top:8px;}
+.ei-textarea:focus{border-color:var(--accent);}
+.ei-textarea.show{display:block;}
+.ei-msg{font-size:.63rem;margin-top:4px;min-height:16px;}
+.ei-msg.ok{color:var(--accent2);}
+.ei-msg.err{color:var(--warn);}
+.ei-sep{border:none;border-top:1px solid rgba(255,255,255,.05);margin:14px 0;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-top">
+    <div class="title-year">KLADYXLAND · 2026</div>
+    <div class="ver-badge" id="ver-badge">ver.1.0Uc</div>
+  </div>
+  <h1>PLATBY</h1>
+  <div class="hline"></div>
+</header>
+
+<div class="month-bar" id="month-bar"></div>
+<div class="month-label" id="month-label"></div>
+<div class="grid" id="grid"></div>
+
+<div class="add-section">
+  <button class="add-toggle" id="add-toggle"><span>＋</span> Přidat novou platbu</button>
+  <div class="add-form" id="add-form">
+    <div class="add-form-title">// Nová položka</div>
+    <div class="add-row">
+      <input class="add-input" id="inp-name" type="text" placeholder="Název platby" maxlength="40"/>
+      <input class="add-input amount-input" id="inp-amount" type="number" placeholder="Částka (Kč)" min="0"/>
+    </div>
+    <div class="add-row">
+      <input class="add-input" id="inp-note" type="text" placeholder="Poznámka (volitelné)" maxlength="80"/>
+      <button class="add-submit" id="add-submit">＋ Přidat</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="summary-title">// Přehled plateb</div>
+  <div class="summary-row"><span class="sum-label">Zaplaceno položek</span><span class="sum-val paid-val" id="count-paid">—</span></div>
+  <div class="summary-row"><span class="sum-label">Nezaplaceno položek</span><span class="sum-val unpaid-val" id="count-unpaid">—</span></div>
+  <div class="summary-row"><span class="sum-label">Suma zaplaceno</span><span class="sum-val paid-val" id="sum-paid">—</span></div>
+  <div class="summary-row"><span class="sum-label">Suma nezaplaceno</span><span class="sum-val unpaid-val" id="sum-unpaid">—</span></div>
+  <div class="summary-total">
+    <span class="total-label">CELKEM ZAPLACENO</span>
+    <span class="total-amount" id="total">— Kč</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+  <div class="progress-label" id="progress-label">0 % uhrazeno</div>
+</div>
+
+<div class="ei-section">
+  <div class="ei-title">// Záloha dat · Export / Import</div>
+
+  <div class="ei-row">
+    <button class="ei-btn export-btn" id="btn-export">⬆ Export dat</button>
+    <span class="ei-desc">Vygeneruje kód — zkopíruj a ulož (poznámky, SMS…)</span>
+  </div>
+  <textarea class="ei-textarea" id="ta-export" readonly></textarea>
+  <div id="row-copy" style="display:none;">
+    <div class="ei-row" style="margin-top:6px;">
+      <button class="ei-btn copy-btn" id="btn-copy">⧉ Kopírovat do schránky</button>
+    </div>
+    <div class="ei-msg ok" id="copy-msg"></div>
+  </div>
+
+  <hr class="ei-sep"/>
+
+  <div class="ei-row">
+    <button class="ei-btn import-btn" id="btn-import-show">⬇ Importovat data</button>
+    <span class="ei-desc">Vlož kód z exportu → obnoví všechna data</span>
+  </div>
+  <textarea class="ei-textarea" id="ta-import" placeholder="Vlož sem exportovaný kód…"></textarea>
+  <div id="row-import-go" style="display:none;">
+    <div class="ei-row" style="margin-top:6px;">
+      <button class="ei-btn import-btn" id="btn-import-go">⬇ Načíst data</button>
+    </div>
+    <div class="ei-msg" id="import-msg"></div>
+  </div>
+
+  <hr class="ei-sep"/>
+
+  <div class="ei-row">
+    <span class="ei-desc" style="font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--muted);">// KOPÍROVAT MĚSÍC</span>
+  </div>
+  <div class="ei-row">
+    <span class="ei-desc">Zkopíruj platby z:</span>
+    <select class="add-input" id="copy-from" style="max-width:130px;"></select>
+    <span class="ei-desc" style="flex:0;">→ do:</span>
+    <select class="add-input" id="copy-to" style="max-width:130px;"></select>
+    <button class="ei-btn export-btn" id="btn-copy-month">⇒ Kopírovat</button>
+  </div>
+  <div class="ei-msg" id="copy-month-msg"></div>
+
+  <hr class="ei-sep"/>
+
+  <div class="ei-row">
+    <span class="ei-desc" style="font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--muted);">// SMAZAT MĚSÍC</span>
+  </div>
+  <div class="ei-row">
+    <span class="ei-desc">Vyber měsíc ke smazání:</span>
+    <select class="add-input" id="del-month" style="max-width:130px;"></select>
+    <button class="ei-btn" id="btn-del-month" style="border-color:rgba(255,68,102,.35);color:var(--warn);background:rgba(255,68,102,.07);">✕ Smazat měsíc</button>
+  </div>
+  <div class="ei-msg" id="del-month-msg"></div>
+</div>
+
+<script>
+const MONTHS=['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const SK='platby2026_';
+const DEFAULT_MAY=[
+  {name:"Telefon Amifox",amount:295,note:""},
+  {name:"ČEZ",amount:1560,note:""},
+  {name:"MND",amount:3600,note:""},
+  {name:"ČT poplatky",amount:150,note:""},
+  {name:"Natura Med",amount:199,note:""},
+  {name:"Sweet TV",amount:60,note:""},
+  {name:"Google Drive",amount:80,note:""},
+  {name:"Cor Sat",amount:400,note:""},
+  {name:"Rozhlas",amount:55,note:""},
+  {name:"SM VAK",amount:1999,note:""},
+  {name:"Popelnice Příbor",amount:732,note:"Zaplaceno 12.2.2026 z účtu",paid:true},
+  {name:"Pojištění Uniqua",amount:100,note:""},
+  {name:"Pojištění Vila Příbor",amount:1060,note:""},
+  {name:"YouTube",amount:300,note:""},
+  {name:"VDJ",amount:419,note:""},
+  {name:"TP-Link",amount:130,note:""},
+  {name:"Stream Mixcloud",amount:150,note:""},
+];
+
+let currentMonth=4, items=[];
+
+// ── VERZE ──
+const VER_KEY='platby_ver';
+const VER_BASE='1.';
+const VER_SUF='Uc';
+function loadVer(){
+  try{ return parseInt(localStorage.getItem(VER_KEY)||'0',10)||0; }catch(e){return 0;}
+}
+function bumpVer(){
+  const v=loadVer()+1;
+  localStorage.setItem(VER_KEY,v);
+  document.getElementById('ver-badge').textContent='ver.'+VER_BASE+v+VER_SUF;
+}
+function initVer(){
+  const v=loadVer();
+  document.getElementById('ver-badge').textContent='ver.'+VER_BASE+v+VER_SUF;
+}
+
+function sKey(m){return SK+m;}
+function loadMonth(m){
+  try{const r=localStorage.getItem(sKey(m));if(r)return JSON.parse(r);}catch(e){}
+  if(m===4)return DEFAULT_MAY.map((it,i)=>({id:i,name:it.name,amount:it.amount,note:it.note||'',paid:!!it.paid}));
+  return[];
+}
+function saveMonth(m,data){localStorage.setItem(sKey(m),JSON.stringify(data));bumpVer();}
+function fmt(n){return n.toLocaleString('cs-CZ')+' Kč';}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderMonthBar(){
+  const bar=document.getElementById('month-bar');bar.innerHTML='';
+  MONTHS.forEach((name,i)=>{
+    const b=document.createElement('button');
+    b.className='month-btn'+(i===currentMonth?' active':'');
+    b.textContent=name;b.onclick=()=>switchMonth(i);bar.appendChild(b);
+  });
+  document.getElementById('month-label').textContent=MONTHS[currentMonth]+' 2026';
+}
+
+function renderCards(){
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  if(!items.length){grid.innerHTML='<div class="empty-msg">// žádné platby — přidej první položku níže</div>';return;}
+  items.forEach((it,idx)=>{
+    const card=document.createElement('div');
+    card.className='card '+(it.paid?'paid':'unpaid');
+    card.style.animationDelay=(idx*.03)+'s';
+    card.innerHTML=`
+      <div class="card-top">
+        <span class="card-num">${String(idx+1).padStart(2,'0')}.</span>
+        <span class="card-name">${esc(it.name)}</span>
+        <span class="card-amount" title="Klikni pro změnu částky" style="cursor:pointer;">${it.amount.toLocaleString('cs-CZ')} Kč ✎</span>
+        <button class="delete-btn" title="Smazat">✕</button>
+      </div>
+      ${it.note?`<div class="card-note">${esc(it.note)}</div>`:'<div class="card-note"></div>'}
+      <div class="card-bottom">
+        <div class="status-dot"></div>
+        <button class="toggle-btn ${it.paid?'paid-btn':'unpaid-btn'}">${it.paid?'✓ Zaplaceno':'✗ Nezaplaceno'}</button>
+      </div>`;
+    // Editace částky kliknutím — inline input
+    card.querySelector('.card-amount').onclick=function(){
+      if(this.querySelector('.amount-edit-wrap')) return;
+      const cur=items[idx].amount;
+      this.innerHTML=`<span class="amount-edit-wrap">
+        <input class="amount-inp" type="number" value="${cur}" min="0"/>
+        <button class="amount-ok">✓ OK</button>
+      </span>`;
+      const inp=this.querySelector('.amount-inp');
+      inp.focus(); inp.select();
+      const save=()=>{
+        const num=parseInt(inp.value,10);
+        if(!isNaN(num)&&num>=0){ items[idx].amount=num; saveMonth(currentMonth,items); }
+        renderCards(); updateSummary();
+      };
+      this.querySelector('.amount-ok').onclick=e=>{e.stopPropagation();save();};
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); if(e.key==='Escape') renderCards(); });
+      inp.addEventListener('click',e=>e.stopPropagation());
+    };
+    card.querySelector('.toggle-btn').onclick=()=>{
+      items[idx].paid=!items[idx].paid;saveMonth(currentMonth,items);renderCards();updateSummary();
+    };
+    card.querySelector('.delete-btn').onclick=()=>{
+      const note=card.querySelector('.card-note');
+      note.innerHTML='Smazat? &nbsp;<button class="ei-btn" style="font-size:.55rem;padding:3px 8px;border-color:rgba(255,68,102,.4);color:var(--warn);" id="cfdel-'+idx+'">ANO</button> &nbsp;<button class="ei-btn" style="font-size:.55rem;padding:3px 8px;border-color:rgba(255,255,255,.12);color:var(--muted);" id="cndel-'+idx+'">NE</button>';
+      document.getElementById('cfdel-'+idx).onclick=()=>{
+        items.splice(idx,1);saveMonth(currentMonth,items);renderCards();updateSummary();
+      };
+      document.getElementById('cndel-'+idx).onclick=()=>renderCards();
+    };
+    grid.appendChild(card);
+  });
+}
+
+function updateSummary(){
+  let ps=0,us=0,pc=0,uc=0;
+  items.forEach(it=>{it.paid?(ps+=it.amount,pc++):(us+=it.amount,uc++);});
+  const tot=ps+us,pct=tot?Math.round(ps/tot*100):0;
+  document.getElementById('count-paid').textContent=pc;
+  document.getElementById('count-unpaid').textContent=uc;
+  document.getElementById('sum-paid').textContent=fmt(ps);
+  document.getElementById('sum-unpaid').textContent=fmt(us);
+  document.getElementById('total').textContent=fmt(ps);
+  document.getElementById('progress').style.width=pct+'%';
+  document.getElementById('progress-label').textContent=pct+' % uhrazeno';
+}
+
+function switchMonth(m){
+  currentMonth=m;items=loadMonth(m);
+  renderMonthBar();renderCards();updateSummary();
+  document.getElementById('add-form').classList.remove('open');
+}
+
+// Přidat
+document.getElementById('add-toggle').onclick=()=>document.getElementById('add-form').classList.toggle('open');
+document.getElementById('add-submit').onclick=()=>{
+  const name=document.getElementById('inp-name').value.trim();
+  const amount=parseInt(document.getElementById('inp-amount').value,10);
+  const note=document.getElementById('inp-note').value.trim();
+  if(!name){alert('Zadej název platby.');return;}
+  if(!amount||amount<0){alert('Zadej platnou částku.');return;}
+  items.push({id:Date.now(),name,amount,note,paid:false});
+  saveMonth(currentMonth,items);renderCards();updateSummary();
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-amount').value='';
+  document.getElementById('inp-note').value='';
+  document.getElementById('add-form').classList.remove('open');
+};
+document.getElementById('inp-note').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('add-submit').click();});
+
+// Export
+document.getElementById('btn-export').onclick=()=>{
+  const all={};
+  MONTHS.forEach((_,i)=>{const r=localStorage.getItem(sKey(i));if(r)all[i]=JSON.parse(r);});
+  const ta=document.getElementById('ta-export');
+  ta.value=JSON.stringify(all);
+  ta.classList.add('show');
+  document.getElementById('row-copy').style.display='block';
+  document.getElementById('copy-msg').textContent='';
+};
+document.getElementById('btn-copy').onclick=()=>{
+  const ta=document.getElementById('ta-export');
+  ta.select();ta.setSelectionRange(0,99999);
+  const msg=document.getElementById('copy-msg');
+  try{
+    navigator.clipboard.writeText(ta.value).then(()=>{msg.textContent='✓ Zkopírováno do schránky!';});
+  }catch(e){document.execCommand('copy');msg.textContent='✓ Zkopírováno!';}
+};
+
+// Import
+document.getElementById('btn-import-show').onclick=()=>{
+  const ta=document.getElementById('ta-import');
+  ta.classList.toggle('show');
+  document.getElementById('row-import-go').style.display=ta.classList.contains('show')?'block':'none';
+};
+document.getElementById('btn-import-go').onclick=()=>{
+  const msg=document.getElementById('import-msg');
+  try{
+    const all=JSON.parse(document.getElementById('ta-import').value.trim());
+    let count=0;
+    Object.keys(all).forEach(k=>{
+      const m=parseInt(k);
+      if(m>=0&&m<=11&&Array.isArray(all[m])){localStorage.setItem(sKey(m),JSON.stringify(all[m]));count++;}
+    });
+    msg.className='ei-msg ok';msg.textContent='✓ Importováno '+count+' měsíců!';
+    items=loadMonth(currentMonth);renderCards();updateSummary();
+  }catch(e){msg.className='ei-msg err';msg.textContent='✗ Chybný formát dat.';}
+};
+
+// Kopírovat měsíc
+function fillMonthSelects(){
+  ['copy-from','copy-to','del-month'].forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML='';
+    MONTHS.forEach((name,i)=>{
+      const o=document.createElement('option');
+      o.value=i; o.textContent=name;
+      if(id==='copy-from'&&i===currentMonth) o.selected=true;
+      if(id==='copy-to'&&i===(currentMonth+1)%12) o.selected=true;
+      if(id==='del-month'&&i===currentMonth) o.selected=true;
+      sel.appendChild(o);
+    });
+  });
+}
+
+document.getElementById('btn-del-month').onclick=()=>{
+  const m=parseInt(document.getElementById('del-month').value);
+  const msg=document.getElementById('del-month-msg');
+  msg.className='ei-msg err';
+  msg.innerHTML='Opravdu smazat <b>'+MONTHS[m]+'</b>? &nbsp;<button class="ei-btn" id="confirm-del" style="font-size:.58rem;padding:5px 10px;border-color:rgba(255,68,102,.4);color:var(--warn);">ANO, smazat</button> &nbsp;<button class="ei-btn" id="cancel-del" style="font-size:.58rem;padding:5px 10px;border-color:rgba(255,255,255,.15);color:var(--muted);">Zrušit</button>';
+  document.getElementById('confirm-del').onclick=()=>{
+    localStorage.setItem(sKey(m), JSON.stringify([]));
+    msg.className='ei-msg ok';
+    msg.textContent='✓ Měsíc '+MONTHS[m]+' byl smazán.';
+    if(m===currentMonth){items=[];renderCards();updateSummary();}
+  };
+  document.getElementById('cancel-del').onclick=()=>{
+    msg.textContent='';
+  };
+};
+
+document.getElementById('btn-copy-month').onclick=()=>{
+  const from=parseInt(document.getElementById('copy-from').value);
+  const to  =parseInt(document.getElementById('copy-to').value);
+  const msg =document.getElementById('copy-month-msg');
+  if(from===to){msg.className='ei-msg err';msg.textContent='✗ Zdrojový a cílový měsíc jsou stejné.';return;}
+  const src=loadMonth(from);
+  if(!src.length){msg.className='ei-msg err';msg.textContent='✗ Zdrojový měsíc je prázdný.';return;}
+  const existing=loadMonth(to);
+  if(existing.length>0){
+    if(!confirm('Měsíc '+MONTHS[to]+' již má '+existing.length+' položek. Přepsat?')) return;
+  }
+  // Zkopíruj — všechny jako nezaplacené, bez poznámek o platbě
+  const copy=src.map(it=>({...it, id:Date.now()+Math.random(), paid:false, note:''}));
+  saveMonth(to,copy);
+  msg.className='ei-msg ok';
+  msg.textContent='✓ Zkopírováno '+copy.length+' položek z '+MONTHS[from]+' do '+MONTHS[to]+'!';
+  if(to===currentMonth){items=loadMonth(currentMonth);renderCards();updateSummary();}
+};
+
+// Init
+items=loadMonth(currentMonth);
+renderMonthBar();renderCards();updateSummary();initVer();fillMonthSelects();
+</script>
+</body>
+</html>
