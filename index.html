@@ -893,7 +893,13 @@
     }
     onValue(grayscaleRef, snap => {
       const val = snap.val();
-      window._grayscaleMode = (val === true) ? 'on' : (val === false) ? 'off' : 'auto';
+      // null = auto, true = on, false = off
+      // Pokud Firebase vrátí null, vždy auto bez ohledu na localStorage
+      if (val === null || val === undefined) {
+        window._grayscaleMode = 'auto';
+      } else {
+        window._grayscaleMode = (val === true) ? 'on' : 'off';
+      }
       localStorage.setItem('gs-mode', window._grayscaleMode);
       applyGrayscale();
     });
@@ -908,8 +914,11 @@
       localStorage.setItem('gs-mode', mode);
       applyGrayscale();
       // Synchronizuj do Firebase (best-effort)
-      const val = mode === 'on' ? true : mode === 'off' ? false : null;
-      set(grayscaleRef, val).catch(e=>console.error(e));
+      if (mode === 'auto') {
+        remove(grayscaleRef).catch(e=>console.error(e));
+      } else {
+        set(grayscaleRef, mode === 'on').catch(e=>console.error(e));
+      }
     };
 
     // ── TIMERY ────────────────────────────────────────────────────────────
@@ -1471,10 +1480,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           <textarea id="hw-disclaimer-edit" class="text-edit-area" style="display:none;" rows="6"></textarea>
           <button class="btn-add-save text-save-btn" id="hw-disclaimer-save-btn" style="display:none;margin-top:8px;" onclick="saveHwDisclaimer()">✓ Uložit text</button>
         </div>
-        <div class="card" style="margin-top:18px;padding:0;overflow:hidden;border:1px solid rgba(0,245,255,.15);">
-          <div style="padding:10px 14px;font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:.15em;color:rgba(0,245,255,.6);text-transform:uppercase;border-bottom:1px solid rgba(0,245,255,.1);">📐 Architektura systému</div>
-          <iframe src="kladyxland-architektura.html" style="width:100%;height:600px;border:none;background:#030812;" loading="lazy"></iframe>
-        </div>
+
 
       </div>
     </div>
@@ -2109,7 +2115,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.0';
+  const CURRENT_VERSION = '2.10.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
