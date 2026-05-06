@@ -13,33 +13,74 @@
       display: flex; align-items: center; justify-content: center;
       font-family: 'Bebas Neue', sans-serif;
     }
-    .badge {
+    a, .offair-wrap {
       display: flex;
       align-items: center;
       gap: 22px;
       padding: 32px 60px;
       border: 2px solid #ff2244;
       box-shadow: 0 0 40px rgba(255,34,68,0.3), inset 0 0 60px rgba(255,34,68,0.04);
+      text-decoration: none;
       color: #ff2244;
       font-size: clamp(52px, 12vw, 96px);
       letter-spacing: 0.08em;
+      transition: box-shadow 0.3s, background 0.3s;
       position: relative;
+      animation: wholePulse 1.4s ease-in-out infinite;
     }
-    .badge::before { content: ''; position: absolute; top: -2px; left: -2px; width: 12px; height: 12px; border-top: 2px solid #ffffff33; border-left: 2px solid #ffffff33; }
-    .badge::after  { content: ''; position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border-bottom: 2px solid #ffffff33; border-right: 2px solid #ffffff33; }
+    a::before, .offair-wrap::before { content: ''; position: absolute; top: -2px; left: -2px; width: 12px; height: 12px; border-top: 2px solid #ffffff33; border-left: 2px solid #ffffff33; }
+    a::after, .offair-wrap::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border-bottom: 2px solid #ffffff33; border-right: 2px solid #ffffff33; }
+    a:hover, .offair-wrap:hover {
+      background: rgba(0,255,102,0.06);
+      box-shadow: 0 0 70px rgba(255,34,68,0.5), inset 0 0 60px rgba(255,34,68,0.08);
+    }
     .dot {
       width: 22px; height: 22px;
       border-radius: 50%;
       background: #ff2244;
       box-shadow: 0 0 0 4px rgba(255,34,68,0.2);
       flex-shrink: 0;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(255,34,68,0.2); }
+      50%       { box-shadow: 0 0 0 12px rgba(255,34,68,0); }
+    }
+    @keyframes wholePulse {
+      0%, 100% {
+        box-shadow: 0 0 40px rgba(255,34,68,0.3), inset 0 0 60px rgba(255,34,68,0.04);
+        border-color: #ff2244;
+        color: #ff2244;
+        text-shadow: 0 0 8px rgba(255,34,68,0.3);
+        opacity: 1;
+      }
+      50% {
+        box-shadow: 0 0 80px rgba(255,34,68,0.7), 0 0 120px rgba(255,34,68,0.3), inset 0 0 60px rgba(255,34,68,0.1);
+        border-color: #ff6680;
+        color: #ff6680;
+        text-shadow: 0 0 30px rgba(255,34,68,0.9), 0 0 60px rgba(255,34,68,0.4);
+        opacity: 0.9;
+      }
+    }
+    @keyframes textPulse {
+      0%, 100% {
+        text-shadow: 0 0 8px rgba(255,34,68,0.4), 0 0 20px rgba(255,34,68,0.2);
+        opacity: 1;
+      }
+      50% {
+        text-shadow: 0 0 24px rgba(255,34,68,0.95), 0 0 50px rgba(255,34,68,0.5), 0 0 80px rgba(255,34,68,0.2);
+        opacity: 0.88;
+      }
+    }
+    .text-inair {
+      animation: textPulse 1.4s ease-in-out infinite;
     }
   </style>
 </head>
 <body>
-  <div class="badge">
+  <div class="offair-wrap">
     <div class="dot"></div>
-    OFF AIR
+    <span class="text-inair">OFF AIR</span>
   </div>
 </body>
 </html>
