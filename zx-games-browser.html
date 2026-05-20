@@ -80,20 +80,19 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
 <body>
 <div class="header">
   <h1>ZX SPECTRUM<br>NEXT</h1>
-  <div class="subtitle">▶ GAMES ARCADE ◀</div>
+  <div class="subtitle">▶ GAMES ARCADE ◀ · <span style="color:#0088ff">v3</span></div>
 </div>
 
 <a class="drive-btn" href="https://drive.google.com/drive/folders/1IDtrcuFJzL0C6gYQj2mh-EJXnHaIVP7_" target="_blank" rel="noopener">
   📁 OPEN GAMES FOLDER ON GOOGLE DRIVE
 </a>
 
-<p class="hint">SEARCH A GAME BELOW → CLICK ▼ DL → DOWNLOAD FROM GOOGLE DRIVE</p>
+<p class="hint">⚠ FOR BEST EXPERIENCE USE PC · SEARCH GAME BELOW → CLICK ▼ DL TO DOWNLOAD · OR OPEN GOOGLE DRIVE FOLDER</p>
 
 <div class="score-bar">
   <div class="score-item">TOTAL<span class="score-val" id="statTotal">—</span></div>
   <div class="score-item">SHOWN<span class="score-val" id="statShown">—</span></div>
   <div class="score-item">PAGE<span class="score-val" id="statPage">—</span></div>
-  <div class="score-item">VER<span class="score-val" style="color:#00ccff;font-size:0.6rem;">v3</span></div>
 </div>
 
 <div id="loadingMsg" class="loading">▶ LOADING GAMES FROM DRIVE...<br>PLEASE WAIT ◀</div>
@@ -132,11 +131,10 @@ let allGames = [], filtered = [], currentPage = 1, activeExt = '';
 fetch(JSON_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
-    const allowedExts = ['tzx', 'tap', 'next'];
+    
     allGames = data.games.filter(g =>
       g.name && g.name.trim() !== '' &&
-      !g.name.startsWith('._') &&
-      allowedExts.includes(g.ext.toLowerCase())
+      !g.name.startsWith('._')
     );
     allGames.sort((a, b) => a.name.localeCompare(b.name));
     document.getElementById('statTotal').textContent = allGames.length.toLocaleString();
