@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZX SPECTRUM NEXT · ARCADE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0a0a;color:#fff;font-family:'Press Start 2P',monospace;min-height:100vh;padding:12px;
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(0,100,255,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 0% 100%,rgba(0,200,255,0.08) 0%,transparent 50%),
+    radial-gradient(ellipse at 100% 100%,rgba(0,150,255,0.08) 0%,transparent 50%);}
+body::before{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.15) 3px,rgba(0,0,0,0.15) 4px);
+  pointer-events:none;z-index:9999;}
+.header{text-align:center;margin-bottom:14px;padding:16px 10px 12px;
+  border:3px solid #0088ff;border-radius:6px;
+  background:linear-gradient(180deg,#00001a 0%,#0a0a0a 100%);position:relative;
+  box-shadow:0 0 30px rgba(0,100,255,0.3),inset 0 0 20px rgba(0,100,255,0.05);}
+.header::before{content:'★ INSERT COIN ★';position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:#0088ff;color:#fff;font-size:0.35rem;padding:2px 10px;letter-spacing:2px;
+  animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;letter-spacing:3px;line-height:1.6;margin-bottom:6px;}
+.subtitle{font-size:0.4rem;color:#00ccff;letter-spacing:4px;margin-top:4px;}
+.drive-btn{display:block;width:100%;margin-bottom:12px;background:#001a00;border:2px solid #00cc00;color:#00cc00;
+  padding:12px 10px;font-family:'Press Start 2P',monospace;font-size:0.5rem;border-radius:4px;
+  cursor:pointer;transition:all 0.15s;text-decoration:none;text-align:center;letter-spacing:2px;
+  box-shadow:0 0 12px rgba(0,200,0,0.15);}
+.drive-btn:hover{background:#00cc00;color:#000;box-shadow:0 0 20px rgba(0,200,0,0.4);}
+.score-bar{display:flex;justify-content:space-between;align-items:center;
+  background:#111;border:2px solid #0088ff;border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:0.45rem;}
+.score-item{text-align:center;}
+.score-val{color:#00ccff;font-size:0.8rem;display:block;margin-top:3px;}
+.loading{text-align:center;padding:40px 20px;font-size:0.5rem;color:#0088ff;
+  letter-spacing:3px;animation:blink 0.8s step-end infinite;line-height:2.5;}
+.search-wrap{display:flex;gap:6px;margin-bottom:10px;}
+.search-input{flex:1;background:#111;border:2px solid #0088ff;color:#00ccff;
+  padding:10px 12px;font-family:'Press Start 2P',monospace;font-size:0.5rem;border-radius:4px;outline:none;letter-spacing:1px;}
+.search-input:focus{border-color:#00ccff;box-shadow:0 0 10px rgba(0,200,255,0.25);}
+.search-input::placeholder{color:rgba(0,150,255,0.4);}
+.clear-btn{background:#111;border:2px solid #0088ff;color:#0088ff;
+  padding:10px 12px;font-family:'Press Start 2P',monospace;font-size:0.5rem;border-radius:4px;cursor:pointer;transition:all 0.15s;}
+.clear-btn:hover{background:#0088ff;color:#fff;}
+.filter-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.filter-btn{background:#111;border:2px solid #444;color:#aaa;
+  padding:5px 10px;font-family:'Press Start 2P',monospace;font-size:0.38rem;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+.filter-btn:hover,.filter-btn.active{background:#0088ff;border-color:#0088ff;color:#fff;box-shadow:0 0 8px rgba(0,100,255,0.4);}
+.results-info{font-size:0.38rem;color:#0055cc;letter-spacing:1px;margin-bottom:8px;}
+.games-list{display:flex;flex-direction:column;gap:3px;}
+.game-item{display:flex;align-items:center;gap:8px;background:#111;border:2px solid #222;border-radius:3px;padding:8px 10px;}
+.game-item:hover{border-color:#00ccff;background:#00001a;}
+.game-num{font-size:0.32rem;color:#444;min-width:32px;flex-shrink:0;}
+.game-name{flex:1;font-size:0.45rem;color:#fff;letter-spacing:1px;line-height:1.5;word-break:break-word;}
+.game-folder{font-size:0.28rem;color:#0055cc;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.game-ext{font-size:0.35rem;color:#00ccff;min-width:38px;text-align:right;flex-shrink:0;}
+
+.hl{color:#00ccff;}
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;margin-bottom:8px;flex-wrap:wrap;}
+.page-btn{background:#111;border:2px solid #0088ff;color:#0088ff;
+  padding:7px 12px;font-family:'Press Start 2P',monospace;font-size:0.4rem;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+.page-btn:hover:not(:disabled){background:#0088ff;color:#fff;}
+.page-btn:disabled{border-color:#333;color:#333;cursor:default;}
+.page-info{font-size:0.4rem;color:#00ccff;letter-spacing:1px;}
+.page-jump{display:flex;gap:5px;align-items:center;margin-top:6px;width:100%;justify-content:center;}
+.page-input{background:#111;border:2px solid #0055cc;color:#00ccff;
+  padding:5px 8px;font-family:'Press Start 2P',monospace;font-size:0.4rem;border-radius:3px;outline:none;width:70px;text-align:center;}
+.page-go{background:#111;border:2px solid #0055cc;color:#0055cc;
+  padding:5px 10px;font-family:'Press Start 2P',monospace;font-size:0.4rem;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+.page-go:hover{background:#0055cc;color:#fff;}
+.no-games{text-align:center;padding:40px 20px;color:#333;font-size:0.5rem;letter-spacing:2px;line-height:2.5;}
+.hint{font-size:0.32rem;color:#444;text-align:center;margin-bottom:10px;letter-spacing:1px;line-height:2;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>ZX SPECTRUM<br>NEXT</h1>
+  <div class="subtitle">▶ GAMES ARCADE ◀</div>
+</div>
+
+<a class="drive-btn" href="https://drive.google.com/drive/folders/1IDtrcuFJzL0C6gYQj2mh-EJXnHaIVP7_" target="_blank" rel="noopener">
+  📁 OPEN GAMES FOLDER ON GOOGLE DRIVE
+</a>
+
+<p class="hint">SEARCH A GAME BELOW → OPEN FOLDER ON GOOGLE DRIVE TO DOWNLOAD</p>
+
+<div class="score-bar">
+  <div class="score-item">TOTAL<span class="score-val" id="statTotal">—</span></div>
+  <div class="score-item">SHOWN<span class="score-val" id="statShown">—</span></div>
+  <div class="score-item">PAGE<span class="score-val" id="statPage">—</span></div>
+</div>
+
+<div id="loadingMsg" class="loading">▶ LOADING GAMES FROM DRIVE...<br>PLEASE WAIT ◀</div>
+
+<div id="mainSection" style="display:none">
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" type="text" placeholder="SEARCH GAME..." autocomplete="off" spellcheck="false">
+    <button class="clear-btn" id="clearBtn">CLR</button>
+  </div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="results-info" id="resultsInfo"></div>
+</div>
+
+<div class="games-list" id="gamesList"></div>
+
+<div class="pagination" id="pagination" style="display:none">
+  <button class="page-btn" id="btnFirst">◀◀</button>
+  <button class="page-btn" id="btnPrev">◀</button>
+  <span class="page-info" id="pageInfo"></span>
+  <button class="page-btn" id="btnNext">▶</button>
+  <button class="page-btn" id="btnLast">▶▶</button>
+  <div class="page-jump">
+    <input class="page-input" id="pageJumpInput" type="number" min="1" placeholder="##">
+    <button class="page-go" id="pageGoBtn">GO</button>
+  </div>
+</div>
+
+<script>
+const PAGE_SIZE = 100;
+const FILE_ID = '18S2D1r8IiCkq2XzpogdnKRWGkA2gUJ-m';
+const API_KEY = 'AIzaSyAd5weXm18FyZ21zo9Y1JsdVYRW1hxecOw';
+const JSON_URL = `https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media&key=${API_KEY}`;
+
+let allGames = [], filtered = [], currentPage = 1, activeExt = '';
+
+fetch(JSON_URL)
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    const allowedExts = ['tzx', 'tap', 'next'];
+    allGames = data.games.filter(g =>
+      g.name && g.name.trim() !== '' &&
+      !g.name.startsWith('._') &&
+      allowedExts.includes(g.ext.toLowerCase())
+    );
+    allGames.sort((a, b) => a.name.localeCompare(b.name));
+    document.getElementById('statTotal').textContent = allGames.length.toLocaleString();
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('mainSection').style.display = 'block';
+    buildFilterButtons();
+    applyFilter();
+  })
+  .catch(err => {
+    document.getElementById('loadingMsg').innerHTML =
+      '▶ ERROR LOADING DATA ◀<br><span style="font-size:0.4rem;color:#ff4444">' + err.message + '</span>';
+  });
+
+function buildFilterButtons() {
+  const ec = {};
+  allGames.forEach(g => { ec[g.ext] = (ec[g.ext] || 0) + 1; });
+  const sorted = Object.entries(ec).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = '<button class="filter-btn active" data-ext="">ALL (' + allGames.length.toLocaleString() + ')</button>';
+  sorted.forEach(([ext, cnt]) => {
+    bar.innerHTML += `<button class="filter-btn" data-ext="${ext}">.${ext.toUpperCase()} (${cnt.toLocaleString()})</button>`;
+  });
+  bar.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeExt = btn.dataset.ext;
+      currentPage = 1;
+      applyFilter();
+    });
+  });
+}
+
+function applyFilter() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  filtered = allGames.filter(g =>
+    (!activeExt || g.ext === activeExt) && (!q || g.name.toLowerCase().includes(q))
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  document.getElementById('statShown').textContent = filtered.length.toLocaleString();
+  document.getElementById('resultsInfo').textContent = '▶ FOUND: ' + filtered.length.toLocaleString() + ' / ' + allGames.length.toLocaleString();
+  renderPage(q);
+  updatePagination();
+}
+
+function renderPage(q) {
+  const list = document.getElementById('gamesList');
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filtered.slice(start, start + PAGE_SIZE);
+  if (page.length === 0) { list.innerHTML = '<div class="no-games">▶ NO RESULTS ◀</div>'; return; }
+  const frag = document.createDocumentFragment();
+  page.forEach((g, i) => {
+    const idx = start + i + 1;
+    const nameHl = q ? g.name.replace(new RegExp('(' + escRe(q) + ')', 'gi'), '<span class="hl">$1</span>') : g.name;
+    const div = document.createElement('div');
+    div.className = 'game-item';
+    const folder = g.folder ? g.folder.split('/').pop() : '';
+    const safeUrl = g.downloadUrl.replace(/&/g, '&amp;');
+    div.innerHTML =
+      '<span class="game-num">' + String(idx).padStart(5, '0') + '</span>' +
+      '<span class="game-name">' + nameHl + '</span>' +
+      (folder ? '<span class="game-folder" title="' + folder + '">' + folder + '</span>' : '') +
+      '<span class="game-ext">.' + g.ext.toUpperCase() + '</span>';
+    frag.appendChild(div);
+  });
+  list.innerHTML = '';
+  list.appendChild(frag);
+  window.scrollTo(0, 0);
+}
+
+function updatePagination() {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  document.getElementById('pagination').style.display = filtered.length > 0 ? 'flex' : 'none';
+  document.getElementById('pageInfo').textContent = currentPage + ' / ' + totalPages;
+  document.getElementById('statPage').textContent = currentPage + '/' + totalPages;
+  document.getElementById('btnFirst').disabled = currentPage === 1;
+  document.getElementById('btnPrev').disabled = currentPage === 1;
+  document.getElementById('btnNext').disabled = currentPage === totalPages;
+  document.getElementById('btnLast').disabled = currentPage === totalPages;
+}
+
+function goToPage(p) {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  currentPage = Math.max(1, Math.min(p, totalPages));
+  renderPage(document.getElementById('searchInput').value.toLowerCase().trim());
+  updatePagination();
+}
+
+document.getElementById('btnFirst').addEventListener('click', () => goToPage(1));
+document.getElementById('btnPrev').addEventListener('click', () => goToPage(currentPage - 1));
+document.getElementById('btnNext').addEventListener('click', () => goToPage(currentPage + 1));
+document.getElementById('btnLast').addEventListener('click', () => goToPage(Math.ceil(filtered.length / PAGE_SIZE)));
+document.getElementById('pageGoBtn').addEventListener('click', () => {
+  const v = parseInt(document.getElementById('pageJumpInput').value);
+  if (!isNaN(v)) { goToPage(v); document.getElementById('pageJumpInput').value = ''; }
+});
+document.getElementById('pageJumpInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pageGoBtn').click(); });
+
+let st;
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(st); st = setTimeout(() => { currentPage = 1; applyFilter(); }, 300);
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('searchInput').value = ''; currentPage = 1; applyFilter();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('clearBtn').click();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+});
+
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+</script>
+</body>
+</html>
