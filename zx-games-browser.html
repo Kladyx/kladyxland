@@ -80,7 +80,7 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
 <body>
 <div class="header">
   <h1>ZX SPECTRUM<br>NEXT</h1>
-  <div class="subtitle">▶ GAMES ARCADE ◀</div>
+  <div class="subtitle">▶ GAMES ARCADE ◀ v3</div>
 </div>
 
 <a class="drive-btn" href="https://drive.google.com/drive/folders/1IDtrcuFJzL0C6gYQj2mh-EJXnHaIVP7_" target="_blank" rel="noopener">
@@ -254,8 +254,12 @@ async function dlGame(btn, url, filename) {
   const orig = btn.textContent;
   btn.textContent = '...';
   btn.style.pointerEvents = 'none';
+  let corsUrl = url;
   try {
-    const resp = await fetch(url);
+    const m = url.match(/[-\w]{25,}/);
+    if (!m) throw new Error('no file id');
+    corsUrl = 'https://www.googleapis.com/drive/v3/files/' + m[0] + '?alt=media&key=' + API_KEY;
+    const resp = await fetch(corsUrl);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const blob = await resp.blob();
     const blobUrl = window.URL.createObjectURL(blob);
@@ -268,6 +272,7 @@ async function dlGame(btn, url, filename) {
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
     btn.textContent = '✓ OK';
   } catch (e) {
+    console.error('DL fail:', e.message, '| tried:', corsUrl);
     btn.textContent = '✗ ERR';
   }
   setTimeout(() => { btn.textContent = orig; btn.style.pointerEvents = ''; }, 2000);
