@@ -55,7 +55,10 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
 .game-name{flex:1;font-size:0.45rem;color:#fff;letter-spacing:1px;line-height:1.5;word-break:break-word;}
 .game-folder{font-size:0.28rem;color:#0055cc;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
 .game-ext{font-size:0.35rem;color:#00ccff;min-width:38px;text-align:right;flex-shrink:0;}
-
+.dl-btn{background:#001200;border:2px solid #00cc00;color:#00cc00;
+  padding:5px 8px;font-family:'Press Start 2P',monospace;font-size:0.35rem;border-radius:3px;
+  transition:all 0.15s;flex-shrink:0;text-decoration:none;display:inline-block;}
+.dl-btn:hover{background:#00cc00;color:#000;box-shadow:0 0 8px rgba(0,200,0,0.4);}
 .hl{color:#00ccff;}
 .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;margin-bottom:8px;flex-wrap:wrap;}
 .page-btn{background:#111;border:2px solid #0088ff;color:#0088ff;
@@ -83,7 +86,7 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
   📁 OPEN GAMES FOLDER ON GOOGLE DRIVE
 </a>
 
-<p class="hint">SEARCH A GAME BELOW → OPEN FOLDER ON GOOGLE DRIVE TO DOWNLOAD</p>
+<p class="hint">SEARCH A GAME BELOW → CLICK ▼ DL → DOWNLOAD FROM GOOGLE DRIVE</p>
 
 <div class="score-bar">
   <div class="score-item">TOTAL<span class="score-val" id="statTotal">—</span></div>
@@ -195,7 +198,8 @@ function renderPage(q) {
       '<span class="game-num">' + String(idx).padStart(5, '0') + '</span>' +
       '<span class="game-name">' + nameHl + '</span>' +
       (folder ? '<span class="game-folder" title="' + folder + '">' + folder + '</span>' : '') +
-      '<span class="game-ext">.' + g.ext.toUpperCase() + '</span>';
+      '<span class="game-ext">.' + g.ext.toUpperCase() + '</span>' +
+      '<a class="dl-btn" href="' + safeUrl + '" download="' + g.fullName + '" target="_blank" rel="noopener">▼ DL</a>';
     frag.appendChild(div);
   });
   list.innerHTML = '';
@@ -244,6 +248,16 @@ document.addEventListener('keydown', e => {
 });
 
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function dlGame(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'game';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 </script>
 </body>
 </html>
