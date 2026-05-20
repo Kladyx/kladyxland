@@ -57,7 +57,8 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
 .game-ext{font-size:0.35rem;color:#00ccff;min-width:38px;text-align:right;flex-shrink:0;}
 .dl-btn{background:#001200;border:2px solid #00cc00;color:#00cc00;
   padding:5px 8px;font-family:'Press Start 2P',monospace;font-size:0.35rem;border-radius:3px;
-  transition:all 0.15s;flex-shrink:0;text-decoration:none;display:inline-block;}
+  transition:all 0.15s;flex-shrink:0;text-decoration:none;display:inline-block;
+  cursor:pointer;appearance:none;-webkit-appearance:none;}
 .dl-btn:hover{background:#00cc00;color:#000;box-shadow:0 0 8px rgba(0,200,0,0.4);}
 .hl{color:#00ccff;}
 .pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;margin-bottom:8px;flex-wrap:wrap;}
@@ -199,7 +200,7 @@ function renderPage(q) {
       '<span class="game-name">' + nameHl + '</span>' +
       (folder ? '<span class="game-folder" title="' + folder + '">' + folder + '</span>' : '') +
       '<span class="game-ext">.' + g.ext.toUpperCase() + '</span>' +
-      '<a class="dl-btn" href="' + safeUrl + '" download="' + g.fullName + '" target="_blank" rel="noopener">▼ DL</a>';
+      '<button class="dl-btn" onclick="dlGame(this,\'' + g.downloadUrl.replace(/'/g, "\\'") + '\',\'' + g.fullName.replace(/'/g, "\\'") + '\')">▼ DL</button>';
     frag.appendChild(div);
   });
   list.innerHTML = '';
@@ -249,14 +250,27 @@ document.addEventListener('keydown', e => {
 
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-function dlGame(url, filename) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename || 'game';
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+async function dlGame(btn, url, filename) {
+  const orig = btn.textContent;
+  btn.textContent = '...';
+  btn.style.pointerEvents = 'none';
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || 'game';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+    btn.textContent = '✓ OK';
+  } catch (e) {
+    btn.textContent = '✗ ERR';
+  }
+  setTimeout(() => { btn.textContent = orig; btn.style.pointerEvents = ''; }, 2000);
 }
 </script>
 </body>
