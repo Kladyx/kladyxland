@@ -123,7 +123,7 @@ h1{font-size:1.1rem;color:#00ccff;text-shadow:3px 3px #0088ff,-1px -1px #0055cc;
 <script>
 const PAGE_SIZE = 100;
 const FILE_ID = '18S2D1r8IiCkq2XzpogdnKRWGkA2gUJ-m';
-const API_KEY = 'AIzaSyAd5weXm18FyZ21zo9Y1JsdVYRW1hxecOw';
+const API_KEY = 'AIzaSyAg-hbazh0arF8SKahPZsQDxbe7T4KbCZo';
 const JSON_URL = `https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media&key=${API_KEY}`;
 
 let allGames = [], filtered = [], currentPage = 1, activeExt = '';
@@ -131,11 +131,10 @@ let allGames = [], filtered = [], currentPage = 1, activeExt = '';
 fetch(JSON_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
-    const allowedExts = ['tzx', 'tap', 'next'];
+    
     allGames = data.games.filter(g =>
       g.name && g.name.trim() !== '' &&
-      !g.name.startsWith('._') &&
-      allowedExts.includes(g.ext.toLowerCase())
+      !g.name.startsWith('._')
     );
     allGames.sort((a, b) => a.name.localeCompare(b.name));
     document.getElementById('statTotal').textContent = allGames.length.toLocaleString();
