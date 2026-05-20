@@ -131,10 +131,11 @@ let allGames = [], filtered = [], currentPage = 1, activeExt = '';
 fetch(JSON_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
-    
+    const allowedExts = ['tzx', 'tap', 'next'];
     allGames = data.games.filter(g =>
       g.name && g.name.trim() !== '' &&
-      !g.name.startsWith('._')
+      !g.name.startsWith('._') &&
+      allowedExts.includes(g.ext.toLowerCase())
     );
     allGames.sort((a, b) => a.name.localeCompare(b.name));
     document.getElementById('statTotal').textContent = allGames.length.toLocaleString();
