@@ -418,6 +418,11 @@
     #site-off-toggle.on{border-color:rgba(231,76,60,.6);color:#e74c3c;background:rgba(231,76,60,.1);}
     /* Grayscale 3-pozicový přepínač */
     .lever-wrap{display:none;margin-top:10px;align-items:center;justify-content:center;gap:14px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;}
+    /* Témata */
+    body.theme-summer{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
+    .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
+    .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
     .gs-switch{display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;width:56px;}
     .gs-btn{width:100%;padding:9px 0;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-bottom:1px solid rgba(0,245,255,.1);}
     .gs-btn:last-child{border-bottom:none;}
@@ -954,6 +959,22 @@
       }
     };
 
+    // ── TÉMA (Dark Moon / Summer) ──
+    window._theme = localStorage.getItem('kladyx-theme') || 'dark';
+    function applyTheme(t){
+      document.body.classList.toggle('theme-summer', t==='summer');
+      var bd=document.getElementById('th-btn-dark');
+      var bs=document.getElementById('th-btn-summer');
+      if(bd){bd.className='th-btn'+(t==='dark'?' active':'');}
+      if(bs){bs.className='th-btn'+(t==='summer'?' active-summer':'');}
+    }
+    applyTheme(window._theme);
+    window.setTheme = function(t){
+      window._theme=t;
+      localStorage.setItem('kladyx-theme',t);
+      applyTheme(t);
+    };
+
     // ── TIMERY ────────────────────────────────────────────────────────────
     let liveStartTime = null;
     let countdownTarget = null;
@@ -1259,12 +1280,17 @@
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná -->
         <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;">
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
             <div class="gs-switch">
               <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Vždy černobílá">ČB</button>
               <button id="gs-btn-auto" class="gs-btn active-auto" onclick="setGrayscale('auto')" title="Auto: ČB v noci, barevná ve dne">AUTO</button>
               <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
+            </div>
+            <span style="color:rgba(0,245,255,.5);font-size:.45rem;margin-left:6px;">Motiv:</span>
+            <div style="display:flex;gap:4px;">
+              <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
+              <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
             </div>
           </div>
           <div id="gs-status" style="font-size:.4rem;letter-spacing:.08em;color:rgba(255,200,0,.7);font-family:'Orbitron',monospace;text-align:center;line-height:1.3;"></div>
@@ -2197,7 +2223,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.18';
+  const CURRENT_VERSION = '2.10.19';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
