@@ -421,10 +421,12 @@
     /* Témata */
     body.theme-summer{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-relax{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
     .th-btn.active-relax{background:rgba(0,200,100,.18);color:#00c864;text-shadow:0 0 8px rgba(0,200,100,.8);border-color:rgba(0,200,100,.7);}
+    .th-btn.active-christmas{background:rgba(220,30,30,.18);color:#ff4444;text-shadow:0 0 8px rgba(220,30,30,.8);border-color:rgba(220,30,30,.7);}
     .gs-switch{display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;width:56px;}
     .gs-btn{width:100%;padding:9px 0;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-bottom:1px solid rgba(0,245,255,.1);}
     .gs-btn:last-child{border-bottom:none;}
@@ -966,12 +968,15 @@
     function applyTheme(t){
       document.body.classList.toggle('theme-summer', t==='summer');
       document.body.classList.toggle('theme-relax', t==='relax');
+      document.body.classList.toggle('theme-christmas', t==='christmas');
       var bd=document.getElementById('th-btn-dark');
       var bs=document.getElementById('th-btn-summer');
       var br=document.getElementById('th-btn-relax');
+      var bc=document.getElementById('th-btn-christmas');
       if(bd){bd.className='th-btn'+(t==='dark'?' active':'');}
       if(bs){bs.className='th-btn'+(t==='summer'?' active-summer':'');}
       if(br){br.className='th-btn'+(t==='relax'?' active-relax':'');}
+      if(bc){bc.className='th-btn'+(t==='christmas'?' active-christmas':'');}
     }
     applyTheme(window._theme);
     window.setTheme = function(t){
@@ -1293,10 +1298,11 @@
               <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
             </div>
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;margin-left:6px;">Motiv:</span>
-            <div style="display:flex;gap:4px;">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
               <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
               <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
               <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
+              <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
             </div>
           </div>
           <div id="gs-status" style="font-size:.4rem;letter-spacing:.08em;color:rgba(255,200,0,.7);font-family:'Orbitron',monospace;text-align:center;line-height:1.3;"></div>
@@ -2229,7 +2235,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.20';
+  const CURRENT_VERSION = '2.10.21';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
