@@ -2181,7 +2181,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     async function speedtest(){
       try{
         const el=document.getElementById('dev-downlink');
-        const url='https://speed.cloudflare.com/__down?bytes=2000000&_='+Date.now();
+        const url='https://speed.cloudflare.com/__down?bytes=10000000&_='+Date.now();
         const t0=performance.now();
         const resp=await fetch(url,{cache:'no-store'});
         const buf=await resp.arrayBuffer();
@@ -2257,7 +2257,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.36';
+  const CURRENT_VERSION = '2.10.38';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
