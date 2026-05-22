@@ -650,7 +650,10 @@
         fixedDot.classList.add('live'); fixedText.classList.add('live');
         fixedText.textContent = 'ON AIR';
         if (liveLinkBox) liveLinkBox.classList.add('live');
-        if (onairBanner) onairBanner.classList.add('live');
+        if (onairBanner) {
+          const isAdmin = document.body.classList.contains('edit-mode');
+          if(isAdmin) onairBanner.classList.add('live');
+        }
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow='0 0 25px rgba(0,255,100,.7)'; }
         if (watchText) watchText.textContent = '▶ SLEDOVAT ŽIVĚ';
         const embedBox = document.getElementById('mixcloud-embed-box');
@@ -1349,13 +1352,6 @@
     <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
   </div>
 
-  <!-- VELKÝ ON AIR BANNER -->
-  <div class="onair-banner" id="onair-banner">
-    <span class="onair-banner-dot"></span>
-    <span class="onair-banner-text">🔴 PRÁVĚ VYSÍLÁM ŽIVĚ</span>
-    <span class="onair-banner-dot"></span>
-  </div>
-
   <div class="hero-space">
 
     <!-- BĚŽÍCÍ TEXT (horní) -->
@@ -1370,6 +1366,13 @@
       <span class="stickman-wrap"><svg viewBox="0 0 20 30"><g class="stick-body-g"><circle class="stick-head" cx="10" cy="4" r="2.5" stroke="#00f5ff" fill="none" stroke-width="1.5"/><line x1="10" y1="6.5" x2="10" y2="20" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/><line class="stick-larm" x1="10" y1="12" x2="4" y2="17" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/><line class="stick-rarm" x1="10" y1="12" x2="16" y2="17" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/><line class="stick-lleg" x1="10" y1="20" x2="5" y2="28" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/><line class="stick-rleg" x1="10" y1="20" x2="15" y2="28" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/></g></svg></span>
       <span class="stickman-wrap green" style="right:50px;"><svg viewBox="0 0 20 30"><g class="stick-body-g"><circle class="stick-head" cx="10" cy="4" r="2.5" stroke="#00ff66" fill="none" stroke-width="1.5"/><line x1="10" y1="6.5" x2="10" y2="20" stroke="#00ff66" stroke-width="1.5" stroke-linecap="round"/><line class="stick-larm" x1="10" y1="12" x2="4" y2="17" stroke="#00ff66" stroke-width="1.5" stroke-linecap="round"/><line class="stick-rarm" x1="10" y1="12" x2="16" y2="17" stroke="#00ff66" stroke-width="1.5" stroke-linecap="round"/><line class="stick-lleg" x1="10" y1="20" x2="5" y2="28" stroke="#00ff66" stroke-width="1.5" stroke-linecap="round"/><line class="stick-rleg" x1="10" y1="20" x2="15" y2="28" stroke="#00ff66" stroke-width="1.5" stroke-linecap="round"/></g></svg></span>
       <div class="digi-date" id="digi-date">—</div>
+    </div>
+
+    <!-- ON AIR BANNER - vidí jen admin -->
+    <div class="onair-banner" id="onair-banner">
+      <span class="onair-banner-dot"></span>
+      <span class="onair-banner-text">🔴 PRÁVĚ VYSÍLÁM ŽIVĚ</span>
+      <span class="onair-banner-dot"></span>
     </div>
 
     <div class="live-panel">
@@ -2257,7 +2260,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.38';
+  const CURRENT_VERSION = '2.10.39';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
