@@ -2168,36 +2168,35 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       };
       updConn();conn.addEventListener('change',updConn);
     }
-    // Real speed test – stáhne 500KB z Cloudflare a změří skutečnou rychlost
+    // Real speed test – warm-up + 5MB měření
     async function realSpeedTest(){
       const el=document.getElementById('dev-downlink');
+      const connEl=document.getElementById('dev-connection');
       el.textContent='⬇ měřím...';
       try{
-        const bytes=500000; // 500 KB
-        const url='https://speed.cloudflare.com/__down?bytes='+bytes+'&t='+Date.now();
+        // Warm-up – zahřeje TCP spojení (výsledek ignorujeme)
+        await fetch('https://speed.cloudflare.com/__down?bytes=100000&t='+Date.now(),{cache:'no-store'});
+        // Skutečné měření – 5 MB
+        const bytes=5000000;
         const t0=performance.now();
-        const resp=await fetch(url,{cache:'no-store'});
+        const resp=await fetch('https://speed.cloudflare.com/__down?bytes='+bytes+'&t='+Date.now(),{cache:'no-store'});
         await resp.arrayBuffer();
         const t1=performance.now();
         const sec=(t1-t0)/1000;
         const mbps=((bytes*8)/(sec*1000000));
-        // Detekce sítě podle rychlosti
+        // Detekce sítě podle reálné rychlosti
         let netType='';
-        if(conn){
-          const raw=conn.effectiveType||'';
-          if(mbps>80) netType='5G';
-          else if(mbps>20) netType='5G/LTE';
-          else if(mbps>5) netType='4G';
-          else if(raw) netType=raw.toUpperCase();
-        }
-        if(netType) document.getElementById('dev-connection').textContent='📶 '+netType;
+        if(mbps>80) netType='5G';
+        else if(mbps>30) netType='5G/LTE';
+        else if(mbps>5) netType='4G';
+        else netType='3G';
+        connEl.textContent='📶 '+netType;
         el.textContent='⬇ '+mbps.toFixed(1)+' Mbps';
       }catch(e){
         el.textContent='⬇ —';
       }
     }
     realSpeedTest();
-    // Opakovat měření každé 2 minuty
     setInterval(realSpeedTest, 120000);
   })();
 
