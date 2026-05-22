@@ -846,16 +846,20 @@
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
     };
-    // Načíst OBS heslo z Firebase při startu
+    // Načíst OBS heslo z Firebase při startu + real-time sync
     try {
-      get(ref(db, 'tapoDb/obsPassword')).then(snap => {
+      onValue(ref(db, 'tapoDb/obsPassword'), snap => {
         if (snap.exists() && snap.val()) {
           const pw = snap.val();
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
-          if (inp && !inp.value) inp.value = pw;
+          if (inp) inp.value = pw;
+          // Pokud heslo přišlo ze sync a OBS není připojen, připoj
+          if (!_obsWs || _obsWs.readyState !== WebSocket.OPEN) {
+            obsConnect();
+          }
         }
-      }).catch(()=>{});
+      });
     } catch(e) {}
     obsConnect();
 
@@ -2275,7 +2279,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.40';
+  const CURRENT_VERSION = '2.10.41';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
