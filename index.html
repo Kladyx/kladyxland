@@ -1409,15 +1409,18 @@
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
       <div id="video-embed-box" style="width:100%;margin:6px 0;border-radius:6px;overflow:hidden;background:rgba(255,30,0,.05);border:2px solid rgba(255,60,0,.4);">
-        <iframe id="main-video" width="100%" height="auto" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;aspect-ratio:16/9;" src="https://www.youtube.com/embed/a2Kuy0qFXbk?autoplay=1&mute=1&enablejsapi=1&controls=0&rel=0&modestbranding=1&showinfo=0" title="KLADYXLAND BROADCAST" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;">
+          <source src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/gemini_generated_video_87f161e2.mp4?alt=media&token=006a59d7-8ab4-4758-be20-2f1864801da6" type="video/mp4">
+        </video>
         <script>
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        var player;
-        function onYouTubeIframeAPIReady(){player=new YT.Player('main-video',{events:{'onStateChange':onPlayerStateChange}});}
-        function onPlayerStateChange(e){if(e.data===YT.PlayerState.ENDED){player.seekTo(0);player.playVideo();}}
+        // Firebase video loop
+        var v = document.getElementById('main-video');
+        if(v) {
+          v.addEventListener('ended', function() {
+            v.currentTime = 0;
+            v.play().catch(function(){});
+          });
+        }
         </script>
         <div style="padding:8px;font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;text-align:center;">🎬 KLADYXLAND BROADCAST</div>
       </div>
