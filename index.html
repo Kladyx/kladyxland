@@ -1884,8 +1884,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const s = String(now.getSeconds()).padStart(2,'0');
     document.getElementById('digi-time').innerHTML =
       h+'<span class="digi-colon">:</span>'+m+'<span class="digi-colon">:</span>'+s;
-    const days   = window._langDays   || ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
-    const months = window._langMonths || ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
+    const days   = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
+    const months = ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
     document.getElementById('digi-date').textContent =
       days[now.getDay()]+' · '+now.getDate()+'. '+months[now.getMonth()]+' '+now.getFullYear();
   }
@@ -2161,25 +2161,24 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         upd();batt.addEventListener('levelchange',upd);batt.addEventListener('chargingchange',upd);
       }catch(e){}
     }
-    // Connection
+    // Connection - zobraz okamžitě z Network API
     const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(conn){
       const upd=()=>{
         const t=conn.effectiveType||'?';
-        // Zobrazit typ sítě - pokud má downlink > 100 Mbps pravděpodobně 5G
         const dl=conn.downlink||0;
-        const rtt=conn.rtt||0;
         let netType=t.toUpperCase();
-        // Pokus o detekci 5G přes downlinkMax nebo typ připojení
         if(conn.type==='wifi'){netType='WiFi';}
         else if(conn.downlinkMax&&conn.downlinkMax>100){netType='5G';}
         document.getElementById('dev-connection').textContent='📶 '+netType;
-        document.getElementById('dev-downlink').textContent='⬇ '+(dl?dl+' Mbps':'měřím...');
+        document.getElementById('dev-downlink').textContent='⬇ '+(dl?dl+' Mbps':'—');
       };
       upd();conn.addEventListener('change',upd);
+    } else {
+      document.getElementById('dev-connection').textContent='📶 ?';
     }
-    // Reálný speedtest - stáhne testovací soubor a změří rychlost
-    (async function speedtest(){
+    // Speedtest - měření reálné rychlosti
+    async function speedtest(){
       try{
         const el=document.getElementById('dev-downlink');
         const url='https://speed.cloudflare.com/__down?bytes=2000000&_='+Date.now();
@@ -2190,13 +2189,10 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         const secs=(t1-t0)/1000;
         const mbps=((buf.byteLength*8)/(secs*1000000)).toFixed(1);
         if(el)el.textContent='⬇ '+mbps+' Mbps';
-        // Opakuj každých 30s
         setTimeout(speedtest,30000);
-      }catch(e){
-        // Fallback - ponech hodnotu z Network API
-      }
-    })();
+      }catch(e){}
     }
+    speedtest();
   })();
 
   // Uvítací hláška
@@ -2261,7 +2257,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.35';
+  const CURRENT_VERSION = '2.10.36';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
