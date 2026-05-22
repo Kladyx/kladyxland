@@ -445,7 +445,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp, runTransaction, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalStoragePersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDmAf2CZILbYKR72XYd3iCj3pQgnqFYTp8",
@@ -461,8 +461,7 @@
     const db  = getDatabase(app);
     const storage = getStorage(app);
     const auth = getAuth(app);
-    // Trvalá session - zůstane přihlášen dokud se neodhlásí
-    setPersistence(auth, browserLocalStoragePersistence).catch(e => console.warn('Persistence:', e));
+    // Firebase v prohlížeči používá localStorage jako default - není třeba nastavovat
     window.firebaseSignIn = async () => {
       return signInAnonymously(auth);
     };
