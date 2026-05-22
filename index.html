@@ -1341,10 +1341,12 @@
   </nav>
 
   <!-- DEVICE INFO BAR -->
-  <div id="device-info" style="display:flex;justify-content:center;gap:14px;padding:3px 10px;font-family:'Orbitron',monospace;font-size:.5rem;color:rgba(0,245,255,.55);letter-spacing:.08em;background:rgba(0,10,30,.5);border-bottom:1px solid rgba(0,245,255,.1);">
-    <span id="dev-battery">🔋 —</span>
-    <span id="dev-connection">📶 —</span>
-    <span id="dev-downlink">⬇ —</span>
+  <div id="device-info" style="display:flex;justify-content:center;align-items:center;gap:18px;padding:6px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.85);border-bottom:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);">
+    <span id="dev-battery" style="color:#00ff88;text-shadow:0 0 8px rgba(0,255,136,.8);">🔋 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
   </div>
 
   <!-- VELKÝ ON AIR BANNER -->
@@ -2159,45 +2161,17 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         upd();batt.addEventListener('levelchange',upd);batt.addEventListener('chargingchange',upd);
       }catch(e){}
     }
-    // Connection type
+    // Connection
     const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(conn){
-      const updConn=()=>{
+      const upd=()=>{
         const t=conn.effectiveType||'?';
         document.getElementById('dev-connection').textContent='📶 '+t.toUpperCase();
+        const dl=conn.downlink;
+        document.getElementById('dev-downlink').textContent='⬇ '+(dl?dl+' Mbps':'—');
       };
-      updConn();conn.addEventListener('change',updConn);
+      upd();conn.addEventListener('change',upd);
     }
-    // Real speed test – warm-up + 5MB měření
-    async function realSpeedTest(){
-      const el=document.getElementById('dev-downlink');
-      const connEl=document.getElementById('dev-connection');
-      el.textContent='⬇ měřím...';
-      try{
-        // Warm-up – zahřeje TCP spojení (výsledek ignorujeme)
-        await fetch('https://speed.cloudflare.com/__down?bytes=100000&t='+Date.now(),{cache:'no-store'});
-        // Skutečné měření – 5 MB
-        const bytes=5000000;
-        const t0=performance.now();
-        const resp=await fetch('https://speed.cloudflare.com/__down?bytes='+bytes+'&t='+Date.now(),{cache:'no-store'});
-        await resp.arrayBuffer();
-        const t1=performance.now();
-        const sec=(t1-t0)/1000;
-        const mbps=((bytes*8)/(sec*1000000));
-        // Detekce sítě podle reálné rychlosti
-        let netType='';
-        if(mbps>80) netType='5G';
-        else if(mbps>30) netType='5G/LTE';
-        else if(mbps>5) netType='4G';
-        else netType='3G';
-        connEl.textContent='📶 '+netType;
-        el.textContent='⬇ '+mbps.toFixed(1)+' Mbps';
-      }catch(e){
-        el.textContent='⬇ —';
-      }
-    }
-    realSpeedTest();
-    setInterval(realSpeedTest, 120000);
   })();
 
   // Uvítací hláška
@@ -2262,7 +2236,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.35';
+  const CURRENT_VERSION = '2.10.34';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
