@@ -2159,17 +2159,46 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         upd();batt.addEventListener('levelchange',upd);batt.addEventListener('chargingchange',upd);
       }catch(e){}
     }
-    // Connection
+    // Connection type
     const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(conn){
-      const upd=()=>{
+      const updConn=()=>{
         const t=conn.effectiveType||'?';
         document.getElementById('dev-connection').textContent='📶 '+t.toUpperCase();
-        const dl=conn.downlink;
-        document.getElementById('dev-downlink').textContent='⬇ '+(dl?dl+' Mbps':'—');
       };
-      upd();conn.addEventListener('change',upd);
+      updConn();conn.addEventListener('change',updConn);
     }
+    // Real speed test – stáhne 500KB z Cloudflare a změří skutečnou rychlost
+    async function realSpeedTest(){
+      const el=document.getElementById('dev-downlink');
+      el.textContent='⬇ měřím...';
+      try{
+        const bytes=500000; // 500 KB
+        const url='https://speed.cloudflare.com/__down?bytes='+bytes+'&t='+Date.now();
+        const t0=performance.now();
+        const resp=await fetch(url,{cache:'no-store'});
+        await resp.arrayBuffer();
+        const t1=performance.now();
+        const sec=(t1-t0)/1000;
+        const mbps=((bytes*8)/(sec*1000000));
+        // Detekce sítě podle rychlosti
+        let netType='';
+        if(conn){
+          const raw=conn.effectiveType||'';
+          if(mbps>80) netType='5G';
+          else if(mbps>20) netType='5G/LTE';
+          else if(mbps>5) netType='4G';
+          else if(raw) netType=raw.toUpperCase();
+        }
+        if(netType) document.getElementById('dev-connection').textContent='📶 '+netType;
+        el.textContent='⬇ '+mbps.toFixed(1)+' Mbps';
+      }catch(e){
+        el.textContent='⬇ —';
+      }
+    }
+    realSpeedTest();
+    // Opakovat měření každé 2 minuty
+    setInterval(realSpeedTest, 120000);
   })();
 
   // Uvítací hláška
@@ -2234,7 +2263,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.33';
+  const CURRENT_VERSION = '2.10.35';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
