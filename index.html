@@ -434,6 +434,19 @@
     body.theme-relax{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-studio{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    /* THEME DOTS */
+    .th-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:th-dot-blink 1.2s ease-in-out infinite;}
+    @keyframes th-dot-blink{0%,100%{opacity:1;}50%{opacity:.15;}}
+    .th-dot-dark{background:#00f5ff;box-shadow:0 0 6px #00f5ff;}
+    .th-dot-summer{background:#ffb400;box-shadow:0 0 6px #ffb400;}
+    .th-dot-relax{background:#00c864;box-shadow:0 0 6px #00c864;}
+    .th-dot-christmas{background:#ff4444;box-shadow:0 0 6px #ff4444;}
+    .th-dot-studio{background:#aa44ff;box-shadow:0 0 6px #aa44ff;}
+    /* THEME URL INPUT */
+    .th-url-input{font-family:'Exo 2',sans-serif;font-size:.58rem;background:rgba(0,10,40,.9);border:1px solid rgba(0,245,255,.2);color:#cce5ff;padding:4px 7px;border-radius:2px;outline:none;width:100%;min-width:0;}
+    .th-url-save{font-family:'Orbitron',monospace;font-size:.48rem;padding:4px 8px;background:rgba(0,100,60,.4);border:1px solid rgba(0,255,100,.35);color:#44ff88;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+    .th-url-save:hover{background:rgba(0,150,80,.5);}
+    .th-row{display:flex;align-items:center;gap:7px;width:100%;}
     .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
@@ -705,6 +718,47 @@
         if (a && !a.currentUser) await window.firebaseSignInAnon();
       } catch(e) {}
       set(mcLiveRef, state);
+    };
+
+    // ── THEME BACKGROUND URLs (Firebase) ──────────────────────────────────
+    const THEMES = ['summer','relax','christmas','studio'];
+    const DEFAULT_BG = {
+      summer:   'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53',
+      relax:    'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57',
+      christmas:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb',
+      studio:   'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4'
+    };
+    // Dynamický style element pro přepsání URL
+    const themeBgStyle = document.createElement('style');
+    themeBgStyle.id = 'theme-bg-dynamic';
+    document.head.appendChild(themeBgStyle);
+    function applyThemeBgUrl(theme, url) {
+      const u = url || DEFAULT_BG[theme] || '';
+      if (!u) return;
+      const rules = themeBgStyle.innerHTML.replace(new RegExp(`body\\.theme-${theme}\\{[^}]*\\}`, 'g'), '');
+      themeBgStyle.innerHTML = rules + `body.theme-${theme}{background-image:url('${u}') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}`;
+    }
+    // Načti URL z Firebase při startu
+    THEMES.forEach(t => {
+      onValue(ref(db, `themes/${t}/bgUrl`), snap => {
+        const url = snap.val() || DEFAULT_BG[t];
+        applyThemeBgUrl(t, url);
+        const inp = document.getElementById('th-url-' + t);
+        if (inp) inp.value = url || '';
+      });
+    });
+    // Uložení URL adminem
+    window.saveThemeUrl = async function(theme) {
+      const inp = document.getElementById('th-url-' + theme);
+      if (!inp) return;
+      const url = inp.value.trim();
+      if (!url) return;
+      try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
+      set(ref(db, `themes/${theme}/bgUrl`), url).then(() => {
+        applyThemeBgUrl(theme, url);
+        inp.style.borderColor = 'rgba(0,255,100,.6)';
+        setTimeout(() => { inp.style.borderColor = ''; }, 1500);
+      }).catch(e => console.error('Theme save error:', e));
     };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
@@ -1788,14 +1842,43 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   </div>
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
 
-  <!-- MOTIVY – mřížka 3 na řádek, úplně dole, jen admin -->
-  <div id="theme-wrap" style="display:none;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
-    <span style="width:100%;text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
-    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon" style="flex:0 0 calc(33% - 6px);">🌑 DARK</button>
-    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer" style="flex:0 0 calc(33% - 6px);">☀️ SUMMER</button>
-    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax" style="flex:0 0 calc(33% - 6px);">🌴 RELAX</button>
-    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas" style="flex:0 0 calc(33% - 6px);">🎄 XMAS</button>
-    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio" style="flex:0 0 calc(33% - 6px);">🎛️ STUDIO</button>
+  <!-- MOTIVY – jen admin -->
+  <div id="theme-wrap" style="display:none;flex-direction:column;align-items:stretch;gap:7px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
+    <span style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;margin-bottom:4px;">MOTIV POZADÍ</span>
+
+    <div class="th-row">
+      <span class="th-dot th-dot-dark"></span>
+      <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
+      <input class="th-url-input" id="th-url-dark" type="text" placeholder="— žádný obrázek (dark space) —" readonly style="color:rgba(0,245,255,.4);cursor:default;">
+    </div>
+
+    <div class="th-row">
+      <span class="th-dot th-dot-summer"></span>
+      <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
+      <input class="th-url-input" id="th-url-summer" type="text" placeholder="URL obrázku...">
+      <button class="th-url-save" onclick="saveThemeUrl('summer')">💾</button>
+    </div>
+
+    <div class="th-row">
+      <span class="th-dot th-dot-relax"></span>
+      <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
+      <input class="th-url-input" id="th-url-relax" type="text" placeholder="URL obrázku...">
+      <button class="th-url-save" onclick="saveThemeUrl('relax')">💾</button>
+    </div>
+
+    <div class="th-row">
+      <span class="th-dot th-dot-christmas"></span>
+      <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
+      <input class="th-url-input" id="th-url-christmas" type="text" placeholder="URL obrázku...">
+      <button class="th-url-save" onclick="saveThemeUrl('christmas')">💾</button>
+    </div>
+
+    <div class="th-row">
+      <span class="th-dot th-dot-studio"></span>
+      <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
+      <input class="th-url-input" id="th-url-studio" type="text" placeholder="URL obrázku...">
+      <button class="th-url-save" onclick="saveThemeUrl('studio')">💾</button>
+    </div>
   </div>
 
 
@@ -2393,7 +2476,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.63';
+  const CURRENT_VERSION = '2.10.64';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
