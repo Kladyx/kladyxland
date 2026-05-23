@@ -426,6 +426,10 @@
     body.theme-relax{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-studio{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-custom::after{display:none;}
+    body.theme-custom #starfield{display:none;}
+    body.theme-custom{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    .th-btn.active-custom{background:rgba(255,100,200,.18);color:#ff64c8;text-shadow:0 0 8px rgba(255,100,200,.8);border-color:rgba(255,100,200,.7);}
     .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
@@ -1049,16 +1053,25 @@
       document.body.classList.toggle('theme-relax', t==='relax');
       document.body.classList.toggle('theme-christmas', t==='christmas');
       document.body.classList.toggle('theme-studio', t==='studio');
+      document.body.classList.toggle('theme-custom', t==='custom');
       var bd=document.getElementById('th-btn-dark');
       var bs=document.getElementById('th-btn-summer');
       var br=document.getElementById('th-btn-relax');
       var bc=document.getElementById('th-btn-christmas');
       var bst=document.getElementById('th-btn-studio');
+      var bcu=document.getElementById('th-btn-custom');
       if(bd){bd.className='th-btn'+(t==='dark'?' active':'');}
       if(bs){bs.className='th-btn'+(t==='summer'?' active-summer':'');}
       if(br){br.className='th-btn'+(t==='relax'?' active-relax':'');}
       if(bc){bc.className='th-btn'+(t==='christmas'?' active-christmas':'');}
       if(bst){bst.className='th-btn'+(t==='studio'?' active-studio':'');}
+      if(bcu){bcu.className='th-btn'+(t==='custom'?' active-custom':'');}
+      if(t==='custom'){
+        var cu=localStorage.getItem('kladyx-custom-theme-url')||'';
+        if(cu) document.body.style.backgroundImage='url('+cu+')';
+      } else {
+        document.body.style.backgroundImage='';
+      }
     }
     applyTheme(window._theme);
     window.setTheme = function(t){
@@ -1067,6 +1080,29 @@
       applyTheme(t);
       // Uložit do Firebase - všichni návštěvníci uvidí změnu
       set(siteThemeRef, t).catch(e=>console.error(e));
+    };
+
+    // Načíst vlastní URL motivu z Firebase
+    onValue(ref(db,'config/customThemeUrl'), snap=>{
+      if(snap.exists()&&snap.val()){
+        localStorage.setItem('kladyx-custom-theme-url', snap.val());
+        var inp=document.getElementById('custom-theme-url-input');
+        if(inp) inp.value=snap.val();
+        if(window._theme==='custom') document.body.style.backgroundImage='url('+snap.val()+')';
+      }
+    });
+
+    window.saveCustomThemeUrl = function(){
+      var inp=document.getElementById('custom-theme-url-input');
+      if(!inp) return;
+      var url=inp.value.trim();
+      if(!url) return;
+      localStorage.setItem('kladyx-custom-theme-url', url);
+      document.body.style.backgroundImage='url('+url+')';
+      set(ref(db,'config/customThemeUrl'), url).catch(e=>console.error(e));
+      window.setTheme('custom');
+      var saved=document.getElementById('custom-theme-saved');
+      if(saved){saved.style.display='inline';setTimeout(()=>{saved.style.display='none';},2000);}
     };
 
     // ── TIMERY ────────────────────────────────────────────────────────────
@@ -1764,6 +1800,15 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
     <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
     <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
+    <button id="th-btn-custom" class="th-btn" onclick="setTheme('custom')" title="Vlastní motiv">🖼️ VLASTNÍ</button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px;width:88%;">
+      <input id="custom-theme-url-input" type="text" placeholder="Firebase Storage URL obrázku..."
+        style="font-family:'Exo 2',sans-serif;font-size:.65rem;background:rgba(0,10,40,.9);border:1px solid rgba(255,100,200,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;"
+        onkeydown="if(event.key==='Enter')window.saveCustomThemeUrl()"/>
+      <button onclick="window.saveCustomThemeUrl()"
+        style="font-family:'Orbitron',monospace;font-size:.5rem;background:rgba(255,100,200,.15);border:1px solid rgba(255,100,200,.4);color:#ff64c8;padding:5px 14px;cursor:pointer;border-radius:2px;letter-spacing:.1em;">🖼️ ULOŽ MOTIV</button>
+      <span id="custom-theme-saved" style="display:none;font-size:.55rem;color:#ff64c8;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+    </div>
   </div>
 
 
@@ -2361,7 +2406,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.59';
+  const CURRENT_VERSION = '2.10.60';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
