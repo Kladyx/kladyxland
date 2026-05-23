@@ -1,0 +1,71 @@
+<!-- ══════════════════════════════════════════════════════
+     MIXCLOUD STATUS TOGGLE – přidej do Panel_final.html
+     do admin sekce (kde jsou ostatní ovládací prvky)
+     ══════════════════════════════════════════════════════ -->
+
+<!-- HTML: přidej kam chceš v admin panelu -->
+<div id="mc-panel-block" style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(0,5,20,.85);border:1px solid rgba(0,245,255,.2);border-radius:4px;margin:6px 0;">
+  <span style="font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.12em;color:rgba(0,245,255,.75);">MIXCLOUD</span>
+  <span id="panel-mc-dot" style="width:10px;height:10px;border-radius:50%;background:#ff2200;box-shadow:0 0 8px #ff2200;flex-shrink:0;transition:all .4s;"></span>
+  <span id="panel-mc-text" style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#ff3300;letter-spacing:.1em;transition:color .4s;min-width:50px;">OFFLINE</span>
+  <button id="panel-mc-btn" onclick="panelToggleMixcloud()" style="font-family:'Orbitron',monospace;font-size:.55rem;padding:5px 12px;background:rgba(0,80,40,.5);border:1px solid rgba(0,255,136,.4);color:#00ff88;border-radius:3px;cursor:pointer;letter-spacing:.08em;transition:all .3s;">▶ SPUSTIT</button>
+</div>
+
+<!-- JS: přidej do <script type="module"> kde máš Firebase -->
+<script type="module">
+  // Použij stejný Firebase config a db který máš v Panelu
+  // Tato část POUZE pokud Panel má vlastní Firebase init –
+  // jinak jen přidej funkce níže do existujícího module scriptu
+
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDmAf2CZILbYKR72XYd3iCj3pQgnqFYTp8",
+    authDomain: "kladyxland.firebaseapp.com",
+    databaseURL: "https://kladyxland-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kladyxland",
+    storageBucket: "kladyxland.firebasestorage.app",
+    messagingSenderId: "178078059030",
+    appId: "1:178078059030:web:8d8a0271b23a7aca2b4337"
+  };
+
+  const app = initializeApp(firebaseConfig, 'panel-mc');
+  const db  = getDatabase(app);
+  const mcRef = ref(db, 'mixcloud/isLive');
+
+  // Sleduj aktuální stav
+  onValue(mcRef, snap => {
+    const live = snap.val() === true;
+    const dot  = document.getElementById('panel-mc-dot');
+    const txt  = document.getElementById('panel-mc-text');
+    const btn  = document.getElementById('panel-mc-btn');
+    if (!dot) return;
+    if (live) {
+      dot.style.background = '#00ff88';
+      dot.style.boxShadow  = '0 0 10px #00ff88';
+      txt.textContent = 'LIVE';
+      txt.style.color = '#00ff88';
+      btn.textContent = '■ ZASTAVIT';
+      btn.style.background = 'rgba(100,0,0,.5)';
+      btn.style.borderColor = 'rgba(255,50,50,.5)';
+      btn.style.color = '#ff4444';
+    } else {
+      dot.style.background = '#ff2200';
+      dot.style.boxShadow  = '0 0 8px #ff2200';
+      txt.textContent = 'OFFLINE';
+      txt.style.color = '#ff3300';
+      btn.textContent = '▶ SPUSTIT';
+      btn.style.background = 'rgba(0,80,40,.5)';
+      btn.style.borderColor = 'rgba(0,255,136,.4)';
+      btn.style.color = '#00ff88';
+    }
+  });
+
+  // Toggle funkce
+  window.panelToggleMixcloud = function() {
+    const dot = document.getElementById('panel-mc-dot');
+    const isLive = dot && dot.style.background.includes('0, 255');
+    set(mcRef, !isLive);
+  };
+</script>
