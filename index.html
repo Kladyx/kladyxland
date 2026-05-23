@@ -720,12 +720,17 @@
     // Zobraz [ klik ] hint jen adminovi
     document.addEventListener('edit-mode-on', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='inline'; });
     document.addEventListener('edit-mode-off', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='none'; });
-    window.setMixcloudLive = async function(state) {
-      try {
-        const a = window.firebaseAuth;
-        if (a && !a.currentUser) await window.firebaseSignInAnon();
-      } catch(e) {}
-      set(mcLiveRef, state);
+    window.setMixcloudLive = function(state) {
+      set(mcLiveRef, state).catch(e => console.error('MC live set error:', e));
+    };
+    window.toggleMixcloudLive = function() {
+      const auth = window.firebaseAuth;
+      if (!auth || !auth.currentUser) { alert('Nejsi přihlášen jako admin.'); return; }
+      const newState = !window._mcLive;
+      set(mcLiveRef, newState).catch(e => {
+        alert('Firebase chyba: ' + (e.code || e.message));
+        console.error('MC toggle error:', e);
+      });
     };
 
     // ── THEME BACKGROUND URLs (Firebase) ──────────────────────────────────
@@ -1744,7 +1749,7 @@
     <audio id="streamPlayer" src="" crossorigin="anonymous" style="display:none;"></audio>
 
     <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
-    <div id="mc-status-bar" onclick="if(document.body.classList.contains('edit-mode')) window.setMixcloudLive(!window._mcLive)">
+    <div id="mc-status-bar" onclick="if(window.firebaseAuth && window.firebaseAuth.currentUser) window.toggleMixcloudLive()">
       <span id="mc-status-dot"></span>
       <span id="mc-status-label">MIXCLOUD</span>
       <span id="mc-status-text">OFFLINE</span>
@@ -2545,7 +2550,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.68';
+  const CURRENT_VERSION = '2.11.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
