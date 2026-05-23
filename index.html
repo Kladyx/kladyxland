@@ -109,7 +109,7 @@
     .live-link-box{display:none;background:rgba(0,200,100,.15);border:1.5px solid rgba(0,255,136,.5);border-radius:6px;padding:8px 12px;backdrop-filter:blur(8px);}
     .live-link-box.live{display:flex;animation:liveBtnGlow 1.5s ease-in-out infinite;}
     @keyframes liveBtnGlow{0%,100%{box-shadow:0 0 8px rgba(0,255,100,.3);border-color:rgba(0,255,136,.5);}50%{box-shadow:0 0 20px rgba(0,255,100,.7);border-color:rgba(0,255,136,.9);}}
-    .obs-sync-pulse{animation:liveBtnGlow 0.6s ease-in-out 6;background:rgba(0,255,100,.25)!important;border-color:rgba(0,255,136,.8)!important;color:#00ff88!important;}
+    .obs-sync-pulse{animation:liveBtnGlow 0.6s ease-in-out infinite;background:rgba(0,255,100,.25)!important;border-color:rgba(0,255,136,.8)!important;color:#00ff88!important;}
     .live-link-btn{display:flex;align-items:center;gap:6px;text-decoration:none;color:#00ff99;font-family:"Orbitron",monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transition:all .3s;white-space:nowrap;}
     .live-link-btn:hover{color:#00ffcc;text-shadow:0 0 12px rgba(0,255,136,.8);}
     .live-dot{animation:live-pulse 1.2s ease-in-out infinite;}
@@ -833,8 +833,49 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
+    window.saveVideoUrl = function() {
+      const url = document.getElementById('video-url-input').value.trim();
+      if (!url) {
+        document.getElementById('video-url-saved').style.display = 'none';
+        return;
+      }
+      try {
+        set(ref(db, 'config/videoUrl'), url).then(() => {
+          const btn = document.getElementById('video-save-btn');
+          if (btn) {
+            btn.style.background = 'rgba(100,200,255,.25)';
+            btn.style.borderColor = 'rgba(100,200,255,.6)';
+          }
+          document.getElementById('video-url-saved').style.display = 'inline';
+          setTimeout(() => { document.getElementById('video-url-saved').style.display = 'none'; }, 2000);
+        }).catch(e => {
+          console.error('Video URL save error:', e);
+        });
+      } catch(e) {
+        console.error('Video URL error:', e);
+      }
+    };
+    // Načíst aktuální video URL z Firebase
+    try {
+      onValue(ref(db, 'config/videoUrl'), snap => {
+        if (snap.exists()) {
+          const url = snap.val();
+          const inp = document.getElementById('video-url-input');
+          if (inp) inp.value = url;
+        }
+      });
+    } catch(e) {}
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
+      const btn = document.getElementById('obs-save-btn');
+      
+      // Toggle - pokud už pulzuje, vypni
+      if (btn && btn.classList.contains('obs-sync-pulse')) {
+        btn.classList.remove('obs-sync-pulse');
+        btn.textContent = '💾 SYNC';
+        return;
+      }
+      
       localStorage.setItem('kladyx_obs_pw', pw);
       try {
         set(ref(db, 'tapoDb/obsPassword'), pw).catch(()=>{});
@@ -842,12 +883,11 @@
       if (_obsWs) { _obsWs.onclose = null; _obsWs.close(); _obsWs = null; }
       if (_obsReconnTimer) clearTimeout(_obsReconnTimer);
       obsConnect();
-      // Pulzovat tlačítko po uložení
-      const btn = document.getElementById('obs-save-btn');
+      
+      // Zapnout pulzování
       if (btn) {
         btn.classList.add('obs-sync-pulse');
         btn.textContent = '✅ SYNC';
-        setTimeout(()=>{ btn.classList.remove('obs-sync-pulse'); btn.textContent='💾 SYNC'; }, 3600);
       }
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
@@ -1342,7 +1382,7 @@
               <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
             </div>
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;margin-left:6px;">Motiv:</span>
-            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;justify-content:center;">
               <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
               <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
               <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
@@ -1442,6 +1482,24 @@
         <script>
         // Firebase video loop
         var v = document.getElementById('main-video');
+        // Auto-load video URL z Firebase
+        try {
+          onValue(ref(db, 'config/videoUrl'), snap => {
+            if (snap.exists() && snap.val()) {
+              const url = snap.val();
+              const source = v.querySelector('source');
+              if (source) {
+                source.src = url;
+                v.load();
+              }
+            }
+          });
+        } catch(e) {}
+        // Fallback: načti i z hardcoded src pokud Firebase není
+        if (v && v.src === '') {
+          const source = v.querySelector('source');
+          if (source && source.src) v.load();
+        }
         if(v) {
           v.addEventListener('ended', function() {
             v.currentTime = 0;
@@ -1491,6 +1549,16 @@
           <button id="obs-save-btn" onclick="window.obsSavePassword()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+        </div>
+        <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
+          <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
+            <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
+              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
+              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
+          </div>
+          <button id="video-save-btn" onclick="window.saveVideoUrl()"
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
+          <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -2282,7 +2350,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.45';
+  const CURRENT_VERSION = '2.10.50';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
