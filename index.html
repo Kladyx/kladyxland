@@ -1381,14 +1381,6 @@
               <button id="gs-btn-auto" class="gs-btn active-auto" onclick="setGrayscale('auto')" title="Auto: ČB v noci, barevná ve dne">AUTO</button>
               <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
             </div>
-            <span style="color:rgba(0,245,255,.5);font-size:.45rem;margin-left:6px;">Motiv:</span>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;justify-content:center;">
-              <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
-              <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
-              <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
-              <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
-              <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
-            </div>
           </div>
           <div id="gs-status" style="font-size:.4rem;letter-spacing:.08em;color:rgba(255,200,0,.7);font-family:'Orbitron',monospace;text-align:center;line-height:1.3;"></div>
         </div>
@@ -1521,6 +1513,16 @@
       <!-- BĚŽÍCÍ TEXT -->
       <div class="marquee-wrap">
         <div class="marquee-text">🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp; 🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp; 🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp;</div>
+      </div>
+
+      <!-- MOTIVY – sloupec, jen admin -->
+      <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:6px;margin:8px 0;">
+        <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;">MOTIV</span>
+        <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
+        <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
+        <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
+        <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
+        <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
       </div>
 
       <!-- CONTROLS -->
@@ -1830,6 +1832,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='flex';
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='inline-block';
     const deviceInfo=document.getElementById('device-info');if(deviceInfo)deviceInfo.style.display='flex';
+    const themeWrap=document.getElementById('theme-wrap');if(themeWrap)themeWrap.style.display='flex';
     populateTextEdits();
     if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
     if(section==='edit'){/* jen zapne edit-mode */}
@@ -1862,6 +1865,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='none';
     const countdownInputWrap=document.getElementById('countdown-input-wrap');if(countdownInputWrap)countdownInputWrap.style.display='none';
     const deviceInfo2=document.getElementById('device-info');if(deviceInfo2)deviceInfo2.style.display='none';
+    const themeWrap2=document.getElementById('theme-wrap');if(themeWrap2)themeWrap2.style.display='none';
     const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();
   }
 
@@ -2356,7 +2360,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.53';
+  const CURRENT_VERSION = '2.10.56';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
