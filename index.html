@@ -114,6 +114,14 @@
     .live-link-btn:hover{color:#00ffcc;text-shadow:0 0 12px rgba(0,255,136,.8);}
     .live-dot{animation:live-pulse 1.2s ease-in-out infinite;}
     @keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    /* MIXCLOUD STATUS INDICATOR */
+    #mc-status-bar{display:flex;align-items:center;gap:8px;padding:5px 14px;background:rgba(0,5,20,.75);border:1px solid rgba(0,245,255,.15);border-radius:4px;margin:6px auto;width:fit-content;}
+    #mc-status-dot{width:10px;height:10px;border-radius:50%;background:#ff2200;box-shadow:0 0 8px #ff2200;flex-shrink:0;transition:background .4s,box-shadow .4s;}
+    #mc-status-dot.mc-live{background:#00ff88;box-shadow:0 0 10px #00ff88,0 0 22px rgba(0,255,136,.6);animation:mc-blink 1.2s ease-in-out infinite;}
+    @keyframes mc-blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+    #mc-status-label{font-family:"Orbitron",monospace;font-size:.5rem;letter-spacing:.15em;color:rgba(0,245,255,.6);}
+    #mc-status-text{font-family:"Orbitron",monospace;font-size:.5rem;font-weight:700;letter-spacing:.12em;color:#ff3300;transition:color .4s;}
+    #mc-status-text.mc-live{color:#00ff88;}
     .freq-wrap{display:flex;align-items:center;justify-content:center;}
     .retro-eq{background:#0a0e1a;border:1px solid rgba(0,245,255,.2);border-radius:4px;padding:4px 6px;display:flex;align-items:flex-end;gap:2px;height:42px;position:relative;overflow:hidden;box-shadow:inset 0 0 15px rgba(0,0,0,.5);}
     .retro-eq::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,245,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.05) 1px,transparent 1px);background-size:7px 4px;z-index:2;pointer-events:none;}
@@ -426,24 +434,12 @@
     body.theme-relax{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-studio{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
-    body.theme-custom::after{display:none;}
-    body.theme-custom #starfield{display:none;}
-    body.theme-custom{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
-    .th-btn.active-custom{background:rgba(255,100,200,.18);color:#ff64c8;text-shadow:0 0 8px rgba(255,100,200,.8);border-color:rgba(255,100,200,.7);}
-    .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;display:inline-flex;align-items:center;gap:5px;}
+    .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
     .th-btn.active-relax{background:rgba(0,200,100,.18);color:#00c864;text-shadow:0 0 8px rgba(0,200,100,.8);border-color:rgba(0,200,100,.7);}
     .th-btn.active-christmas{background:rgba(220,30,30,.18);color:#ff4444;text-shadow:0 0 8px rgba(220,30,30,.8);border-color:rgba(220,30,30,.7);}
     .th-btn.active-studio{background:rgba(140,0,255,.18);color:#aa44ff;text-shadow:0 0 8px rgba(140,0,255,.8);border-color:rgba(140,0,255,.7);}
-    @keyframes thblink{0%,100%{opacity:1;}50%{opacity:.15;}}
-    .td{width:7px;height:7px;border-radius:50%;display:inline-block;animation:thblink 1.2s ease-in-out infinite;flex-shrink:0;}
-    .td-dark{background:#00f5ff;box-shadow:0 0 5px #00f5ff;}
-    .td-summer{background:#ffb400;box-shadow:0 0 5px #ffb400;animation-delay:.2s;}
-    .td-relax{background:#00c864;box-shadow:0 0 5px #00c864;animation-delay:.4s;}
-    .td-xmas{background:#ff4444;box-shadow:0 0 5px #ff4444;animation-delay:.6s;}
-    .td-studio{background:#aa44ff;box-shadow:0 0 5px #aa44ff;animation-delay:.8s;}
-    .td-custom{background:#ff64c8;box-shadow:0 0 5px #ff64c8;animation-delay:1s;}
     .gs-switch{display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;width:56px;}
     .gs-btn{width:100%;padding:9px 0;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-bottom:1px solid rgba(0,245,255,.1);}
     .gs-btn:last-child{border-bottom:none;}
@@ -693,6 +689,23 @@
       }
     }
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
+
+    // ── MIXCLOUD STATUS INDICATOR ─────────────────────────────────────────
+    const mcLiveRef = ref(db, 'mixcloud/isLive');
+    onValue(mcLiveRef, snap => {
+      const live = snap.val() === true;
+      const dot  = document.getElementById('mc-status-dot');
+      const txt  = document.getElementById('mc-status-text');
+      if (dot) { dot.classList.toggle('mc-live', live); }
+      if (txt) { txt.textContent = live ? 'LIVE' : 'OFFLINE'; txt.classList.toggle('mc-live', live); }
+    });
+    window.setMixcloudLive = async function(state) {
+      try {
+        const a = window.firebaseAuth;
+        if (a && !a.currentUser) await window.firebaseSignInAnon();
+      } catch(e) {}
+      set(mcLiveRef, state);
+    };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
       if (window._isLive) {
@@ -1061,81 +1074,24 @@
       document.body.classList.toggle('theme-relax', t==='relax');
       document.body.classList.toggle('theme-christmas', t==='christmas');
       document.body.classList.toggle('theme-studio', t==='studio');
-      document.body.classList.toggle('theme-custom', t==='custom');
       var bd=document.getElementById('th-btn-dark');
       var bs=document.getElementById('th-btn-summer');
       var br=document.getElementById('th-btn-relax');
       var bc=document.getElementById('th-btn-christmas');
       var bst=document.getElementById('th-btn-studio');
-      var bcu=document.getElementById('th-btn-custom');
       if(bd){bd.className='th-btn'+(t==='dark'?' active':'');}
       if(bs){bs.className='th-btn'+(t==='summer'?' active-summer':'');}
       if(br){br.className='th-btn'+(t==='relax'?' active-relax':'');}
       if(bc){bc.className='th-btn'+(t==='christmas'?' active-christmas':'');}
       if(bst){bst.className='th-btn'+(t==='studio'?' active-studio':'');}
-      if(bcu){bcu.className='th-btn'+(t==='custom'?' active-custom':'');}
-      if(t==='custom'){
-        var cu=localStorage.getItem('kladyx-custom-theme-url')||'';
-        if(cu) document.body.style.backgroundImage='url('+cu+')';
-      } else {
-        document.body.style.backgroundImage='';
-      }
     }
     applyTheme(window._theme);
-    // Načíst uložený název vlastního motivu
-    var _savedName=localStorage.getItem('kladyx-custom-theme-name');
-    if(_savedName){var _lbl=document.getElementById('th-custom-label');if(_lbl)_lbl.textContent=_savedName.toUpperCase();}
     window.setTheme = function(t){
       window._theme=t;
       localStorage.setItem('kladyx-theme',t);
       applyTheme(t);
       // Uložit do Firebase - všichni návštěvníci uvidí změnu
       set(siteThemeRef, t).catch(e=>console.error(e));
-    };
-
-    // Načíst vlastní URL motivu z Firebase
-    onValue(ref(db,'config/customThemeUrl'), snap=>{
-      if(snap.exists()&&snap.val()){
-        localStorage.setItem('kladyx-custom-theme-url', snap.val());
-        var inp=document.getElementById('custom-theme-url-input');
-        if(inp) inp.value=snap.val();
-        if(window._theme==='custom') document.body.style.backgroundImage='url('+snap.val()+')';
-      }
-    });
-
-    // Načíst název vlastního motivu z Firebase
-    onValue(ref(db,'config/customThemeName'), snap=>{
-      if(snap.exists()&&snap.val()){
-        var n=snap.val();
-        localStorage.setItem('kladyx-custom-theme-name', n);
-        var lbl=document.getElementById('th-custom-label');
-        if(lbl) lbl.textContent=n.toUpperCase();
-        var ni=document.getElementById('custom-theme-name-input');
-        if(ni) ni.value=n;
-      }
-    });
-
-    window.saveCustomThemeName = function(){
-      var inp=document.getElementById('custom-theme-name-input');
-      if(!inp||!inp.value.trim()) return;
-      var name=inp.value.trim();
-      localStorage.setItem('kladyx-custom-theme-name', name);
-      var lbl=document.getElementById('th-custom-label');
-      if(lbl) lbl.textContent=name.toUpperCase();
-      set(ref(db,'config/customThemeName'), name).catch(e=>console.error(e));
-    };
-
-    window.saveCustomThemeUrl = function(){
-      var inp=document.getElementById('custom-theme-url-input');
-      if(!inp) return;
-      var url=inp.value.trim();
-      if(!url) return;
-      localStorage.setItem('kladyx-custom-theme-url', url);
-      document.body.style.backgroundImage='url('+url+')';
-      set(ref(db,'config/customThemeUrl'), url).catch(e=>console.error(e));
-      window.setTheme('custom');
-      var saved=document.getElementById('custom-theme-saved');
-      if(saved){saved.style.display='inline';setTimeout(()=>{saved.style.display='none';},2000);}
     };
 
     // ── TIMERY ────────────────────────────────────────────────────────────
@@ -1532,6 +1488,13 @@
         </a>
       </div>
 
+      <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
+      <div id="mc-status-bar">
+        <span id="mc-status-dot"></span>
+        <span id="mc-status-label">MIXCLOUD</span>
+        <span id="mc-status-text">OFFLINE</span>
+      </div>
+
       <!-- MIXCLOUD LIVE EMBED -->
       <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;border-radius:6px;overflow:hidden;">
         <iframe width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2F" frameborder="0"></iframe>
@@ -1828,23 +1791,11 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   <!-- MOTIVY – sloupec, úplně dole, jen admin -->
   <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
     <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
-    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon"><span class="td td-dark"></span>DARK</button>
-    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer"><span class="td td-summer"></span>SUMMER</button>
-    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax"><span class="td td-relax"></span>RELAX</button>
-    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas"><span class="td td-xmas"></span>XMAS</button>
-    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio"><span class="td td-studio"></span>STUDIO</button>
-    <button id="th-btn-custom" class="th-btn" onclick="setTheme('custom')" title="Vlastní motiv"><span class="td td-custom"></span><span id="th-custom-label">VLASTNÍ</span></button>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px;width:88%;">
-      <input id="custom-theme-name-input" type="text" placeholder="Název motivu..."
-        style="font-family:'Exo 2',sans-serif;font-size:.65rem;background:rgba(0,10,40,.9);border:1px solid rgba(255,100,200,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;"
-        onkeydown="if(event.key==='Enter')window.saveCustomThemeName()"/>
-      <input id="custom-theme-url-input" type="text" placeholder="Firebase Storage URL obrázku..."
-        style="font-family:'Exo 2',sans-serif;font-size:.65rem;background:rgba(0,10,40,.9);border:1px solid rgba(255,100,200,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;"
-        onkeydown="if(event.key==='Enter')window.saveCustomThemeUrl()"/>
-      <button onclick="window.saveCustomThemeUrl()"
-        style="font-family:'Orbitron',monospace;font-size:.5rem;background:rgba(255,100,200,.15);border:1px solid rgba(255,100,200,.4);color:#ff64c8;padding:5px 14px;cursor:pointer;border-radius:2px;letter-spacing:.1em;">🖼️ ULOŽ MOTIV</button>
-      <span id="custom-theme-saved" style="display:none;font-size:.55rem;color:#ff64c8;font-family:'Orbitron',monospace;">✓ Uloženo</span>
-    </div>
+    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
+    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
+    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
+    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
+    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
   </div>
 
 
@@ -2442,7 +2393,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.61';
+  const CURRENT_VERSION = '2.10.60';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
