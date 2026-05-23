@@ -1405,14 +1405,7 @@
     </div>
   </nav>
 
-  <!-- DEVICE INFO BAR -->
-  <div id="device-info" style="display:flex;justify-content:center;align-items:center;gap:18px;padding:6px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.85);border-bottom:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);">
-    <span id="dev-battery" style="color:#00ff88;text-shadow:0 0 8px rgba(0,255,136,.8);">🔋 —</span>
-    <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
-    <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
-  </div>
+
 
   <div class="hero-space">
 
@@ -1762,6 +1755,15 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   </div>
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
 
+  <!-- DEVICE INFO BAR – admin only, fixed bottom -->
+  <div id="device-info" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;flex-direction:row;justify-content:flex-end;align-items:center;gap:18px;padding:5px 20px 5px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.92);border-top:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);">
+    <span id="dev-battery" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">🔋 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
+  </div>
+
 </div>
 
 <script>
@@ -1826,6 +1828,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='block';
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='flex';
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='inline-block';
+    const deviceInfo=document.getElementById('device-info');if(deviceInfo)deviceInfo.style.display='flex';
     populateTextEdits();
     if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
     if(section==='edit'){/* jen zapne edit-mode */}
@@ -1856,6 +1859,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='none';
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='none';
     const countdownInputWrap=document.getElementById('countdown-input-wrap');if(countdownInputWrap)countdownInputWrap.style.display='none';
+    const deviceInfo2=document.getElementById('device-info');if(deviceInfo2)deviceInfo2.style.display='none';
     const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();
   }
 
@@ -2350,7 +2354,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.50';
+  const CURRENT_VERSION = '2.10.52';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
