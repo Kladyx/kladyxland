@@ -430,12 +430,20 @@
     body.theme-custom #starfield{display:none;}
     body.theme-custom{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     .th-btn.active-custom{background:rgba(255,100,200,.18);color:#ff64c8;text-shadow:0 0 8px rgba(255,100,200,.8);border-color:rgba(255,100,200,.7);}
-    .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
+    .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;display:inline-flex;align-items:center;gap:5px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
     .th-btn.active-relax{background:rgba(0,200,100,.18);color:#00c864;text-shadow:0 0 8px rgba(0,200,100,.8);border-color:rgba(0,200,100,.7);}
     .th-btn.active-christmas{background:rgba(220,30,30,.18);color:#ff4444;text-shadow:0 0 8px rgba(220,30,30,.8);border-color:rgba(220,30,30,.7);}
     .th-btn.active-studio{background:rgba(140,0,255,.18);color:#aa44ff;text-shadow:0 0 8px rgba(140,0,255,.8);border-color:rgba(140,0,255,.7);}
+    @keyframes thblink{0%,100%{opacity:1;}50%{opacity:.15;}}
+    .td{width:7px;height:7px;border-radius:50%;display:inline-block;animation:thblink 1.2s ease-in-out infinite;flex-shrink:0;}
+    .td-dark{background:#00f5ff;box-shadow:0 0 5px #00f5ff;}
+    .td-summer{background:#ffb400;box-shadow:0 0 5px #ffb400;animation-delay:.2s;}
+    .td-relax{background:#00c864;box-shadow:0 0 5px #00c864;animation-delay:.4s;}
+    .td-xmas{background:#ff4444;box-shadow:0 0 5px #ff4444;animation-delay:.6s;}
+    .td-studio{background:#aa44ff;box-shadow:0 0 5px #aa44ff;animation-delay:.8s;}
+    .td-custom{background:#ff64c8;box-shadow:0 0 5px #ff64c8;animation-delay:1s;}
     .gs-switch{display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;width:56px;}
     .gs-btn{width:100%;padding:9px 0;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-bottom:1px solid rgba(0,245,255,.1);}
     .gs-btn:last-child{border-bottom:none;}
@@ -1074,6 +1082,9 @@
       }
     }
     applyTheme(window._theme);
+    // Načíst uložený název vlastního motivu
+    var _savedName=localStorage.getItem('kladyx-custom-theme-name');
+    if(_savedName){var _lbl=document.getElementById('th-custom-label');if(_lbl)_lbl.textContent=_savedName.toUpperCase();}
     window.setTheme = function(t){
       window._theme=t;
       localStorage.setItem('kladyx-theme',t);
@@ -1091,6 +1102,28 @@
         if(window._theme==='custom') document.body.style.backgroundImage='url('+snap.val()+')';
       }
     });
+
+    // Načíst název vlastního motivu z Firebase
+    onValue(ref(db,'config/customThemeName'), snap=>{
+      if(snap.exists()&&snap.val()){
+        var n=snap.val();
+        localStorage.setItem('kladyx-custom-theme-name', n);
+        var lbl=document.getElementById('th-custom-label');
+        if(lbl) lbl.textContent=n.toUpperCase();
+        var ni=document.getElementById('custom-theme-name-input');
+        if(ni) ni.value=n;
+      }
+    });
+
+    window.saveCustomThemeName = function(){
+      var inp=document.getElementById('custom-theme-name-input');
+      if(!inp||!inp.value.trim()) return;
+      var name=inp.value.trim();
+      localStorage.setItem('kladyx-custom-theme-name', name);
+      var lbl=document.getElementById('th-custom-label');
+      if(lbl) lbl.textContent=name.toUpperCase();
+      set(ref(db,'config/customThemeName'), name).catch(e=>console.error(e));
+    };
 
     window.saveCustomThemeUrl = function(){
       var inp=document.getElementById('custom-theme-url-input');
@@ -1795,13 +1828,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   <!-- MOTIVY – sloupec, úplně dole, jen admin -->
   <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
     <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
-    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
-    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
-    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
-    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
-    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
-    <button id="th-btn-custom" class="th-btn" onclick="setTheme('custom')" title="Vlastní motiv">🖼️ VLASTNÍ</button>
+    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon"><span class="td td-dark"></span>DARK</button>
+    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer"><span class="td td-summer"></span>SUMMER</button>
+    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax"><span class="td td-relax"></span>RELAX</button>
+    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas"><span class="td td-xmas"></span>XMAS</button>
+    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio"><span class="td td-studio"></span>STUDIO</button>
+    <button id="th-btn-custom" class="th-btn" onclick="setTheme('custom')" title="Vlastní motiv"><span class="td td-custom"></span><span id="th-custom-label">VLASTNÍ</span></button>
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:4px;width:88%;">
+      <input id="custom-theme-name-input" type="text" placeholder="Název motivu..."
+        style="font-family:'Exo 2',sans-serif;font-size:.65rem;background:rgba(0,10,40,.9);border:1px solid rgba(255,100,200,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;"
+        onkeydown="if(event.key==='Enter')window.saveCustomThemeName()"/>
       <input id="custom-theme-url-input" type="text" placeholder="Firebase Storage URL obrázku..."
         style="font-family:'Exo 2',sans-serif;font-size:.65rem;background:rgba(0,10,40,.9);border:1px solid rgba(255,100,200,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;"
         onkeydown="if(event.key==='Enter')window.saveCustomThemeUrl()"/>
@@ -2406,7 +2442,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.60';
+  const CURRENT_VERSION = '2.10.61';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
