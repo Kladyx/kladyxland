@@ -532,6 +532,7 @@
     window.dbRemove = remove;
     window.dbSet = set;
     window.dbGet = get;
+    window.dbOnValue = onValue;
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -2167,8 +2168,12 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   function addRow(){const brand=document.getElementById('new-brand').value.trim();const name=document.getElementById('new-name').value.trim();const cat=document.getElementById('new-cat').value.trim();if(!brand||!name){alert('Zadej značku a model!');return;}const tbody=document.getElementById('hw-tbody');const num=tbody.rows.length+1;const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(num).padStart(2,'0')+'</td><td class="hw-brand-col" style="color:#aaddff;">'+brand+'</td><td class="hw-name-col">'+name+'</td><td class="hw-cat">'+cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);document.getElementById('new-brand').value='';document.getElementById('new-name').value='';document.getElementById('new-cat').value='';renumber();saveHw();}
   function delRow(btn){btn.closest('tr').remove();renumber();saveHw();}
   function renumber(){const tbody=document.getElementById('hw-tbody');if(!tbody)return;const rows=tbody.rows;for(let i=0;i<rows.length;i++)rows[i].cells[0].textContent=String(i+1).padStart(2,'0');}
-  function saveHw(){const tbody=document.getElementById('hw-tbody');if(!tbody)return;const rows=tbody.rows;const data=[];for(let r of rows)data.push({brand:r.cells[1].textContent,brandStyle:r.cells[1].getAttribute('style')||'',brandClass:r.cells[1].className,name:r.cells[2].textContent,cat:r.cells[3].textContent});localStorage.setItem('kladyx_hw',JSON.stringify(data));}
-  function loadHw(){const saved=localStorage.getItem('kladyx_hw');if(!saved)return;try{const data=JSON.parse(saved);const tbody=document.getElementById('hw-tbody');if(!tbody)return;tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+item.brandClass+'" style="'+item.brandStyle+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}catch(e){}}
+  function saveHw(){const tbody=document.getElementById('hw-tbody');if(!tbody)return;const rows=tbody.rows;const data=[];for(let r of rows)data.push({brand:r.cells[1].textContent,brandStyle:r.cells[1].getAttribute('style')||'',brandClass:r.cells[1].className,name:r.cells[2].textContent,cat:r.cells[3].textContent});
+    if(window.dbSet&&window.dbRef&&window.db){window.dbSet(window.dbRef(window.db,'content/hardware'),data).catch(e=>console.error('HW save error:',e));}}
+  function renderHw(data){const tbody=document.getElementById('hw-tbody');if(!tbody||!Array.isArray(data))return;tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+(item.brandClass||'hw-brand-col')+'" style="'+(item.brandStyle||'')+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}
+  function loadHw(){/* data se načítají realtime z Firebase listeneru níže */}
+  // Realtime listener – hardware tabulku vidí všichni
+  if(window.dbOnValue&&window.dbRef&&window.db){window.dbOnValue(window.dbRef(window.db,'content/hardware'),snap=>{if(snap.exists())renderHw(snap.val());});}
 
 
   // DIGI HODINY (lang-aware)
@@ -2554,7 +2559,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.3';
+  const CURRENT_VERSION = '2.11.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
