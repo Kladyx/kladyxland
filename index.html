@@ -116,6 +116,8 @@
     @keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
     /* MIXCLOUD STATUS INDICATOR */
     #mc-status-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:rgba(0,5,20,.85);border:1px solid rgba(0,245,255,.2);border-radius:4px;margin:8px auto;width:fit-content;}
+    body.edit-mode #mc-status-bar{cursor:pointer;border-color:rgba(0,245,255,.45);}
+    body.edit-mode #mc-status-bar:hover{background:rgba(0,20,60,.9);}
     #mc-status-dot{width:10px;height:10px;border-radius:50%;background:#ff2200;box-shadow:0 0 8px #ff2200;flex-shrink:0;transition:background .4s,box-shadow .4s;}
     #mc-status-dot.mc-live{background:#00ff88;box-shadow:0 0 10px #00ff88,0 0 22px rgba(0,255,136,.6);animation:mc-blink 1.2s ease-in-out infinite;}
     @keyframes mc-blink{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -709,11 +711,15 @@
     const mcLiveRef = ref(db, 'mixcloud/isLive');
     onValue(mcLiveRef, snap => {
       const live = snap.val() === true;
+      window._mcLive = live;
       const dot  = document.getElementById('mc-status-dot');
       const txt  = document.getElementById('mc-status-text');
       if (dot) { dot.classList.toggle('mc-live', live); }
       if (txt) { txt.textContent = live ? 'LIVE' : 'OFFLINE'; txt.classList.toggle('mc-live', live); }
     });
+    // Zobraz [ klik ] hint jen adminovi
+    document.addEventListener('edit-mode-on', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='inline'; });
+    document.addEventListener('edit-mode-off', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='none'; });
     window.setMixcloudLive = async function(state) {
       try {
         const a = window.firebaseAuth;
@@ -1738,10 +1744,11 @@
     <audio id="streamPlayer" src="" crossorigin="anonymous" style="display:none;"></audio>
 
     <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
-    <div id="mc-status-bar">
+    <div id="mc-status-bar" onclick="if(document.body.classList.contains('edit-mode')) window.setMixcloudLive(!window._mcLive)">
       <span id="mc-status-dot"></span>
       <span id="mc-status-label">MIXCLOUD</span>
       <span id="mc-status-text">OFFLINE</span>
+      <span id="mc-status-hint" style="display:none;font-family:'Orbitron',monospace;font-size:.38rem;color:rgba(0,245,255,.4);letter-spacing:.08em;margin-left:6px;">[ klik ]</span>
     </div>
 
     <!-- Fixed ON AIR Status Indicator (jen zobrazení, toggle přes admin) -->
@@ -2538,7 +2545,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.67';
+  const CURRENT_VERSION = '2.10.68';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
