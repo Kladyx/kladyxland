@@ -446,6 +446,8 @@
     .th-url-input{font-family:'Exo 2',sans-serif;font-size:.58rem;background:rgba(0,10,40,.9);border:1px solid rgba(0,245,255,.2);color:#cce5ff;padding:4px 7px;border-radius:2px;outline:none;width:100%;min-width:0;}
     .th-url-save{font-family:'Orbitron',monospace;font-size:.48rem;padding:4px 8px;background:rgba(0,100,60,.4);border:1px solid rgba(0,255,100,.35);color:#44ff88;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
     .th-url-save:hover{background:rgba(0,150,80,.5);}
+    .th-url-del{font-family:'Orbitron',monospace;font-size:.48rem;padding:4px 8px;background:rgba(100,0,0,.4);border:1px solid rgba(255,50,50,.35);color:#ff6666;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+    .th-url-del:hover{background:rgba(160,0,0,.5);}
     .th-row{display:flex;align-items:center;gap:7px;width:100%;}
     .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
@@ -759,6 +761,14 @@
         inp.style.borderColor = 'rgba(0,255,100,.6)';
         setTimeout(() => { inp.style.borderColor = ''; }, 1500);
       }).catch(e => console.error('Theme save error:', e));
+    };
+    window.deleteThemeUrl = async function(theme) {
+      try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
+      set(ref(db, `themes/${theme}/bgUrl`), DEFAULT_BG[theme]).then(() => {
+        const inp = document.getElementById('th-url-' + theme);
+        if (inp) { inp.value = DEFAULT_BG[theme] || ''; inp.style.borderColor = 'rgba(255,80,80,.6)'; setTimeout(() => { inp.style.borderColor = ''; }, 1500); }
+        applyThemeBgUrl(theme, DEFAULT_BG[theme]);
+      }).catch(e => console.error('Theme delete error:', e));
     };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
@@ -1857,6 +1867,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
       <input class="th-url-input" id="th-url-summer" type="text" placeholder="URL obrázku...">
       <button class="th-url-save" onclick="saveThemeUrl('summer')">💾</button>
+      <button class="th-url-del" onclick="deleteThemeUrl('summer')">🗑️</button>
     </div>
 
     <div class="th-row">
@@ -1864,6 +1875,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
       <input class="th-url-input" id="th-url-relax" type="text" placeholder="URL obrázku...">
       <button class="th-url-save" onclick="saveThemeUrl('relax')">💾</button>
+      <button class="th-url-del" onclick="deleteThemeUrl('relax')">🗑️</button>
     </div>
 
     <div class="th-row">
@@ -1871,6 +1883,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
       <input class="th-url-input" id="th-url-christmas" type="text" placeholder="URL obrázku...">
       <button class="th-url-save" onclick="saveThemeUrl('christmas')">💾</button>
+      <button class="th-url-del" onclick="deleteThemeUrl('christmas')">🗑️</button>
     </div>
 
     <div class="th-row">
@@ -1878,6 +1891,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
       <input class="th-url-input" id="th-url-studio" type="text" placeholder="URL obrázku...">
       <button class="th-url-save" onclick="saveThemeUrl('studio')">💾</button>
+      <button class="th-url-del" onclick="deleteThemeUrl('studio')">🗑️</button>
     </div>
   </div>
 
@@ -2476,7 +2490,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.64';
+  const CURRENT_VERSION = '2.10.65';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
