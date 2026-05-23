@@ -720,7 +720,11 @@
     // Zobraz [ klik ] hint jen adminovi
     document.addEventListener('edit-mode-on', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='inline'; });
     document.addEventListener('edit-mode-off', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='none'; });
-    window.setMixcloudLive = function(state) {
+    window.setMixcloudLive = async function(state) {
+      try {
+        const auth = window.firebaseAuth;
+        if (auth && !auth.currentUser) await window.firebaseSignInAnon();
+      } catch(authErr) { console.warn('MC auth warning:', authErr); }
       set(mcLiveRef, state).catch(e => console.error('MC live set error:', e));
     };
     window.toggleMixcloudLive = function() {
@@ -947,6 +951,7 @@
                     window.firebaseSetLive(true);
                     obsLog('📡 → ON AIR ✅');
                   }
+                  if (typeof window.setMixcloudLive === 'function') { window.setMixcloudLive(true); obsLog('🎵 Mixcloud → LIVE'); }
                 } else if (state === 'OBS_WEBSOCKET_OUTPUT_STOPPED' ||
                            state === 'OBS_WEBSOCKET_OUTPUT_STOPPING') {
                   obsLog('⏳ čekám 3s...');
@@ -956,6 +961,7 @@
                       window.firebaseSetLive(false);
                       obsLog('📡 → OFFLINE');
                     }
+                    if (typeof window.setMixcloudLive === 'function') { window.setMixcloudLive(false); obsLog('🎵 Mixcloud → OFFLINE'); }
                     _obsOfflineTimer = null;
                   }, 3000);
                 }
@@ -2550,7 +2556,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.0';
+  const CURRENT_VERSION = '2.11.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
