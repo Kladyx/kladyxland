@@ -1515,16 +1515,6 @@
         <div class="marquee-text">🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp; 🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp; 🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo &nbsp;&nbsp;&nbsp;</div>
       </div>
 
-      <!-- MOTIVY – sloupec, jen admin -->
-      <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:6px;margin:8px 0;">
-        <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;">MOTIV</span>
-        <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
-        <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
-        <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
-        <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
-        <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
-      </div>
-
       <!-- CONTROLS -->
       <div class="live-left">
         <!-- Nové jednoduché broadcast tlačítko – jen admin, jen zapne/vypne Firebase stav -->
@@ -1756,6 +1746,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div class="tv-count" id="total-visitors-count">···</div>
   </div>
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
+
+  <!-- MOTIVY – sloupec, úplně dole, jen admin -->
+  <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 18px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
+    <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
+    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
+    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
+    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
+    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
+    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
+  </div>
 
   <!-- DEVICE INFO BAR – admin only, fixed bottom -->
   <div id="device-info" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;flex-direction:row;justify-content:flex-end;align-items:center;gap:18px;padding:5px 20px 5px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.92);border-top:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);">
@@ -2268,17 +2268,19 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(conn){
       const upd=()=>{
-        const t=conn.effectiveType||'?';
+        const t=conn.effectiveType||'';
         const dl=conn.downlink||0;
-        let netType=t.toUpperCase();
-        if(conn.type==='wifi'){netType='WiFi';}
-        else if(conn.downlinkMax&&conn.downlinkMax>100){netType='5G';}
+        let netType='';
+        if(conn.type==='wifi'||conn.type==='ethernet'){netType='WiFi';}
+        else if(t==='4g'&&dl>20){netType='5G';}
+        else if(t){netType=t.toUpperCase();}
+        else{netType='NET';}
         document.getElementById('dev-connection').textContent='📶 '+netType;
-        document.getElementById('dev-downlink').textContent='⬇ '+(dl?dl+' Mbps':'—');
+        if(dl>0) document.getElementById('dev-downlink').textContent='⬇ '+dl+' Mbps';
       };
       upd();conn.addEventListener('change',upd);
     } else {
-      document.getElementById('dev-connection').textContent='📶 ?';
+      document.getElementById('dev-connection').textContent='📶 Online';
     }
     // Speedtest - měření reálné rychlosti
     async function speedtest(){
@@ -2360,7 +2362,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.56';
+  const CURRENT_VERSION = '2.10.57';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
