@@ -109,6 +109,7 @@
     .live-link-box{display:none;background:rgba(0,200,100,.15);border:1.5px solid rgba(0,255,136,.5);border-radius:6px;padding:8px 12px;backdrop-filter:blur(8px);}
     .live-link-box.live{display:flex;animation:liveBtnGlow 1.5s ease-in-out infinite;}
     @keyframes liveBtnGlow{0%,100%{box-shadow:0 0 8px rgba(0,255,100,.3);border-color:rgba(0,255,136,.5);}50%{box-shadow:0 0 20px rgba(0,255,100,.7);border-color:rgba(0,255,136,.9);}}
+    .obs-sync-pulse{animation:liveBtnGlow 0.6s ease-in-out 6;background:rgba(0,255,100,.25)!important;border-color:rgba(0,255,136,.8)!important;color:#00ff88!important;}
     .live-link-btn{display:flex;align-items:center;gap:6px;text-decoration:none;color:#00ff99;font-family:"Orbitron",monospace;font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transition:all .3s;white-space:nowrap;}
     .live-link-btn:hover{color:#00ffcc;text-shadow:0 0 12px rgba(0,255,136,.8);}
     .live-dot{animation:live-pulse 1.2s ease-in-out infinite;}
@@ -851,10 +852,19 @@
       onValue(ref(db, 'tapoDb/obsPassword'), snap => {
         if (snap.exists() && snap.val()) {
           const pw = snap.val();
+          const local = localStorage.getItem('kladyx_obs_pw');
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
           if (inp) inp.value = pw;
-          // Pokud heslo přišlo ze sync a OBS není připojen, připoj
+          // Pulzovat tlačítko jen když přišla změna ze sync (ne vlastní uložení)
+          if (local !== pw) {
+            const btn = document.getElementById('obs-save-btn');
+            if (btn) {
+              btn.classList.add('obs-sync-pulse');
+              btn.textContent = '✅ SYNC';
+              setTimeout(()=>{ btn.classList.remove('obs-sync-pulse'); btn.textContent='💾 SYNC'; }, 3600);
+            }
+          }
           if (!_obsWs || _obsWs.readyState !== WebSocket.OPEN) {
             obsConnect();
           }
@@ -1485,8 +1495,8 @@
             <button type="button" onclick="(function(){var i=document.getElementById('obs-pw-input');i.type=i.type==='password'?'text':'password';})()"
               style="position:absolute;right:4px;background:none;border:none;color:rgba(0,245,255,.6);cursor:pointer;font-size:13px;padding:0;line-height:1;">👁️</button>
           </div>
-          <button onclick="window.obsSavePassword()"
-            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;">💾</button>
+          <button id="obs-save-btn" onclick="window.obsSavePassword()"
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
@@ -2279,7 +2289,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.41';
+  const CURRENT_VERSION = '2.10.42';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
