@@ -704,19 +704,17 @@
         if (mixcloudBox) mixcloudBox.style.display = 'none';
         stopLiveTimer();
       }
+      // MIXCLOUD indikátor kopíruje ON AIR stav
+      const mcDot = document.getElementById('mc-status-dot');
+      const mcTxt = document.getElementById('mc-status-text');
+      if (mcDot) mcDot.classList.toggle('mc-live', state);
+      if (mcTxt) { mcTxt.textContent = state ? 'LIVE' : 'OFFLINE'; mcTxt.classList.toggle('mc-live', state); }
     }
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
 
     // ── MIXCLOUD STATUS INDICATOR ─────────────────────────────────────────
+    // Indikátor kopíruje ON AIR stav (viz applyLiveState). Žádný samostatný listener.
     const mcLiveRef = ref(db, 'mixcloud/isLive');
-    onValue(mcLiveRef, snap => {
-      const live = snap.val() === true;
-      window._mcLive = live;
-      const dot  = document.getElementById('mc-status-dot');
-      const txt  = document.getElementById('mc-status-text');
-      if (dot) { dot.classList.toggle('mc-live', live); }
-      if (txt) { txt.textContent = live ? 'LIVE' : 'OFFLINE'; txt.classList.toggle('mc-live', live); }
-    });
     // Zobraz [ klik ] hint jen adminovi
     document.addEventListener('edit-mode-on', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='inline'; });
     document.addEventListener('edit-mode-off', () => { const h = document.getElementById('mc-status-hint'); if(h) h.style.display='none'; });
@@ -1755,7 +1753,7 @@
     <audio id="streamPlayer" src="" crossorigin="anonymous" style="display:none;"></audio>
 
     <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
-    <div id="mc-status-bar" onclick="if(window.firebaseAuth && window.firebaseAuth.currentUser) window.toggleMixcloudLive()">
+    <div id="mc-status-bar">
       <span id="mc-status-dot"></span>
       <span id="mc-status-label">MIXCLOUD</span>
       <span id="mc-status-text">OFFLINE</span>
@@ -2556,7 +2554,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.2';
+  const CURRENT_VERSION = '2.11.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
