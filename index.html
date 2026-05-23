@@ -835,15 +835,20 @@
     window.obsConnect = obsConnect;
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
-      // Uložit lokálně i do Firebase pro sync přes zařízení
       localStorage.setItem('kladyx_obs_pw', pw);
       try {
         set(ref(db, 'tapoDb/obsPassword'), pw).catch(()=>{});
       } catch(e) {}
-      // restartovat připojení s novým heslem
       if (_obsWs) { _obsWs.onclose = null; _obsWs.close(); _obsWs = null; }
       if (_obsReconnTimer) clearTimeout(_obsReconnTimer);
       obsConnect();
+      // Pulzovat tlačítko po uložení
+      const btn = document.getElementById('obs-save-btn');
+      if (btn) {
+        btn.classList.add('obs-sync-pulse');
+        btn.textContent = '✅ SYNC';
+        setTimeout(()=>{ btn.classList.remove('obs-sync-pulse'); btn.textContent='💾 SYNC'; }, 3600);
+      }
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
     };
@@ -2289,7 +2294,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.42';
+  const CURRENT_VERSION = '2.10.43';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
