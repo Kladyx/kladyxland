@@ -115,7 +115,7 @@
     .live-dot{animation:live-pulse 1.2s ease-in-out infinite;}
     @keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
     /* MIXCLOUD STATUS INDICATOR */
-    #mc-status-bar{display:flex;align-items:center;gap:8px;padding:5px 14px;background:rgba(0,5,20,.75);border:1px solid rgba(0,245,255,.15);border-radius:4px;margin:6px auto;width:fit-content;}
+    #mc-status-bar{display:flex;align-items:center;gap:8px;padding:6px 18px;background:rgba(0,5,20,.85);border:1px solid rgba(0,245,255,.2);border-radius:4px;margin:8px auto;width:fit-content;}
     #mc-status-dot{width:10px;height:10px;border-radius:50%;background:#ff2200;box-shadow:0 0 8px #ff2200;flex-shrink:0;transition:background .4s,box-shadow .4s;}
     #mc-status-dot.mc-live{background:#00ff88;box-shadow:0 0 10px #00ff88,0 0 22px rgba(0,255,136,.6);animation:mc-blink 1.2s ease-in-out infinite;}
     @keyframes mc-blink{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -1488,13 +1488,6 @@
         </a>
       </div>
 
-      <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
-      <div id="mc-status-bar">
-        <span id="mc-status-dot"></span>
-        <span id="mc-status-label">MIXCLOUD</span>
-        <span id="mc-status-text">OFFLINE</span>
-      </div>
-
       <!-- MIXCLOUD LIVE EMBED -->
       <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;border-radius:6px;overflow:hidden;">
         <iframe width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2F" frameborder="0"></iframe>
@@ -1629,6 +1622,13 @@
     </div>
 
     <audio id="streamPlayer" src="" crossorigin="anonymous" style="display:none;"></audio>
+
+    <!-- MIXCLOUD STATUS INDICATOR - vidí všichni návštěvníci -->
+    <div id="mc-status-bar">
+      <span id="mc-status-dot"></span>
+      <span id="mc-status-label">MIXCLOUD</span>
+      <span id="mc-status-text">OFFLINE</span>
+    </div>
 
     <!-- Fixed ON AIR Status Indicator (jen zobrazení, toggle přes admin) -->
     <div id="fixed-status-button">
@@ -1788,14 +1788,14 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   </div>
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
 
-  <!-- MOTIVY – sloupec, úplně dole, jen admin -->
-  <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
-    <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
-    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
-    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
-    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
-    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
-    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
+  <!-- MOTIVY – mřížka 3 na řádek, úplně dole, jen admin -->
+  <div id="theme-wrap" style="display:none;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
+    <span style="width:100%;text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
+    <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon" style="flex:0 0 calc(33% - 6px);">🌑 DARK</button>
+    <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer" style="flex:0 0 calc(33% - 6px);">☀️ SUMMER</button>
+    <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax" style="flex:0 0 calc(33% - 6px);">🌴 RELAX</button>
+    <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas" style="flex:0 0 calc(33% - 6px);">🎄 XMAS</button>
+    <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio" style="flex:0 0 calc(33% - 6px);">🎛️ STUDIO</button>
   </div>
 
 
@@ -2317,7 +2317,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     async function speedtest(){
       try{
         const el=document.getElementById('dev-downlink');
-        const url='https://speed.cloudflare.com/__down?bytes=10000000&_='+Date.now();
+        const url='https://speed.cloudflare.com/__down?bytes=30000000&_='+Date.now();
         const t0=performance.now();
         const resp=await fetch(url,{cache:'no-store'});
         const buf=await resp.arrayBuffer();
@@ -2393,7 +2393,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.60';
+  const CURRENT_VERSION = '2.10.63';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
