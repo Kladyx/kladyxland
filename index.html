@@ -740,13 +740,18 @@
       const rules = themeBgStyle.innerHTML.replace(new RegExp(`body\\.theme-${theme}\\{[^}]*\\}`, 'g'), '');
       themeBgStyle.innerHTML = rules + `body.theme-${theme}{background-image:url('${u}') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}`;
     }
-    // Načti URL z Firebase při startu
+    // Načti URL z Firebase při startu — pokud není uložena, ulož default
     THEMES.forEach(t => {
       onValue(ref(db, `themes/${t}/bgUrl`), snap => {
-        const url = snap.val() || DEFAULT_BG[t];
-        applyThemeBgUrl(t, url);
+        const url = snap.val();
+        if (!url && DEFAULT_BG[t]) {
+          // Prvně uloží default do Firebase
+          set(ref(db, `themes/${t}/bgUrl`), DEFAULT_BG[t]).catch(()=>{});
+        }
+        const finalUrl = url || DEFAULT_BG[t];
+        applyThemeBgUrl(t, finalUrl);
         const inp = document.getElementById('th-url-' + t);
-        if (inp) inp.value = url || '';
+        if (inp) inp.value = finalUrl || '';
       });
     });
     // Uložení URL adminem
@@ -769,6 +774,51 @@
         if (inp) { inp.value = DEFAULT_BG[theme] || ''; inp.style.borderColor = 'rgba(255,80,80,.6)'; setTimeout(() => { inp.style.borderColor = ''; }, 1500); }
         applyThemeBgUrl(theme, DEFAULT_BG[theme]);
       }).catch(e => console.error('Theme delete error:', e));
+    };
+
+    // ── VLASTNÍ POZADÍ (custom backgrounds) ──────────────────────────────
+    const customBgRef = ref(db, 'themes/custom');
+    // Načti a zobraz custom pozadí
+    onValue(customBgRef, snap => {
+      const list = document.getElementById('th-custom-list');
+      if (!list) return;
+      list.innerHTML = '';
+      if (!snap.exists()) return;
+      snap.forEach(child => {
+        const key = child.key;
+        const d = child.val();
+        const row = document.createElement('div');
+        row.className = 'th-row';
+        row.innerHTML = `
+          <span class="th-dot" style="background:#00f5ff;box-shadow:0 0 6px #00f5ff;animation:th-dot-blink 1.2s ease-in-out infinite;"></span>
+          <button class="th-btn" onclick="applyCustomBg('${d.url}')" title="${d.name||''}">🖼️ ${d.name||'BG'}</button>
+          <span style="font-family:'Exo 2',sans-serif;font-size:.5rem;color:rgba(0,245,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${d.url}</span>
+          <button class="th-url-del" onclick="deleteCustomBg('${key}')">🗑️</button>`;
+        list.appendChild(row);
+      });
+    });
+    window.addCustomBg = async function() {
+      const urlInp  = document.getElementById('th-new-url');
+      const nameInp = document.getElementById('th-new-name');
+      const url  = urlInp ? urlInp.value.trim() : '';
+      const name = nameInp ? nameInp.value.trim() : '';
+      if (!url) return;
+      try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
+      push(ref(db, 'themes/custom'), { url, name: name || 'BG' }).then(() => {
+        if (urlInp)  urlInp.value  = '';
+        if (nameInp) nameInp.value = '';
+      }).catch(e => console.error('Custom BG add error:', e));
+    };
+    window.applyCustomBg = function(url) {
+      // Přepíše body background přes inline style
+      document.body.style.backgroundImage = `url('${url}')`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundAttachment = 'fixed';
+    };
+    window.deleteCustomBg = async function(key) {
+      try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
+      set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
     };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
@@ -1856,43 +1906,41 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   <div id="theme-wrap" style="display:none;flex-direction:column;align-items:stretch;gap:7px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
     <span style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;margin-bottom:4px;">MOTIV POZADÍ</span>
 
+    <!-- Pevné motivy -->
     <div class="th-row">
       <span class="th-dot th-dot-dark"></span>
       <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
-      <input class="th-url-input" id="th-url-dark" type="text" placeholder="— žádný obrázek (dark space) —" readonly style="color:rgba(0,245,255,.4);cursor:default;">
     </div>
-
     <div class="th-row">
       <span class="th-dot th-dot-summer"></span>
       <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
-      <input class="th-url-input" id="th-url-summer" type="text" placeholder="URL obrázku...">
-      <button class="th-url-save" onclick="saveThemeUrl('summer')">💾</button>
-      <button class="th-url-del" onclick="deleteThemeUrl('summer')">🗑️</button>
     </div>
-
     <div class="th-row">
       <span class="th-dot th-dot-relax"></span>
       <button id="th-btn-relax" class="th-btn" onclick="setTheme('relax')" title="Relax">🌴 RELAX</button>
-      <input class="th-url-input" id="th-url-relax" type="text" placeholder="URL obrázku...">
-      <button class="th-url-save" onclick="saveThemeUrl('relax')">💾</button>
-      <button class="th-url-del" onclick="deleteThemeUrl('relax')">🗑️</button>
     </div>
-
     <div class="th-row">
       <span class="th-dot th-dot-christmas"></span>
       <button id="th-btn-christmas" class="th-btn" onclick="setTheme('christmas')" title="Christmas">🎄 XMAS</button>
-      <input class="th-url-input" id="th-url-christmas" type="text" placeholder="URL obrázku...">
-      <button class="th-url-save" onclick="saveThemeUrl('christmas')">💾</button>
-      <button class="th-url-del" onclick="deleteThemeUrl('christmas')">🗑️</button>
     </div>
-
     <div class="th-row">
       <span class="th-dot th-dot-studio"></span>
       <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
-      <input class="th-url-input" id="th-url-studio" type="text" placeholder="URL obrázku...">
-      <button class="th-url-save" onclick="saveThemeUrl('studio')">💾</button>
-      <button class="th-url-del" onclick="deleteThemeUrl('studio')">🗑️</button>
     </div>
+
+    <!-- Oddělovač -->
+    <div style="border-top:1px solid rgba(0,245,255,.1);margin:6px 0;"></div>
+
+    <!-- Přidat nové pozadí -->
+    <span style="color:rgba(0,245,255,.4);font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.1em;">PŘIDAT POZADÍ</span>
+    <div class="th-row">
+      <input class="th-url-input" id="th-new-url" type="text" placeholder="Vlož URL obrázku...">
+      <input class="th-url-input" id="th-new-name" type="text" placeholder="Název..." style="max-width:90px;">
+      <button class="th-url-save" onclick="addCustomBg()">➕</button>
+    </div>
+
+    <!-- Seznam vlastních pozadí -->
+    <div id="th-custom-list" style="display:flex;flex-direction:column;gap:5px;margin-top:4px;"></div>
   </div>
 
 
@@ -2490,7 +2538,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.65';
+  const CURRENT_VERSION = '2.10.67';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
