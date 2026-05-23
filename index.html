@@ -869,9 +869,11 @@
               btn.textContent = '✅ SYNC';
               setTimeout(()=>{ btn.classList.remove('obs-sync-pulse'); btn.textContent='💾 SYNC'; }, 3600);
             }
-          }
-          if (!_obsWs || _obsWs.readyState !== WebSocket.OPEN) {
-            obsConnect();
+            // Reconnect OBS jen pokud už bylo spojení aktivní na tomto zařízení
+            if (_obsConnected) {
+              if (_obsWs) { _obsWs.onclose = null; _obsWs.close(); _obsWs = null; }
+              obsConnect();
+            }
           }
         }
       });
@@ -2294,7 +2296,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.43';
+  const CURRENT_VERSION = '2.10.44';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
