@@ -1397,6 +1397,15 @@
     </div>
   </nav>
 
+  <!-- DEVICE INFO BAR – admin only, top -->
+  <div id="device-info" style="display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:18px;padding:5px 20px 5px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.92);border-bottom:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);position:relative;z-index:150;">
+    <span id="dev-battery" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">🔋 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
+  </div>
+
 
 
   <div class="hero-space">
@@ -1748,7 +1757,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
 
   <!-- MOTIVY – sloupec, úplně dole, jen admin -->
-  <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 18px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
+  <div id="theme-wrap" style="display:none;flex-direction:column;align-items:center;gap:8px;padding:14px 0 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
     <span style="color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;">MOTIV</span>
     <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Dark Moon">🌑 DARK</button>
     <button id="th-btn-summer" class="th-btn" onclick="setTheme('summer')" title="Summer">☀️ SUMMER</button>
@@ -1757,14 +1766,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <button id="th-btn-studio" class="th-btn" onclick="setTheme('studio')" title="Studio">🎛️ STUDIO</button>
   </div>
 
-  <!-- DEVICE INFO BAR – admin only, fixed bottom -->
-  <div id="device-info" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;flex-direction:row;justify-content:flex-end;align-items:center;gap:18px;padding:5px 20px 5px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.92);border-top:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);">
-    <span id="dev-battery" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">🔋 —</span>
-    <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
-    <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
-  </div>
 
 </div>
 
@@ -1831,7 +1832,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='block';
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='flex';
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='inline-block';
-    const deviceInfo=document.getElementById('device-info');if(deviceInfo)deviceInfo.style.display='flex';
     const themeWrap=document.getElementById('theme-wrap');if(themeWrap)themeWrap.style.display='flex';
     populateTextEdits();
     if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
@@ -1864,7 +1864,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='none';
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='none';
     const countdownInputWrap=document.getElementById('countdown-input-wrap');if(countdownInputWrap)countdownInputWrap.style.display='none';
-    const deviceInfo2=document.getElementById('device-info');if(deviceInfo2)deviceInfo2.style.display='none';
     const themeWrap2=document.getElementById('theme-wrap');if(themeWrap2)themeWrap2.style.display='none';
     const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();
   }
@@ -2362,7 +2361,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.57';
+  const CURRENT_VERSION = '2.10.59';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
