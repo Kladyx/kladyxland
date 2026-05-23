@@ -280,7 +280,8 @@
     /* Hvězdičky */
     /* VELKÝ ON AIR BANNER */
     .onair-banner{display:none;justify-content:center;align-items:center;gap:10px;padding:10px 0;background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,200,100,.1));border-bottom:2px solid rgba(0,255,136,.5);animation:bannerPulse 1.5s ease-in-out infinite;}
-    .onair-banner.live{display:flex;}
+    body.edit-mode .onair-banner.live{display:flex;}
+    body:not(.edit-mode) .onair-banner{display:none!important;}
     .onair-banner-dot{width:14px;height:14px;border-radius:50%;background:#00ff88;box-shadow:0 0 12px #00ff88,0 0 24px rgba(0,255,136,.6);animation:onair-blink-green 1.1s ease-in-out infinite;}
     .onair-banner-text{font-family:"Orbitron",monospace;font-size:1rem;font-weight:900;letter-spacing:.25em;color:#00ff88;text-shadow:0 0 12px rgba(0,255,136,.8),0 0 24px rgba(0,255,136,.4);}
     @keyframes bannerPulse{0%,100%{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,200,100,.1));}50%{background:linear-gradient(135deg,rgba(0,255,136,.28),rgba(0,200,100,.2));}}
@@ -678,10 +679,7 @@
         fixedDot.classList.add('live'); fixedText.classList.add('live');
         fixedText.textContent = 'ON AIR';
         if (liveLinkBox) liveLinkBox.classList.add('live');
-        if (onairBanner) {
-          const isAdmin = document.body.classList.contains('edit-mode');
-          if(isAdmin) onairBanner.classList.add('live');
-        }
+        if (onairBanner) onairBanner.classList.add('live');
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow='0 0 25px rgba(0,255,100,.7)'; }
         if (watchText) watchText.textContent = '▶ SLEDOVAT ŽIVĚ';
         const embedBox = document.getElementById('mixcloud-embed-box');
@@ -2560,7 +2558,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.6';
+  const CURRENT_VERSION = '2.11.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
