@@ -1818,6 +1818,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const obsStatus=document.getElementById('obs-ws-status');if(obsStatus)obsStatus.style.display='inline';
     const obsPwRow=document.getElementById('obs-pw-row');if(obsPwRow){obsPwRow.style.display='flex';const inp=document.getElementById('obs-pw-input');if(inp)inp.value=localStorage.getItem('kladyx_obs_pw')||'';}
     const obsDbg=document.getElementById('obs-debug-wrap');if(obsDbg)obsDbg.style.display='block';
+    const videoUrlRow=document.getElementById('video-url-row');if(videoUrlRow)videoUrlRow.style.display='flex';
     // Admin databázové odkazy
     const dbRow=document.getElementById('admin-db-row');if(dbRow)dbRow.style.display='flex';
     // Zobrazit admin panel pro oznámení + tlačítka smazat
@@ -1849,6 +1850,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const obsStatus2=document.getElementById('obs-ws-status');if(obsStatus2)obsStatus2.style.display='none';
     const obsPwRow2=document.getElementById('obs-pw-row');if(obsPwRow2)obsPwRow2.style.display='none';
     const obsDbg2=document.getElementById('obs-debug-wrap');if(obsDbg2)obsDbg2.style.display='none';
+    const videoUrlRow2=document.getElementById('video-url-row');if(videoUrlRow2)videoUrlRow2.style.display='none';
     // Admin databázové odkazy
     const dbRow=document.getElementById('admin-db-row');if(dbRow)dbRow.style.display='none';
     const annAdmin=document.getElementById('announce-admin');if(annAdmin)annAdmin.style.display='none';
@@ -2354,7 +2356,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.52';
+  const CURRENT_VERSION = '2.10.53';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
