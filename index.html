@@ -857,24 +857,10 @@
       onValue(ref(db, 'tapoDb/obsPassword'), snap => {
         if (snap.exists() && snap.val()) {
           const pw = snap.val();
-          const local = localStorage.getItem('kladyx_obs_pw');
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
           if (inp) inp.value = pw;
-          // Pulzovat tlačítko jen když přišla změna ze sync (ne vlastní uložení)
-          if (local !== pw) {
-            const btn = document.getElementById('obs-save-btn');
-            if (btn) {
-              btn.classList.add('obs-sync-pulse');
-              btn.textContent = '✅ SYNC';
-              setTimeout(()=>{ btn.classList.remove('obs-sync-pulse'); btn.textContent='💾 SYNC'; }, 3600);
-            }
-            // Reconnect OBS jen pokud už bylo spojení aktivní na tomto zařízení
-            if (_obsConnected) {
-              if (_obsWs) { _obsWs.onclose = null; _obsWs.close(); _obsWs = null; }
-              obsConnect();
-            }
-          }
+          // Nic dalšího - obsConnect a pulzování řeší jen vlastní uložení
         }
       });
     } catch(e) {}
@@ -2296,7 +2282,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.10.44';
+  const CURRENT_VERSION = '2.10.45';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
