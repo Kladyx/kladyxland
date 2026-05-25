@@ -994,9 +994,8 @@
       if (video) {
         const source = video.querySelector('source');
         if (source) {
-          source.src = url + '?t=' + Date.now(); // cache-bust s časem
+          source.src = url; // Nastav nový src
         }
-        video.load(); // RELOAD video element
       }
     };
 
