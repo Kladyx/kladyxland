@@ -987,19 +987,6 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
-    // Funkce na aktualizaci video elementu
-    window.updateVideoElement = function(url) {
-      if (!url) return;
-      const video = document.getElementById('main-video');
-      if (video) {
-        const source = video.querySelector('source');
-        if (source) {
-          source.src = url + '?t=' + Date.now(); // cache-bust s časem
-        }
-        video.load(); // RELOAD video element
-      }
-    };
-
     window.saveVideoUrl = function() {
       const url = document.getElementById('video-url-input').value.trim();
       if (!url) {
@@ -1008,9 +995,6 @@
       }
       try {
         set(ref(db, 'config/videoUrl'), url).then(() => {
-          // Ihned aktualizuj video element
-          updateVideoElement(url);
-          
           const btn = document.getElementById('video-save-btn');
           if (btn) {
             btn.style.background = 'rgba(100,200,255,.25)';
@@ -1032,8 +1016,6 @@
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
-          // Také aktualizuj video element
-          updateVideoElement(url);
         }
       });
     } catch(e) {}
@@ -1716,18 +1698,15 @@
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
-        <div id="video-url-row" class="edit-only" style="display:none;margin-top:8px;padding:8px;background:rgba(0,100,200,.1);border:1px solid rgba(0,200,255,.3);border-radius:3px;align-items:center;gap:6px;flex-wrap:wrap;">
-          <label style="font-family:'Orbitron',monospace;font-size:.65rem;color:#00ffff;text-transform:uppercase;letter-spacing:.05em;flex-basis:100%;">🎬 Změna videa:</label>
+        <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
           <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
-            <input id="video-url-input" type="text" placeholder="Vložte URL z Firebase Storage (https://firebasestorage...)..."
-              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.95);border:1px solid rgba(100,200,255,.35);color:#cce5ff;padding:6px 10px;border-radius:2px;outline:none;width:100%;max-width:100%;transition:border-color 0.3s;"
-              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"
-              onfocus="this.style.borderColor='rgba(100,255,200,.6)'"
-              onblur="this.style.borderColor='rgba(100,200,255,.35)'"/>
+            <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
+              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
+              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
           </div>
           <button id="video-save-btn" onclick="window.saveVideoUrl()"
-            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,200,150,.15);border:1px solid rgba(100,255,150,.35);color:#00ff99;padding:6px 12px;cursor:pointer;border-radius:2px;transition:all 0.3s;white-space:nowrap;font-weight:bold;">🎬 ULOŽ</button>
-          <span id="video-url-saved" style="display:none;font-size:.65rem;color:#00ff99;font-family:'Orbitron',monospace;font-weight:bold;">✓ Uloženo!</span>
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
+          <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
