@@ -987,18 +987,6 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
-    // Funkce na aktualizaci video elementu
-    window.updateVideoElement = function(url) {
-      if (!url) return;
-      const video = document.getElementById('main-video');
-      if (video) {
-        const source = video.querySelector('source');
-        if (source) {
-          source.src = url; // Nastav nový src
-        }
-      }
-    };
-
     window.saveVideoUrl = function() {
       const url = document.getElementById('video-url-input').value.trim();
       if (!url) {
@@ -1007,9 +995,6 @@
       }
       try {
         set(ref(db, 'config/videoUrl'), url).then(() => {
-          // Ihned aktualizuj video element
-          updateVideoElement(url);
-          
           const btn = document.getElementById('video-save-btn');
           if (btn) {
             btn.style.background = 'rgba(100,200,255,.25)';
@@ -1031,8 +1016,6 @@
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
-          // Také aktualizuj video element
-          updateVideoElement(url);
         }
       });
     } catch(e) {}
