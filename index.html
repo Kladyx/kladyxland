@@ -1073,14 +1073,16 @@
       }
     };
     // Načíst aktuální video URL z Firebase
+    const HARDCODED_VIDEO = 'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/video_loop_muted.mp4?alt=media&token=8f89f8e7-da79-4f38-88b6-3999f90dd6b9';
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
-        if (snap.exists()) {
+        if (snap.exists() && snap.val()) {
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
-          // Také aktualizuj video element
-          updateVideoElement(url);
+          // Použij URL z Firebase jen pokud je to MP4
+          const validVideo = url && (url.includes('.mp4') || url.includes('video/mp4'));
+          if (validVideo) updateVideoElement(url);
         }
       });
     } catch(e) {}
@@ -2606,7 +2608,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.1';
+  const CURRENT_VERSION = '2.12.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
