@@ -1012,10 +1012,16 @@
     // Načíst aktuální video URL z Firebase
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
-        if (snap.exists()) {
+        if (snap.exists() && snap.val()) {
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
+          // Aktualizovat video element
+          const v = document.getElementById('main-video');
+          if (v) {
+            const source = v.querySelector('source');
+            if (source) { source.src = url; v.load(); }
+          }
         }
       });
     } catch(e) {}
@@ -1630,24 +1636,6 @@
         <script>
         // Firebase video loop
         var v = document.getElementById('main-video');
-        // Auto-load video URL z Firebase
-        try {
-          onValue(ref(db, 'config/videoUrl'), snap => {
-            if (snap.exists() && snap.val()) {
-              const url = snap.val();
-              const source = v.querySelector('source');
-              if (source) {
-                source.src = url;
-                v.load();
-              }
-            }
-          });
-        } catch(e) {}
-        // Fallback: načti i z hardcoded src pokud Firebase není
-        if (v && v.src === '') {
-          const source = v.querySelector('source');
-          if (source && source.src) v.load();
-        }
         if(v) {
           v.addEventListener('ended', function() {
             v.currentTime = 0;
