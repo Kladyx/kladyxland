@@ -833,6 +833,53 @@
       try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
       set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
     };
+
+    window.uploadThemeBg = async function(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const status = document.getElementById('th-upload-status');
+      if (status) { status.style.display = 'block'; status.textContent = '⏳ Komprimuji...'; }
+      try {
+        // Komprese přes Canvas — max 1920px, kvalita 0.82
+        const compressed = await new Promise((resolve, reject) => {
+          const img = new Image();
+          const reader = new FileReader();
+          reader.onload = e => { img.src = e.target.result; };
+          img.onload = () => {
+            const MAX = 1920;
+            let w = img.width, h = img.height;
+            if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+            if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(blob => blob ? resolve(blob) : reject('canvas fail'), 'image/jpeg', 0.82);
+          };
+          img.onerror = reject;
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        if (status) status.textContent = '⬆ Nahrávám...';
+        const ts = Date.now();
+        const sRef = window.storageRef(window.storage, 'themes/' + ts + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_') + '.jpg');
+        const task = window.uploadBytesResumable(sRef, compressed, { contentType: 'image/jpeg' });
+        task.on('state_changed',
+          snap => { const pct = Math.round(snap.bytesTransferred/snap.totalBytes*100); if(status) status.textContent = '⬆ ' + pct + '%'; },
+          err => { if(status){status.style.color='#ff4466';status.textContent='❌ Chyba: '+err.message;} },
+          async () => {
+            const url = await window.getDownloadURL(task.snapshot.ref);
+            const name = file.name.replace(/\.[^.]+$/,'').substring(0,20) || 'BG';
+            try { const a = window.firebaseAuth; if(a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
+            await push(ref(db,'themes/custom'), { url, name });
+            window.applyCustomBg(url);
+            if(status){ status.style.color='#00ff88'; status.textContent='✅ Nahráno a použito!'; setTimeout(()=>{status.style.display='none';},3000); }
+            input.value='';
+          }
+        );
+      } catch(e) {
+        if(status){ status.style.color='#ff4466'; status.textContent='❌ '+((e&&e.message)||e); }
+      }
+    };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
       if (window._isLive) {
@@ -987,6 +1034,19 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
+    // Funkce na aktualizaci video elementu
+    window.updateVideoElement = function(url) {
+      if (!url) return;
+      const video = document.getElementById('main-video');
+      if (video) {
+        const source = video.querySelector('source');
+        if (source) {
+          source.src = url + '?t=' + Date.now(); // cache-bust s časem
+        }
+        video.load(); // RELOAD video element
+      }
+    };
+
     window.saveVideoUrl = function() {
       const url = document.getElementById('video-url-input').value.trim();
       if (!url) {
@@ -995,6 +1055,9 @@
       }
       try {
         set(ref(db, 'config/videoUrl'), url).then(() => {
+          // Ihned aktualizuj video element
+          updateVideoElement(url);
+          
           const btn = document.getElementById('video-save-btn');
           if (btn) {
             btn.style.background = 'rgba(100,200,255,.25)';
@@ -1016,6 +1079,8 @@
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
+          // Také aktualizuj video element
+          updateVideoElement(url);
         }
       });
     } catch(e) {}
@@ -1624,37 +1689,9 @@
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
       <div id="video-embed-box" style="width:100%;margin:6px 0;border-radius:6px;overflow:hidden;background:rgba(255,30,0,.05);border:2px solid rgba(255,60,0,.4);">
-        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;">
-          <source src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/gemini_generated_video_87f161e2.mp4?alt=media&token=006a59d7-8ab4-4758-be20-2f1864801da6" type="video/mp4">
+        <video id="main-video" width="100%" height="auto" autoplay muted loop playsinline webkit-playsinline preload="auto" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;">
+          <source src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/video_loop_muted.mp4?alt=media&token=8f89f8e7-da79-4f38-88b6-3999f90dd6b9" type="video/mp4">
         </video>
-        <script>
-        // Firebase video loop
-        var v = document.getElementById('main-video');
-        // Auto-load video URL z Firebase
-        try {
-          onValue(ref(db, 'config/videoUrl'), snap => {
-            if (snap.exists() && snap.val()) {
-              const url = snap.val();
-              const source = v.querySelector('source');
-              if (source) {
-                source.src = url;
-                v.load();
-              }
-            }
-          });
-        } catch(e) {}
-        // Fallback: načti i z hardcoded src pokud Firebase není
-        if (v && v.src === '') {
-          const source = v.querySelector('source');
-          if (source && source.src) v.load();
-        }
-        if(v) {
-          v.addEventListener('ended', function() {
-            v.currentTime = 0;
-            v.play().catch(function(){});
-          });
-        }
-        </script>
         <div style="padding:8px;font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;text-align:center;">🎬 KLADYXLAND BROADCAST</div>
       </div>
 
@@ -1698,15 +1735,18 @@
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
-        <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
+        <div id="video-url-row" class="edit-only" style="display:none;margin-top:8px;padding:8px;background:rgba(0,100,200,.1);border:1px solid rgba(0,200,255,.3);border-radius:3px;align-items:center;gap:6px;flex-wrap:wrap;">
+          <label style="font-family:'Orbitron',monospace;font-size:.65rem;color:#00ffff;text-transform:uppercase;letter-spacing:.05em;flex-basis:100%;">🎬 Změna videa:</label>
           <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
-            <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
-              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
-              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
+            <input id="video-url-input" type="text" placeholder="Vložte URL z Firebase Storage (https://firebasestorage...)..."
+              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.95);border:1px solid rgba(100,200,255,.35);color:#cce5ff;padding:6px 10px;border-radius:2px;outline:none;width:100%;max-width:100%;transition:border-color 0.3s;"
+              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"
+              onfocus="this.style.borderColor='rgba(100,255,200,.6)'"
+              onblur="this.style.borderColor='rgba(100,200,255,.35)'"/>
           </div>
           <button id="video-save-btn" onclick="window.saveVideoUrl()"
-            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
-          <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,200,150,.15);border:1px solid rgba(100,255,150,.35);color:#00ff99;padding:6px 12px;cursor:pointer;border-radius:2px;transition:all 0.3s;white-space:nowrap;font-weight:bold;">🎬 ULOŽ</button>
+          <span id="video-url-saved" style="display:none;font-size:.65rem;color:#00ff99;font-family:'Orbitron',monospace;font-weight:bold;">✓ Uloženo!</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -1954,6 +1994,14 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <input class="th-url-input" id="th-new-name" type="text" placeholder="Název..." style="max-width:90px;">
       <button class="th-url-save" onclick="addCustomBg()">➕</button>
     </div>
+    <div class="th-row edit-only" style="margin-top:4px;display:none;">
+      <label style="display:flex;align-items:center;gap:7px;cursor:pointer;width:100%;">
+        <span style="font-family:'Orbitron',monospace;font-size:.42rem;color:rgba(0,245,255,.5);letter-spacing:.08em;white-space:nowrap;">📁 NAHRÁT OBRÁZEK</span>
+        <input type="file" id="th-file-input" accept="image/*" style="display:none;" onchange="uploadThemeBg(this)">
+        <span id="th-upload-btn" style="font-family:'Orbitron',monospace;font-size:.42rem;padding:4px 10px;background:rgba(0,100,60,.4);border:1px solid rgba(0,255,100,.35);color:#44ff88;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;">VYBRAT SOUBOR</span>
+      </label>
+    </div>
+    <div id="th-upload-status" class="edit-only" style="font-family:'Exo 2',sans-serif;font-size:.6rem;color:#00ff88;display:none;padding:4px 0;"></div>
 
     <!-- Seznam vlastních pozadí -->
     <div id="th-custom-list" style="display:flex;flex-direction:column;gap:5px;margin-top:4px;"></div>
@@ -2558,7 +2606,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.7';
+  const CURRENT_VERSION = '2.12.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
