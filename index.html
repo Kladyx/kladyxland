@@ -683,14 +683,7 @@
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow='0 0 25px rgba(0,255,100,.7)'; }
         if (watchText) watchText.textContent = '▶ SLEDOVAT ŽIVĚ';
         const embedBox = document.getElementById('mixcloud-embed-box');
-        if (embedBox) {
-          embedBox.style.display = 'block';
-          // Přenačti iframe vždy při zapnutí ON AIR – aby se načetl živý stream
-          const mcIframe = embedBox.querySelector('iframe');
-          if (mcIframe) {
-            mcIframe.src = 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2Flive%2F&_t=' + Date.now();
-          }
-        }
+        if (embedBox) embedBox.style.display = 'block';
         if (videoBox) videoBox.style.display = 'none'; // VIDEO SCHOVANÉ
         if (mixcloudBox) mixcloudBox.style.display = 'block';
         startLiveTimer();
@@ -1692,13 +1685,9 @@
         </a>
       </div>
 
-      <!-- MIXCLOUD LIVE ODKAZ -->
-      <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;">
-        <a href="https://www.mixcloud.com/live/kladyx/" target="_blank" rel="noopener"
-          style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 0;background:linear-gradient(135deg,rgba(0,200,100,.18),rgba(0,255,136,.08));border:1.5px solid rgba(0,255,136,.55);border-radius:8px;text-decoration:none;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:.15em;color:#00ff99;text-shadow:0 0 10px rgba(0,255,136,.7);box-shadow:0 0 14px rgba(0,255,100,.15);transition:all .3s;">
-          <span style="width:10px;height:10px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:mc-blink 1.2s ease-in-out infinite;flex-shrink:0;"></span>
-          ▶ POSLOUCHAT NA MIXCLOUD LIVE
-        </a>
+      <!-- MIXCLOUD LIVE EMBED -->
+      <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;border-radius:6px;overflow:hidden;">
+        <iframe width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2F" frameborder="0"></iframe>
       </div>
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
@@ -2620,7 +2609,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.3';
+  const CURRENT_VERSION = '2.12.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
