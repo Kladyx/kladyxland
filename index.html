@@ -1041,9 +1041,10 @@
       if (video) {
         const source = video.querySelector('source');
         if (source) {
-          source.src = url + '?t=' + Date.now(); // cache-bust s časem
+          source.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(); // cache-bust s časem
         }
         video.load(); // RELOAD video element
+        video.play().catch(() => {}); // Autoplay po reloadu
       }
     };
 
