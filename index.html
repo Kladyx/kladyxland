@@ -683,7 +683,14 @@
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow='0 0 25px rgba(0,255,100,.7)'; }
         if (watchText) watchText.textContent = '▶ SLEDOVAT ŽIVĚ';
         const embedBox = document.getElementById('mixcloud-embed-box');
-        if (embedBox) embedBox.style.display = 'block';
+        if (embedBox) {
+          embedBox.style.display = 'block';
+          // Přenačti iframe vždy při zapnutí ON AIR – aby se načetl živý stream
+          const mcIframe = embedBox.querySelector('iframe');
+          if (mcIframe) {
+            mcIframe.src = 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2Flive%2F&_t=' + Date.now();
+          }
+        }
         if (videoBox) videoBox.style.display = 'none'; // VIDEO SCHOVANÉ
         if (mixcloudBox) mixcloudBox.style.display = 'block';
         startLiveTimer();
@@ -1687,7 +1694,7 @@
 
       <!-- MIXCLOUD LIVE EMBED -->
       <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;border-radius:6px;overflow:hidden;">
-        <iframe width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2F" frameborder="0"></iframe>
+        <iframe id="mixcloud-live-iframe" width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Fkladyx%2Flive%2F" frameborder="0" allowtransparency></iframe>
       </div>
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
