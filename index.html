@@ -469,7 +469,8 @@
     .gs-btn.active-on{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);}
     .gs-btn.active-auto{background:rgba(255,200,0,.15);color:#ffc800;text-shadow:0 0 8px rgba(255,200,0,.6);}
     .gs-btn.active-off{background:rgba(100,100,120,.18);color:#aab;text-shadow:none;}
-    body.grayscale-on{filter:grayscale(1);transition:filter .5s;}
+    body.grayscale-on .control-bar, body.grayscale-on .nav, body.grayscale-on .sections, body.grayscale-on .card, body.grayscale-on nav, body.grayscale-on .cbtn, body.grayscale-on button{filter:grayscale(1);transition:filter .5s;}
+    body.grayscale-full{filter:grayscale(1);transition:filter .5s;}
   </style>
 
   <!-- Firebase: ON AIR + počítadlo návštěvníků + oznámení -->
@@ -1144,7 +1145,7 @@
       if (el) { const n = snap.exists() ? Object.keys(snap.val()).length : 0; el.textContent = n + ' CD'; }
     });
     // Načti uložený režim z localStorage (fallback pokud Firebase ještě nenačetl)
-    window._grayscaleMode = localStorage.getItem('gs-mode') || 'auto'; // auto | on | off
+    window._grayscaleMode = localStorage.getItem('gs-mode') || 'auto'; // auto | on | off | full
 
     function isNightTime() {
       const h = new Date().getHours();
@@ -1152,9 +1153,12 @@
     }
     function applyGrayscale() {
       const mode = window._grayscaleMode;
-      const on = mode === 'on' || (mode === 'auto' && isNightTime());
+      const isNight = isNightTime();
+      const on = mode === 'on' || (mode === 'auto' && isNight);
+      const full = mode === 'full' || (mode === 'auto' && isNight);
       document.body.classList.toggle('grayscale-on', on);
-      ['on','auto','off'].forEach(m => {
+      document.body.classList.toggle('grayscale-full', full);
+      ['on','full','auto','off'].forEach(m => {
         const btn = document.getElementById('gs-btn-' + m);
         if (btn) { btn.className = 'gs-btn' + (m === mode ? ' active-' + m : ''); }
       });
@@ -1164,24 +1168,28 @@
         const h = new Date().getHours(), mm = String(new Date().getMinutes()).padStart(2,'0');
         const nowStr = h + ':' + mm;
         let txt = '';
-        if (mode === 'auto') {
-          txt = on
-            ? '🌙 ČB · auto (' + nowStr + ', přepne v 06:00)'
-            : '☀ BAR · auto (' + nowStr + ', přepne v 22:00)';
+        if (mode === 'full') {
+          txt = '⬛ ČB+ · vše černobílé';
+        } else if (mode === 'auto') {
+          txt = isNight
+            ? '🌙 ČB+ · auto (vše černobílé, přepne v 06:00)'
+            : '☀ BAR · auto (vše barevné, přepne v 22:00)';
         } else if (mode === 'on') {
-          txt = '🌙 ČB · ručně';
+          txt = '🌙 ČB · jen střed';
         } else {
-          txt = '☀ BAR · ručně';
+          txt = '☀ BAR · vše barevné';
         }
         stEl.textContent = txt;
       }
     }
     onValue(grayscaleRef, snap => {
       const val = snap.val();
-      // null = auto, true = on, false = off
+      // null = auto, true = on, false = off, 'full' = full grayscale
       // Pokud Firebase vrátí null, vždy auto bez ohledu na localStorage
       if (val === null || val === undefined) {
         window._grayscaleMode = 'auto';
+      } else if (val === 'full') {
+        window._grayscaleMode = 'full';
       } else {
         window._grayscaleMode = (val === true) ? 'on' : 'off';
       }
@@ -1201,6 +1209,8 @@
       // Synchronizuj do Firebase (best-effort)
       if (mode === 'auto') {
         remove(grayscaleRef).catch(e=>console.error(e));
+      } else if (mode === 'full') {
+        set(grayscaleRef, 'full').catch(e=>console.error(e));
       } else {
         set(grayscaleRef, mode === 'on').catch(e=>console.error(e));
       }
@@ -1541,7 +1551,8 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
             <div class="gs-switch">
-              <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Vždy černobílá">ČB</button>
+              <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Jen střed černobílá">ČB</button>
+              <button id="gs-btn-full" class="gs-btn" onclick="setGrayscale('full')" title="Vše černobílá">ČB+</button>
               <button id="gs-btn-auto" class="gs-btn active-auto" onclick="setGrayscale('auto')" title="Auto: ČB v noci, barevná ve dne">AUTO</button>
               <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
             </div>
