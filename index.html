@@ -1623,9 +1623,40 @@
         </a>
       </div>
 
-      <!-- MIXCLOUD LIVE EMBED -->
-      <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;border-radius:6px;overflow:hidden;">
-        <iframe width="100%" height="60" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=0&feed=%2Flive%2Fkladyx%2F" frameborder="0"></iframe>
+      <!-- MIXCLOUD LIVE CARD -->
+      <div id="mixcloud-embed-box" style="display:none;width:100%;margin:6px 0;">
+        <a href="https://www.mixcloud.com/live/kladyx/" target="_blank" id="mc-live-card" style="
+          display:flex;align-items:center;gap:14px;
+          background:linear-gradient(135deg,rgba(0,10,30,.95),rgba(10,0,40,.9));
+          border:1.5px solid rgba(100,80,255,.6);
+          border-radius:6px;padding:12px 16px;
+          text-decoration:none;
+          box-shadow:0 0 18px rgba(100,80,255,.3);
+          animation:mcCardGlow 1.8s ease-in-out infinite;
+          cursor:pointer;position:relative;overflow:hidden;">
+          <!-- shimmer line -->
+          <div style="position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);animation:mcShimmer 2.5s ease-in-out infinite;pointer-events:none;"></div>
+          <!-- Mixcloud logo SVG -->
+          <div style="flex-shrink:0;width:38px;height:38px;background:rgba(100,80,255,.2);border:1.5px solid rgba(100,80,255,.5);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(100,80,255,.4);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="rgba(160,140,255,.9)"/>
+              <circle cx="12" cy="12" r="10" stroke="rgba(160,140,255,.5)" stroke-width="1" fill="none"/>
+              <path d="M8 9l8 3-8 3V9z" fill="rgba(180,160,255,1)"/>
+            </svg>
+          </div>
+          <!-- texts -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.2em;color:rgba(160,140,255,.7);text-transform:uppercase;margin-bottom:3px;">M—XCLOUD LIVE</div>
+            <div style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;letter-spacing:.12em;color:#c8b8ff;text-shadow:0 0 10px rgba(160,140,255,.6);">🔴 POSLOUCHEJ ŽIVĚ</div>
+          </div>
+          <!-- arrow -->
+          <div style="flex-shrink:0;font-family:'Orbitron',monospace;font-size:1rem;color:rgba(160,140,255,.7);animation:mcArrow .9s ease-in-out infinite alternate;">▶</div>
+        </a>
+        <style>
+          @keyframes mcCardGlow{0%,100%{box-shadow:0 0 14px rgba(100,80,255,.3);border-color:rgba(100,80,255,.5);}50%{box-shadow:0 0 28px rgba(140,100,255,.65);border-color:rgba(160,130,255,.85);}}
+          @keyframes mcShimmer{0%{left:-100%;}100%{left:150%;}}
+          @keyframes mcArrow{from{transform:translateX(0);}to{transform:translateX(5px);}}
+        </style>
       </div>
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
