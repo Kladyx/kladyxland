@@ -2744,7 +2744,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       // Znovu zkontrolovat po 2s – auto-login mohl proběhnout mezitím
       if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
       if (document.body.classList.contains('edit-mode')) return;
-      fetch('https://ntfy.sh/kladyx_dark_side_notify', {
+      fetch('https://ntfy.sh/kladyxland-visitors', {
         method: 'POST',
         body: '👤 Nový návštěvník na webu KLADYXLAND!'
       }).catch(() => {});
