@@ -2548,31 +2548,39 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   let bgAudioCtx = null;
   let bgSource = null;
   let bgBuffer = null;
-  let bgLoaded = false;
+  let bgLoading = false;
+  let bgPendingPlay = false;
 
-  function loadBgMusic(){
-    if(bgLoaded) return;
-    bgLoaded = true;
-    bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function loadBgMusic(callback){
+    if(bgBuffer){ if(callback) callback(); return; }
+    if(!bgAudioCtx) bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(bgLoading){ bgPendingPlay = true; return; }
+    bgLoading = true;
     fetch('alec_koff-carnaval-484622.mp3')
       .then(r => r.arrayBuffer())
       .then(buf => bgAudioCtx.decodeAudioData(buf))
-      .then(decoded => { bgBuffer = decoded; })
-      .catch(e => { console.warn('Podkres nelze načíst:', e); bgLoaded = false; });
+      .then(decoded => {
+        bgBuffer = decoded;
+        bgLoading = false;
+        if(callback) callback();
+      })
+      .catch(e => { console.warn('Podkres nelze načíst:', e); bgLoading = false; });
   }
 
   function startBg(){
-    if(!bgBuffer || !bgAudioCtx) return;
-    if(bgAudioCtx.state === 'suspended') bgAudioCtx.resume();
-    stopBg();
-    bgSource = bgAudioCtx.createBufferSource();
-    bgSource.buffer = bgBuffer;
-    bgSource.loop = true;
-    const gain = bgAudioCtx.createGain();
-    gain.gain.value = 0.35;
-    bgSource.connect(gain);
-    gain.connect(bgAudioCtx.destination);
-    bgSource.start(0);
+    loadBgMusic(function(){
+      if(!bgBuffer || !bgAudioCtx) return;
+      if(bgAudioCtx.state === 'suspended') bgAudioCtx.resume();
+      stopBg();
+      bgSource = bgAudioCtx.createBufferSource();
+      bgSource.buffer = bgBuffer;
+      bgSource.loop = true;
+      const gain = bgAudioCtx.createGain();
+      gain.gain.value = 0.35;
+      bgSource.connect(gain);
+      gain.connect(bgAudioCtx.destination);
+      bgSource.start(0);
+    });
   }
 
   function stopBg(){
@@ -2581,13 +2589,12 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
   // Uvítací hláška
   function playGreeting(){
-    loadBgMusic();
     const audio = document.getElementById('greeting-audio');
     const btn = document.getElementById('speaker-btn');
     if(audio.paused){
       audio.currentTime = 0;
-      startBg();
       audio.play();
+      startBg();
       btn.classList.add('playing');
       btn.textContent = '🔊';
     } else {
@@ -2618,12 +2625,12 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   }
 
   function playGreeting3(){
-    loadBgMusic();
     const audio = document.getElementById('greeting-audio3');
     const btn = document.getElementById('speaker-btn3');
     if(audio.paused){
       audio.currentTime = 0;
-      audio.play().then(() => { startBg(); });
+      audio.play();
+      startBg();
       btn.classList.add('playing');
       btn.textContent = '🔊';
     } else {
@@ -2663,7 +2670,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.6kl';
+  const CURRENT_VERSION = '2.12.8kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
