@@ -2670,7 +2670,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.8kl';
+  const CURRENT_VERSION = '2.12.9kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -2842,6 +2842,12 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         body: '👤 Nový návštěvník na webu KLADYXLAND!'
       }).catch(() => {});
     }, 2000);
+  });
+
+  // Předem načti podkres aby byl připravený okamžitě
+  window.addEventListener('load', function() {
+    if(!bgAudioCtx) bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    loadBgMusic();
   });
 </script>
 </body>
