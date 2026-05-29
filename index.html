@@ -2586,7 +2586,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const btn = document.getElementById('speaker-btn');
     if(audio.paused){
       audio.currentTime = 0;
-      audio.play().then(() => { startBg(); });
+      startBg();
+      audio.play();
       btn.classList.add('playing');
       btn.textContent = '🔊';
     } else {
@@ -2662,7 +2663,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.5kl';
+  const CURRENT_VERSION = '2.12.6kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
