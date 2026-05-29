@@ -1014,6 +1014,15 @@
         console.error('Video URL error:', e);
       }
     };
+    window.clearVideoUrl = function() {
+      try {
+        set(ref(db, 'config/videoUrl'), '').then(() => {
+          document.getElementById('video-url-input').value = '';
+          const saved = document.getElementById('video-url-saved');
+          if (saved) { saved.textContent = '✓ Smazáno'; saved.style.color = '#f87171'; saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; saved.textContent = '✓ Uloženo'; saved.style.color = '#60a5fa'; }, 2000); }
+        }).catch(e => { console.error('Video URL clear error:', e); });
+      } catch(e) { console.error('Video URL clear error:', e); }
+    };
     // Načíst aktuální video URL z Firebase
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
@@ -1740,6 +1749,8 @@
           </div>
           <button id="video-save-btn" onclick="window.saveVideoUrl()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
+          <button id="video-clear-btn" onclick="window.clearVideoUrl()"
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(200,50,50,.15);border:1px solid rgba(255,100,100,.35);color:#f87171;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🗑 VYMAŽ</button>
           <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
@@ -2592,7 +2603,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.11.7';
+  const CURRENT_VERSION = '2.12.kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
