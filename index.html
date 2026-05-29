@@ -2544,27 +2544,59 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     speedtest();
   })();
 
+  // Web Audio Context pro podkres
+  let bgAudioCtx = null;
+  let bgSource = null;
+  let bgBuffer = null;
+  let bgLoaded = false;
+
+  function loadBgMusic(){
+    if(bgLoaded) return;
+    bgLoaded = true;
+    bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    fetch('alec_koff-carnaval-484622.mp3')
+      .then(r => r.arrayBuffer())
+      .then(buf => bgAudioCtx.decodeAudioData(buf))
+      .then(decoded => { bgBuffer = decoded; })
+      .catch(e => { console.warn('Podkres nelze načíst:', e); bgLoaded = false; });
+  }
+
+  function startBg(){
+    if(!bgBuffer || !bgAudioCtx) return;
+    if(bgAudioCtx.state === 'suspended') bgAudioCtx.resume();
+    stopBg();
+    bgSource = bgAudioCtx.createBufferSource();
+    bgSource.buffer = bgBuffer;
+    bgSource.loop = true;
+    const gain = bgAudioCtx.createGain();
+    gain.gain.value = 0.35;
+    bgSource.connect(gain);
+    gain.connect(bgAudioCtx.destination);
+    bgSource.start(0);
+  }
+
+  function stopBg(){
+    if(bgSource){ try{ bgSource.stop(); }catch(e){} bgSource = null; }
+  }
+
   // Uvítací hláška
   function playGreeting(){
+    loadBgMusic();
     const audio = document.getElementById('greeting-audio');
-    const bg = document.getElementById('bg-music-13');
     const btn = document.getElementById('speaker-btn');
     if(audio.paused){
       audio.currentTime = 0;
-      bg.currentTime = 0;
-      audio.play();
-      bg.play();
+      audio.play().then(() => { startBg(); });
       btn.classList.add('playing');
       btn.textContent = '🔊';
     } else {
       audio.pause();
       audio.currentTime = 0;
-      bg.pause();
-      bg.currentTime = 0;
+      stopBg();
       btn.classList.remove('playing');
       btn.textContent = '📢';
     }
-    audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; bg.pause(); bg.currentTime = 0; };
+    audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; stopBg(); };
   }
 
   function playGreeting2(){
@@ -2585,25 +2617,22 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   }
 
   function playGreeting3(){
+    loadBgMusic();
     const audio = document.getElementById('greeting-audio3');
-    const bg = document.getElementById('bg-music-13');
     const btn = document.getElementById('speaker-btn3');
     if(audio.paused){
       audio.currentTime = 0;
-      bg.currentTime = 0;
-      audio.play();
-      bg.play();
+      audio.play().then(() => { startBg(); });
       btn.classList.add('playing');
       btn.textContent = '🔊';
     } else {
       audio.pause();
       audio.currentTime = 0;
-      bg.pause();
-      bg.currentTime = 0;
+      stopBg();
       btn.classList.remove('playing');
       btn.textContent = '📢';
     }
-    audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; bg.pause(); bg.currentTime = 0; };
+    audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; stopBg(); };
   }
 
   function playGreeting4(){
@@ -2633,7 +2662,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.4kl';
+  const CURRENT_VERSION = '2.12.5kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
