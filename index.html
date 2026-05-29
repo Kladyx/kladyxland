@@ -2415,6 +2415,22 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }
   }
 
+  function loadArchivStats(){
+    fetch('https://api.mixcloud.com/kladyx/?metadata=1')
+      .then(r=>r.json())
+      .then(data=>{
+        const stats = document.getElementById('archiv-stats');
+        if(!stats) return;
+        const cc = data.cloudcast_count || 0;
+        const listeners = data.listener_count || 0;
+        stats.innerHTML = `
+          ${cc?'<span style="font-family:\'Orbitron\',monospace;font-size:.6rem;color:rgba(0,245,255,.6);background:rgba(0,245,255,.08);padding:4px 10px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">🎙 '+cc+' POŘADŮ</span>':''}
+          ${listeners?'<span style="font-family:\'Orbitron\',monospace;font-size:.6rem;color:rgba(0,245,255,.6);background:rgba(0,245,255,.08);padding:4px 10px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">👥 '+listeners.toLocaleString('cs-CZ')+' POSLUCHAČŮ</span>':''}
+        `;
+      })
+      .catch(()=>{});
+  }
+
   // ── GALERIE ─────────────────────────────────────────
   let galleryItems = [];
   let lightboxIndex = 0;
@@ -2787,7 +2803,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.13.1kl';
+  const CURRENT_VERSION = '2.13.2klUc';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
