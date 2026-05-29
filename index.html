@@ -207,6 +207,14 @@
       .broadcast-info{font-size:.42rem;}
     }
 
+    /* ARCHIV */
+    .archiv-item{display:flex;flex-direction:column;gap:4px;padding:12px 14px;margin-bottom:8px;background:rgba(0,10,30,.7);border:1px solid rgba(0,245,255,.15);border-radius:3px;transition:border-color .2s;}
+    .archiv-item:hover{border-color:rgba(0,245,255,.4);}
+    .archiv-item-name{font-family:'Orbitron',monospace;font-size:.68rem;color:#00f5ff;letter-spacing:.06em;text-decoration:none;}
+    .archiv-item-name:hover{text-shadow:0 0 8px #00f5ff;}
+    .archiv-item-meta{font-family:'Exo 2',sans-serif;font-size:.72rem;color:rgba(150,200,255,.6);display:flex;gap:12px;flex-wrap:wrap;}
+    .archiv-item-plays{color:rgba(0,245,255,.5);}
+
     /* CHAT */
     .chat-input-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;padding:12px;background:rgba(0,10,30,.6);border:1px solid rgba(0,245,255,.15);border-radius:4px;}
     .chat-input-wrap input,.chat-input-wrap textarea{background:rgba(0,10,40,.9);border:1px solid rgba(0,245,255,.3);color:#cce5ff;padding:8px 10px;border-radius:3px;font-family:'Exo 2',sans-serif;font-size:.85rem;outline:none;}
@@ -1578,6 +1586,7 @@
       <a href="#" class="nbtn" id="nb-hardware" onclick="show('hardware');return false;">Hardware</a>
       <a href="#" class="nbtn" id="nb-galerie" onclick="show('galerie');return false;">Galerie</a>
       <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;">Chat</a>
+      <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;">📻 Archiv</a>
     </div>
   </nav>
 
@@ -1922,6 +1931,20 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         </div>
         <div id="gallery-grid" class="gallery-grid"></div>
         <div class="gallery-empty" id="gallery-empty">Zatím žádné fotky ani videa</div>
+      </div>
+    </div>
+
+    <!-- ARCHIV -->
+    <div class="section" id="s-archiv">
+      <div class="content-wrap single">
+        <div class="stitle"><span>📻 ARCHIV VYSÍLÁNÍ</span></div>
+        <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;">⏳ NAČÍTÁM...</div>
+        <div id="archiv-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;"></div>
+        <div id="archiv-list" style="display:none;"></div>
+        <div id="archiv-empty" style="display:none;text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Žádné záznamy nenalezeny.</div>
+        <div id="archiv-more-wrap" style="display:none;text-align:center;margin-top:14px;">
+          <button id="archiv-more-btn" onclick="loadArchiv(true)" style="font-family:'Orbitron',monospace;font-size:.6rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;padding:8px 22px;cursor:pointer;border-radius:3px;letter-spacing:.1em;">⬇ NAČÍST DALŠÍ</button>
+        </div>
       </div>
     </div>
 
@@ -2296,6 +2319,100 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const nb=document.getElementById("nb-"+name);
     if(nb)nb.classList.add("on");
     document.querySelector(".sections").scrollIntoView({behavior:"smooth"});
+    if(name==='archiv' && !archivLoaded) loadArchiv(false);
+    if(name==='archiv') loadArchivStats();
+  }
+
+  // ── ARCHIV MIXCLOUD ─────────────────────────────────────────
+  let archivLoaded = false;
+  let archivNextUrl = null;
+
+  function formatDuration(sec){
+    if(!sec) return '';
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    if(h>0) return h+'h '+m+'m';
+    return m+'m '+String(s).padStart(2,'0')+'s';
+  }
+
+  function formatDate(str){
+    if(!str) return '';
+    const d = new Date(str);
+    return d.toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+
+  function loadArchiv(more){
+    const list = document.getElementById('archiv-list');
+    const loading = document.getElementById('archiv-loading');
+    const empty = document.getElementById('archiv-empty');
+    const moreWrap = document.getElementById('archiv-more-wrap');
+    const moreBtn = document.getElementById('archiv-more-btn');
+
+    if(!more){
+      loading.style.display='block';
+      list.style.display='none';
+      empty.style.display='none';
+      moreWrap.style.display='none';
+    } else {
+      moreBtn.textContent='⏳ NAČÍTÁM...';
+    }
+
+    const url = more && archivNextUrl ? archivNextUrl : 'https://api.mixcloud.com/kladyx/cloudcasts/?limit=10&metadata=1';
+
+    fetch(url)
+      .then(r=>r.json())
+      .then(data=>{
+        loading.style.display='none';
+        const items = data.data || [];
+        if(items.length===0 && !more){
+          empty.style.display='block';
+          return;
+        }
+        list.style.display='block';
+        items.forEach(item=>{
+          const div = document.createElement('div');
+          div.className='archiv-item';
+          const dur = item.audio_length ? formatDuration(item.audio_length) : '';
+          const date = formatDate(item.created_time);
+          const plays = item.play_count ? '▶ '+item.play_count.toLocaleString('cs-CZ') : '';
+          const embedKey = encodeURIComponent(item.key);
+          div.innerHTML=`
+            <div class="archiv-item-name" style="cursor:pointer;" onclick="toggleEmbed(this,'${embedKey}')">🎙 ${item.name}</div>
+            <div class="archiv-item-meta">
+              ${date?'<span>📅 '+date+'</span>':''}
+              ${dur?'<span>⏱ '+dur+'</span>':''}
+              ${plays?'<span class="archiv-item-plays">'+plays+'</span>':''}
+              <span style="color:rgba(0,245,255,.5);font-size:.65rem;">▶ PŘEHRÁT</span>
+            </div>
+            <div class="archiv-embed" style="display:none;margin-top:10px;"></div>`;
+          list.appendChild(div);
+        });
+        archivNextUrl = data.paging && data.paging.next ? data.paging.next : null;
+        archivLoaded = true;
+        moreWrap.style.display = archivNextUrl ? 'block' : 'none';
+        if(more) moreBtn.textContent='⬇ NAČÍST DALŠÍ';
+      })
+      .catch(()=>{
+        loading.style.display='none';
+        empty.style.display='block';
+        empty.textContent='⚠ Nepodařilo se načíst archiv.';
+      });
+  }
+
+  function toggleEmbed(nameEl, key){
+    const item = nameEl.closest('.archiv-item');
+    const embedDiv = item.querySelector('.archiv-embed');
+    const playSpan = item.querySelector('.archiv-item-meta span:last-child');
+    if(embedDiv.style.display==='none'){
+      embedDiv.style.display='block';
+      embedDiv.innerHTML=`<iframe width="100%" height="120" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&feed=${key}" frameborder="0" allow="autoplay" style="border-radius:3px;"></iframe>`;
+      if(playSpan) playSpan.textContent='■ ZAVŘÍT';
+    } else {
+      embedDiv.style.display='none';
+      embedDiv.innerHTML='';
+      if(playSpan) playSpan.textContent='▶ PŘEHRÁT';
+    }
   }
 
   // ── GALERIE ─────────────────────────────────────────
@@ -2670,7 +2787,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.12.9kl';
+  const CURRENT_VERSION = '2.13.1kl';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -2842,12 +2959,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         body: '👤 Nový návštěvník na webu KLADYXLAND!'
       }).catch(() => {});
     }, 2000);
-  });
-
-  // Předem načti podkres aby byl připravený okamžitě
-  window.addEventListener('load', function() {
-    if(!bgAudioCtx) bgAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    loadBgMusic();
   });
 </script>
 </body>
