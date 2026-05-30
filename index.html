@@ -479,6 +479,10 @@
     .gs-btn.active-off{background:rgba(100,100,120,.18);color:#aab;text-shadow:none;}
     body.grayscale-on .control-bar, body.grayscale-on .nav, body.grayscale-on .sections, body.grayscale-on .card, body.grayscale-on nav, body.grayscale-on .cbtn, body.grayscale-on button{filter:grayscale(1);transition:filter .5s;}
     body.grayscale-full{filter:grayscale(1);transition:filter .5s;}
+    /* BELL BUTTON – push notifikace */
+    #bell-btn{background:none;border:1px solid rgba(0,245,255,.35);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;position:relative;z-index:1;color:#fff;}
+    #bell-btn:hover{background:rgba(0,245,255,.12);box-shadow:0 0 10px rgba(0,245,255,.4);}
+    #bell-btn.bell-active{border-color:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5);}
   </style>
 
   <!-- Firebase: ON AIR + počítadlo návštěvníků + oznámení -->
@@ -722,6 +726,18 @@
       const mcTxt = document.getElementById('mc-status-text');
       if (mcDot) mcDot.classList.toggle('mc-live', state);
       if (mcTxt) { mcTxt.textContent = state ? 'LIVE' : 'OFFLINE'; mcTxt.classList.toggle('mc-live', state); }
+
+      // WEB PUSH – odeslat notifikaci při změně ON AIR stavu (pouze admin spouští)
+      if (document.body.classList.contains('edit-mode')) {
+        fetch('/.netlify/functions/send-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-push-secret': 'kladyx_push_2024_secret'
+          },
+          body: JSON.stringify({ live: state })
+        }).catch(e => console.warn('send-push error:', e));
+      }
     }
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
 
@@ -1517,17 +1533,65 @@
 <!-- HVĚZDIČKY (celá plocha) -->
 <div class="starfield" id="starfield"></div>
 
-<!-- Service Worker ODSTRANĚN - způsoboval cachování starých verzí -->
+<!-- Service Worker – Web Push notifikace (bez cache) -->
 <script>
-  // Odregistrace starého SW aby se vyčistil cache
+  // VAPID public key
+  window._VAPID_PUBLIC = 'BEkFRnGZ8va1-eiKFpEz6L4YoFOcG6Eae0WZHpdnIsHfVplw-pP85MMqeBPnTDNyf7lPvBT_HxXeCj4iZ-8fjrI';
+
   if ('serviceWorker' in navigator) {
+    // Odregistrace starých SW (cache cleanup)
     navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
+      regs.forEach(r => {
+        if (!r.active || !r.active.scriptURL.includes('sw.js')) r.unregister();
+      });
     });
     if ('caches' in window) {
       caches.keys().then(names => names.forEach(n => caches.delete(n)));
     }
+    // Registrace nového push SW
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      window._swReg = reg;
+      console.log('✅ Push SW zaregistrován');
+    }).catch(e => console.warn('SW reg failed:', e));
   }
+
+  // Pomocné funkce pro Web Push
+  function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
+  async function subscribeToPush() {
+    const btn = document.getElementById('bell-btn');
+    try {
+      if (!('Notification' in window)) { alert('Váš prohlížeč nepodporuje notifikace.'); return; }
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        if (btn) { btn.textContent = '🔕'; btn.title = 'Notifikace zakázány'; }
+        return;
+      }
+      const reg = window._swReg || await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8Array(window._VAPID_PUBLIC)
+      });
+      await fetch('/.netlify/functions/save-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub)
+      });
+      localStorage.setItem('kladyx_push_sub', '1');
+      if (btn) { btn.textContent = '🔔'; btn.title = 'Notifikace zapnuty ✅'; btn.classList.add('bell-active'); }
+      console.log('✅ Push subscription uložena');
+    } catch (e) {
+      console.warn('Push subscribe error:', e);
+      if (btn) { btn.textContent = '🔕'; btn.title = 'Chyba notifikací'; }
+    }
+  }
+
+  window.subscribeToPush = subscribeToPush;
 </script>
 
 <!-- PASSWORD MODAL -->
@@ -1586,8 +1650,10 @@
       <a href="#" class="nbtn" id="nb-hardware" onclick="show('hardware');return false;">Hardware</a>
       <a href="#" class="nbtn" id="nb-galerie" onclick="show('galerie');return false;">Galerie</a>
       <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;">Chat</a>
-      <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;">📻 Archiv</a>
+      <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;">📻 Archive Stream</a>
     </div>
+    <!-- BELL BTN – vpravo v nav, vždy viditelný -->
+    <button id="bell-btn" onclick="subscribeToPush()" title="Notifikace – upozornit mě když začne živé vysílání" style="position:absolute;top:10px;right:12px;z-index:210;">🔔</button>
   </nav>
 
   <!-- DEVICE INFO BAR – admin only, top -->
@@ -1832,6 +1898,7 @@
         <a href="#" class="cbtn" onclick="show('hardware');return false;">⚙ Hardware</a>
         <a href="#" class="cbtn" onclick="show('galerie');return false;">🖼 Galerie</a>
         <a href="#" class="cbtn" onclick="show('chat');return false;">💬 Chat</a>
+        <a href="#" class="cbtn" onclick="show('archiv');return false;">📻 Archive Stream</a>
       </div>
       <div class="ctrl-right">
         <div class="visitor-box">
@@ -1937,7 +2004,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <!-- ARCHIV -->
     <div class="section" id="s-archiv">
       <div class="content-wrap single">
-        <div class="stitle"><span>📻 ARCHIV VYSÍLÁNÍ</span></div>
+        <div class="stitle"><span>📻 ARCHIVE STREAM</span></div>
         <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;">⏳ NAČÍTÁM...</div>
         <div id="archiv-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;"></div>
         <div id="archiv-list" style="display:none;"></div>
@@ -2364,7 +2431,13 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       .then(r=>r.json())
       .then(data=>{
         loading.style.display='none';
-        const items = data.data || [];
+        if(!data || !Array.isArray(data.data)){
+          empty.style.display='block';
+          empty.textContent='⚠ Neplatná odpověď z Mixcloudu.';
+          console.error('Mixcloud API – neplatná odpověď:', data);
+          return;
+        }
+        const items = data.data;
         if(items.length===0 && !more){
           empty.style.display='block';
           return;
@@ -2384,6 +2457,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
               ${dur?'<span>⏱ '+dur+'</span>':''}
               ${plays?'<span class="archiv-item-plays">'+plays+'</span>':''}
               <span style="color:rgba(0,245,255,.5);font-size:.65rem;">▶ PŘEHRÁT</span>
+              <a href="https://www.mixcloud.com${item.key}" target="_blank" rel="noopener" style="font-family:'Orbitron',monospace;font-size:.55rem;color:rgba(255,160,50,.8);text-decoration:none;border:1px solid rgba(255,160,50,.3);padding:2px 7px;border-radius:2px;">🔗 NA MIXCLOUDU</a>
             </div>
             <div class="archiv-embed" style="display:none;margin-top:10px;"></div>`;
           list.appendChild(div);
@@ -2393,10 +2467,12 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         moreWrap.style.display = archivNextUrl ? 'block' : 'none';
         if(more) moreBtn.textContent='⬇ NAČÍST DALŠÍ';
       })
-      .catch(()=>{
+      .catch((e)=>{
         loading.style.display='none';
         empty.style.display='block';
         empty.textContent='⚠ Nepodařilo se načíst archiv.';
+        if(more) moreBtn.textContent='⬇ NAČÍST DALŠÍ';
+        console.error('Mixcloud API – chyba načtení:', e);
       });
   }
 
@@ -2406,7 +2482,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const playSpan = item.querySelector('.archiv-item-meta span:last-child');
     if(embedDiv.style.display==='none'){
       embedDiv.style.display='block';
-      embedDiv.innerHTML=`<iframe width="100%" height="120" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&feed=${key}" frameborder="0" allow="autoplay" style="border-radius:3px;"></iframe>`;
+      const feedKey = encodeURIComponent(decodeURIComponent(key));
+      embedDiv.innerHTML=`<iframe width="100%" height="120" src="https://www.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&feed=${feedKey}" frameborder="0" allow="autoplay" style="border-radius:3px;"></iframe>`;
       if(playSpan) playSpan.textContent='■ ZAVŘÍT';
     } else {
       embedDiv.style.display='none';
@@ -2415,20 +2492,25 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }
   }
 
+  let archivStatsLoaded = false;
   function loadArchivStats(){
-    fetch('https://api.mixcloud.com/kladyx/?metadata=1')
+    if(archivStatsLoaded) return;
+    archivStatsLoaded = true;
+    fetch('https://api.mixcloud.com/kladyx/')
       .then(r=>r.json())
       .then(data=>{
-        const stats = document.getElementById('archiv-stats');
-        if(!stats) return;
+        const statsBox = document.getElementById('archiv-stats');
+        if(!statsBox) return;
         const cc = data.cloudcast_count || 0;
-        const listeners = data.listener_count || 0;
-        stats.innerHTML = `
-          ${cc?'<span style="font-family:\'Orbitron\',monospace;font-size:.6rem;color:rgba(0,245,255,.6);background:rgba(0,245,255,.08);padding:4px 10px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">🎙 '+cc+' POŘADŮ</span>':''}
-          ${listeners?'<span style="font-family:\'Orbitron\',monospace;font-size:.6rem;color:rgba(0,245,255,.6);background:rgba(0,245,255,.08);padding:4px 10px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">👥 '+listeners.toLocaleString('cs-CZ')+' POSLUCHAČŮ</span>':''}
-        `;
+        const followers = data.follower_count || 0;
+        const following = data.following_count || 0;
+        statsBox.innerHTML = [
+          cc       ? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">🎙 ${cc} POŘADŮ</span>` : '',
+          followers? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">👥 ${followers.toLocaleString('cs-CZ')} FOLLOWERS</span>` : '',
+          following? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">➕ ${following} FOLLOWING</span>` : '',
+        ].join('');
       })
-      .catch(()=>{});
+      .catch((e)=>{ archivStatsLoaded = false; console.error('Mixcloud stats – chyba:', e); });
   }
 
   // ── GALERIE ─────────────────────────────────────────
@@ -2803,12 +2885,21 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.13.2klUc';
+  const CURRENT_VERSION = '2.14.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
     if(localStorage.getItem('kladyx_admin_uid') && !document.body.classList.contains('edit-mode')){
       enableEdit('edit');
+    }
+    // Bell-btn init – obnov stav z localStorage + zkontroluj Notification.permission
+    const bellBtn = document.getElementById('bell-btn');
+    if (bellBtn) {
+      if (localStorage.getItem('kladyx_push_sub') === '1' && Notification.permission === 'granted') {
+        bellBtn.textContent = '🔔'; bellBtn.title = 'Notifikace zapnuty ✅'; bellBtn.classList.add('bell-active');
+      } else if (Notification.permission === 'denied') {
+        bellBtn.textContent = '🔕'; bellBtn.title = 'Notifikace zakázány v prohlížeči';
+      }
     }
     const saved = localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp');
     if (!saved) return;
