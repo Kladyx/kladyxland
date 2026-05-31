@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="0"/>
+  <meta name="version" content="2.14.2"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -315,6 +315,30 @@
       animation:marquee-scroll 18s linear infinite;
     }
     @keyframes marquee-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-33.33%)} }
+
+    /* WEATHER WIDGET */
+    #weather-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(0,255,136,0.05) 100%);
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      color: #fff;
+      z-index: 100;
+      max-width: 140px;
+      box-shadow: 0 0 20px rgba(0,212,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: weather-pulse 3s ease-in-out infinite;
+    }
+    #weather-widget .weather-temp { font-size: 1.2rem; color: #00d4ff; font-weight: bold; margin-bottom: 6px; }
+    #weather-widget .weather-desc { color: #00ff88; font-size: 0.65rem; margin-bottom: 4px; }
+    #weather-widget .weather-meta { color: #889; font-size: 0.6rem; }
+    @keyframes weather-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(0,212,255,0.2); } 50% { box-shadow: 0 0 30px rgba(0,212,255,0.4); } }
+    @media (max-width: 680px) { #weather-widget { bottom: 10px; right: 10px; font-size: 0.65rem; padding: 10px 14px; } }
 
     .digi-clock {
       font-family:"Orbitron",monospace;
@@ -2885,7 +2909,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.14.0';
+  const CURRENT_VERSION = '2.14.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -3067,6 +3091,104 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       }).catch(() => {});
     }, 2000);
   });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // OPENWEATHERMAP API – POČASÍ DLE POLOHY NÁVŠTĚVNÍKA
+  // ═══════════════════════════════════════════════════════════════════════
+  (function() {
+    const WEATHER_API_KEY = '906495444f5c56bf4e39be939d731330';
+
+    function fetchWeatherByCoords(lat, lon) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=cs&appid=${WEATHER_API_KEY}`;
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          const widget = document.getElementById('weather-widget');
+          if (!widget || !data.main) return;
+          const temp = Math.round(data.main.temp);
+          const desc = data.weather[0].description;
+          const humidity = data.main.humidity;
+          const city = data.name || '';
+          document.getElementById('weather-temp').textContent = temp + '°C';
+          document.getElementById('weather-desc').textContent = desc;
+          document.getElementById('weather-meta').textContent = (city ? city + ' · ' : '') + 'Vlhkost: ' + humidity + '%';
+          widget.style.display = 'block';
+        })
+        .catch(e => console.warn('Weather API error:', e));
+    }
+
+    function fetchWeatherByCity(city, country) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&units=metric&lang=cs&appid=${WEATHER_API_KEY}`;
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          const widget = document.getElementById('weather-widget');
+          if (!widget || !data.main) return;
+          const temp = Math.round(data.main.temp);
+          const desc = data.weather[0].description;
+          const humidity = data.main.humidity;
+          document.getElementById('weather-temp').textContent = temp + '°C';
+          document.getElementById('weather-desc').textContent = desc;
+          document.getElementById('weather-meta').textContent = city + ' · Vlhkost: ' + humidity + '%';
+          widget.style.display = 'block';
+        })
+        .catch(e => console.warn('Weather fallback error:', e));
+    }
+
+    function updateWeather() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function(pos) {
+            fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+          },
+          function() {
+            // Poloha zamítnuta – fallback Praha
+            fetchWeatherByCity('Prague', 'CZ');
+          },
+          { timeout: 6000 }
+        );
+      } else {
+        fetchWeatherByCity('Prague', 'CZ');
+      }
+    }
+
+    // Inicializace
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateWeather);
+    } else {
+      updateWeather();
+    }
+
+    // Obnovit každých 10 minut
+    setInterval(updateWeather, 600000);
+  })();
 </script>
+<!-- WEATHER WIDGET -->
+<div id="weather-widget" style="display:none;">
+  <div class="weather-temp" id="weather-temp">—°C</div>
+  <div class="weather-desc" id="weather-desc">—</div>
+  <div class="weather-meta" id="weather-meta">—</div>
+</div>
+
+<!-- WELCOME BANNER -->
+<div id="welcome-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#0a0a2e 0%,#0d1b4b 50%,#0a0a2e 100%);border-top:2px solid #00d4ff;color:#00d4ff;text-align:center;padding:14px 20px;font-family:'Courier New',monospace;font-size:1.1rem;letter-spacing:2px;text-shadow:0 0 10px rgba(0,212,255,0.8);box-shadow:0 -4px 20px rgba(0,212,255,0.3);transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);transform:translateY(0);">
+  🛸 VÍTÁM TĚ NA KLADYXLANDU
+</div>
+
+<script>
+(function(){
+  if (!localStorage.getItem('kladyx_welcomed')) {
+    localStorage.setItem('kladyx_welcomed', '1');
+    var banner = document.getElementById('welcome-banner');
+    banner.style.display = 'block';
+    setTimeout(function(){
+      banner.style.transform = 'translateY(100%)';
+    }, 5000);
+  } else {
+    document.getElementById('welcome-banner').style.display = 'none';
+  }
+})();
+</script>
+
 </body>
 </html>
