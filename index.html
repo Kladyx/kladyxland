@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.14.2"/>
+  <meta name="version" content="2.14.4"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -319,7 +319,7 @@
     /* WEATHER WIDGET */
     #weather-widget {
       position: fixed;
-      bottom: 20px;
+      bottom: 120px;
       right: 20px;
       background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(0,255,136,0.05) 100%);
       border: 1px solid rgba(0,212,255,0.3);
@@ -338,7 +338,7 @@
     #weather-widget .weather-desc { color: #00ff88; font-size: 0.65rem; margin-bottom: 4px; }
     #weather-widget .weather-meta { color: #889; font-size: 0.6rem; }
     @keyframes weather-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(0,212,255,0.2); } 50% { box-shadow: 0 0 30px rgba(0,212,255,0.4); } }
-    @media (max-width: 680px) { #weather-widget { bottom: 10px; right: 10px; font-size: 0.65rem; padding: 10px 14px; } }
+    @media (max-width: 680px) { #weather-widget { bottom: 110px; right: 10px; font-size: 0.65rem; padding: 10px 14px; } }
 
     .digi-clock {
       font-family:"Orbitron",monospace;
@@ -2909,7 +2909,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.14.1';
+  const CURRENT_VERSION = '2.14.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
