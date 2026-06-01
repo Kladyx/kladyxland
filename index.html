@@ -503,10 +503,7 @@
     .gs-btn.active-off{background:rgba(100,100,120,.18);color:#aab;text-shadow:none;}
     body.grayscale-on .control-bar, body.grayscale-on .nav, body.grayscale-on .sections, body.grayscale-on .card, body.grayscale-on nav, body.grayscale-on .cbtn, body.grayscale-on button{filter:grayscale(1);transition:filter .5s;}
     body.grayscale-full{filter:grayscale(1);transition:filter .5s;}
-    /* BELL BUTTON – push notifikace */
-    #bell-btn{background:none;border:1px solid rgba(0,245,255,.35);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0;position:relative;z-index:1;color:#fff;}
-    #bell-btn:hover{background:rgba(0,245,255,.12);box-shadow:0 0 10px rgba(0,245,255,.4);}
-    #bell-btn.bell-active{border-color:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5);}
+
   </style>
 
   <!-- Firebase: ON AIR + počítadlo návštěvníků + oznámení -->
@@ -1587,35 +1584,7 @@
     return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
   }
 
-  async function subscribeToPush() {
-    const btn = document.getElementById('bell-btn');
-    try {
-      if (!('Notification' in window)) { alert('Váš prohlížeč nepodporuje notifikace.'); return; }
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') {
-        if (btn) { btn.textContent = '🔕'; btn.title = 'Notifikace zakázány'; }
-        return;
-      }
-      const reg = window._swReg || await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(window._VAPID_PUBLIC)
-      });
-      await fetch('/.netlify/functions/save-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub)
-      });
-      localStorage.setItem('kladyx_push_sub', '1');
-      if (btn) { btn.textContent = '🔔'; btn.title = 'Notifikace zapnuty ✅'; btn.classList.add('bell-active'); }
-      console.log('✅ Push subscription uložena');
-    } catch (e) {
-      console.warn('Push subscribe error:', e);
-      if (btn) { btn.textContent = '🔕'; btn.title = 'Chyba notifikací'; }
-    }
-  }
 
-  window.subscribeToPush = subscribeToPush;
 </script>
 
 <!-- PASSWORD MODAL -->
@@ -1676,8 +1645,6 @@
       <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;">Chat</a>
       <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;">📻 Archive Stream</a>
     </div>
-    <!-- BELL BTN – vpravo v nav, vždy viditelný -->
-    <button id="bell-btn" onclick="subscribeToPush()" title="Notifikace – upozornit mě když začne živé vysílání" style="position:absolute;top:10px;right:12px;z-index:210;">🔔</button>
   </nav>
 
   <!-- DEVICE INFO BAR – admin only, top -->
@@ -2932,7 +2899,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.14.6';
+  const CURRENT_VERSION = '2.14.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -2940,14 +2907,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       enableEdit('edit');
     }
     // Bell-btn init – obnov stav z localStorage + zkontroluj Notification.permission
-    const bellBtn = document.getElementById('bell-btn');
-    if (bellBtn) {
-      if (localStorage.getItem('kladyx_push_sub') === '1' && Notification.permission === 'granted') {
-        bellBtn.textContent = '🔔'; bellBtn.title = 'Notifikace zapnuty ✅'; bellBtn.classList.add('bell-active');
-      } else if (Notification.permission === 'denied') {
-        bellBtn.textContent = '🔕'; bellBtn.title = 'Notifikace zakázány v prohlížeči';
-      }
-    }
+
     const saved = localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp');
     if (!saved) return;
     if (document.body.classList.contains('edit-mode')) return;
