@@ -2125,6 +2125,29 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 </div>
 
 <script>
+
+  function translateWeather(d) {
+    const t = {
+      'clear sky':'jasno','few clouds':'skoro jasno','scattered clouds':'polojasno',
+      'broken clouds':'oblačno','overcast clouds':'zataženo',
+      'light rain':'slabý déšť','moderate rain':'mírný déšť','heavy intensity rain':'silný déšť',
+      'very heavy rain':'velmi silný déšť','freezing rain':'mrznoucí déšť',
+      'light intensity shower rain':'přeháňky','shower rain':'přeháňky',
+      'heavy intensity shower rain':'silné přeháňky','light snow':'slabé sněžení',
+      'snow':'sněžení','heavy snow':'silné sněžení','sleet':'déšť se sněhem',
+      'light rain and snow':'déšť se sněhem','rain and snow':'déšť se sněhem',
+      'mist':'mlha','smoke':'kouř','haze':'opar','fog':'hustá mlha',
+      'dust':'prach','sand':'písek','squalls':'vichřice','tornado':'tornádo',
+      'thunderstorm with light rain':'bouřka se slabým deštěm',
+      'thunderstorm with rain':'bouřka s deštěm',
+      'thunderstorm with heavy rain':'bouřka se silným deštěm',
+      'light thunderstorm':'slabá bouřka','thunderstorm':'bouřka',
+      'heavy thunderstorm':'silná bouřka',
+      'light intensity drizzle':'slabé mrholení','drizzle':'mrholení',
+      'heavy intensity drizzle':'silné mrholení','patchy rain possible':'místy déšť'
+    };
+    return t[d.toLowerCase()] || d;
+  }
   // ADMIN GOOGLE LOGIN
   let pendingSection=null;
 
@@ -2769,7 +2792,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     async function speedtest(){
       try{
         const el=document.getElementById('dev-downlink');
-        const url='https://speed.cloudflare.com/__down?bytes=50000000&_='+Date.now();
+        const url='https://speed.cloudflare.com/__down?bytes=30000000&_='+Date.now();
         const t0=performance.now();
         const resp=await fetch(url,{cache:'no-store'});
         const buf=await resp.arrayBuffer();
@@ -2909,7 +2932,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.14.5';
+  const CURRENT_VERSION = '2.14.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -3110,7 +3133,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const humidity = data.main.humidity;
           const city = data.name || '';
           document.getElementById('weather-temp').textContent = temp + '°C';
-          document.getElementById('weather-desc').textContent = desc;
+          document.getElementById('weather-desc').textContent = translateWeather(desc);
           document.getElementById('weather-meta').textContent = (city ? city + ' · ' : '') + 'Vlhkost: ' + humidity + '%';
           widget.style.display = 'block';
         })
@@ -3128,7 +3151,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const desc = data.weather[0].description;
           const humidity = data.main.humidity;
           document.getElementById('weather-temp').textContent = temp + '°C';
-          document.getElementById('weather-desc').textContent = desc;
+          document.getElementById('weather-desc').textContent = translateWeather(desc);
           document.getElementById('weather-meta').textContent = city + ' · Vlhkost: ' + humidity + '%';
           widget.style.display = 'block';
         })
