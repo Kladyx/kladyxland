@@ -878,7 +878,21 @@
       document.body.style.backgroundSize = 'cover';
       document.body.style.backgroundPosition = 'center';
       document.body.style.backgroundAttachment = 'fixed';
+      // Ulož aktivní URL do Firebase
+      try {
+        set(ref(db, 'themes/activeBg'), url).catch(()=>{});
+      } catch(e) {}
     };
+    // Načti aktivní custom bg při startu
+    onValue(ref(db, 'themes/activeBg'), snap => {
+      const url = snap.val();
+      if (url) {
+        document.body.style.backgroundImage = `url('${url}')`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundAttachment = 'fixed';
+      }
+    });
     window.deleteCustomBg = async function(key) {
       try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
       set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
