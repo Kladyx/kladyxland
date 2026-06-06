@@ -870,18 +870,17 @@
       push(ref(db, 'themes/custom'), { url, name: name || 'BG' }).then(() => {
         if (urlInp)  urlInp.value  = '';
         if (nameInp) nameInp.value = '';
+        // Ihned aplikuj pozadí
+        window.applyCustomBg(url);
       }).catch(e => console.error('Custom BG add error:', e));
     };
     window.applyCustomBg = function(url) {
-      // Přepíše body background přes inline style
+      // Přepíše body background přes inline style + uloží do Firebase
       document.body.style.backgroundImage = `url('${url}')`;
       document.body.style.backgroundSize = 'cover';
       document.body.style.backgroundPosition = 'center';
       document.body.style.backgroundAttachment = 'fixed';
-      // Ulož aktivní URL do Firebase
-      try {
-        set(ref(db, 'themes/activeBg'), url).catch(()=>{});
-      } catch(e) {}
+      try { set(ref(db, 'themes/activeBg'), url).catch(()=>{}); } catch(e) {}
     };
     // Načti aktivní custom bg při startu
     onValue(ref(db, 'themes/activeBg'), snap => {
