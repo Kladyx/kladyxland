@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.15.9"/>
+  <meta name="version" content="2.16.0"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -583,7 +583,7 @@
       var _videoInterval = null;
       var _nextChangeAt = 0; // timestamp příští změny (ms)
       var _countdownTimer = null;
-      var CHANGE_MS = 2 * 60 * 60 * 1000; // 2 hodiny
+      var CHANGE_MS = 30 * 60 * 1000; // 30 minut
 
       function shuffle(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
@@ -668,10 +668,27 @@
         _countdownTimer = setInterval(tick, 1000);
       }
 
-      // Manuální vložení URL — přehraje konkrétní video
+      // Manuální vložení URL — uloží do Firebase, vidí všichni
       function playManualUrl(url) {
         if (!url) return;
         url = ('' + url).trim();
+        if (!url) return;
+        // Ulož do Firebase – listener pak přehraje u všech (i u mě)
+        try {
+          if (window.firebaseDb && window.dbRef && window.dbSet) {
+            window.dbSet(window.dbRef(window.firebaseDb, 'config/videoUrl'), url)
+              .catch(function(e){ console.error('KladyxVideo: ulož chyba', e); _playLocal(url); });
+          } else {
+            _playLocal(url);
+          }
+        } catch(e) {
+          console.error('KladyxVideo: manuální URL chyba', e);
+          _playLocal(url);
+        }
+      }
+
+      // Přehrát konkrétní URL lokálně (volá Firebase listener u všech návštěvníků)
+      function _playLocal(url) {
         if (!url) return;
         var v = document.getElementById('main-video');
         if (!v) return;
@@ -680,14 +697,28 @@
           v.load();
           v.play().catch(function(){});
           v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
-          // Reset časovače — auto změna za další 2h
-          scheduleNextChange();
-          console.log('KladyxVideo: manuálně přehrávám', url);
+          // Pozastav auto-rotaci
+          if (_videoInterval) { clearInterval(_videoInterval); _videoInterval = null; }
+          var el = document.getElementById('next-video-countdown');
+          if (el) el.textContent = 'MANUAL';
+          if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
         } catch(e) {
-          console.error('KladyxVideo: manuální URL chyba', e);
+          console.error('KladyxVideo: lokál chyba', e);
         }
       }
+
       window.kladyxPlayManualUrl = playManualUrl;
+      window._kladyxPlayLocal = _playLocal;
+      window._kladyxRestartAutoRotation = function(){
+        // Pokud auto-rotace neběží a list existuje, restartuj
+        if (!_videoInterval && _videoList.length > 0) {
+          playVideoAt(_videoIndex);
+          scheduleNextChange();
+          startCountdown();
+        } else if (_videoList.length === 0) {
+          loadVideoList();
+        }
+      };
 
       window.kladyxNextVideo = nextVideo;
 
@@ -721,6 +752,7 @@
     window.dbSet = set;
     window.dbGet = get;
     window.dbOnValue = onValue;
+    window.firebaseDb = db;
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -1202,50 +1234,21 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
-    window.saveVideoUrl = function() {
-      const url = document.getElementById('video-url-input').value.trim();
-      if (!url) {
-        document.getElementById('video-url-saved').style.display = 'none';
-        return;
-      }
-      try {
-        set(ref(db, 'config/videoUrl'), url).then(() => {
-          const btn = document.getElementById('video-save-btn');
-          if (btn) {
-            btn.style.background = 'rgba(100,200,255,.25)';
-            btn.style.borderColor = 'rgba(100,200,255,.6)';
-          }
-          document.getElementById('video-url-saved').style.display = 'inline';
-          setTimeout(() => { document.getElementById('video-url-saved').style.display = 'none'; }, 2000);
-        }).catch(e => {
-          console.error('Video URL save error:', e);
-        });
-      } catch(e) {
-        console.error('Video URL error:', e);
-      }
-    };
-    window.clearVideoUrl = function() {
-      try {
-        set(ref(db, 'config/videoUrl'), '').then(() => {
-          document.getElementById('video-url-input').value = '';
-          const saved = document.getElementById('video-url-saved');
-          if (saved) { saved.textContent = '✓ Smazáno'; saved.style.color = '#f87171'; saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; saved.textContent = '✓ Uloženo'; saved.style.color = '#60a5fa'; }, 2000); }
-        }).catch(e => { console.error('Video URL clear error:', e); });
-      } catch(e) { console.error('Video URL clear error:', e); }
-    };
-    // Načíst aktuální video URL z Firebase
+    // Staré funkce ponechány jako no-op (volaly element který už neexistuje)
+    window.saveVideoUrl = function() {};
+    window.clearVideoUrl = function() {};
+    // Načíst aktuální video URL z Firebase – synchronizace pro všechny návštěvníky
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
-        if (snap.exists() && snap.val()) {
-          const url = snap.val();
-          const inp = document.getElementById('video-url-input');
-          if (inp) inp.value = url;
-          // Aktualizovat video element
-          const v = document.getElementById('main-video');
-          if (v) {
-            const source = v.querySelector('source');
-            if (source) { source.src = url; v.load(); }
-          }
+        const url = (snap.exists() && snap.val()) ? snap.val() : '';
+        const inp = document.getElementById('manual-video-url');
+        if (inp) inp.value = url;
+        if (url) {
+          // Manuální URL je nastavená → přehraj ji u všech
+          if (window._kladyxPlayLocal) window._kladyxPlayLocal(url);
+        } else {
+          // URL je prázdná → spusť auto-rotaci z rootu (pokud ještě neběží)
+          if (window._kladyxRestartAutoRotation) window._kladyxRestartAutoRotation();
         }
       });
     } catch(e) {}
@@ -1927,6 +1930,7 @@
         <div id="manual-video-row" class="edit-only" style="display:none;padding:0 8px 8px 8px;gap:6px;align-items:center;flex-wrap:wrap;">
           <input id="manual-video-url" type="text" placeholder="Vlož URL videa (Firebase Storage)..." style="flex:1;min-width:180px;font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;" onkeydown="if(event.key==='Enter'){window.kladyxPlayManualUrl &amp;&amp; window.kladyxPlayManualUrl(this.value);}"/>
           <button onclick="var i=document.getElementById('manual-video-url'); window.kladyxPlayManualUrl &amp;&amp; window.kladyxPlayManualUrl(i.value);" style="font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">▶ VLOŽIT URL</button>
+          <button onclick="if(window.firebaseDb&amp;&amp;window.dbRef&amp;&amp;window.dbSet){window.dbSet(window.dbRef(window.firebaseDb,'config/videoUrl'),'');}var i=document.getElementById('manual-video-url');if(i)i.value='';" style="font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(200,50,50,.15);color:#f87171;border:1px solid rgba(255,100,100,.35);border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">🗑 ZRUŠIT</button>
         </div>
       </div>
 
@@ -3107,7 +3111,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.15.9';
+  const CURRENT_VERSION = '2.16.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
