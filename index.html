@@ -592,7 +592,7 @@
 
       async function loadVideoList() {
         try {
-          var videosRef = storageRef(storage, '');
+          var videosRef = storageRef(storage, 'videa');
           var result = await listAll(videosRef);
           var mp4items = result.items.filter(function(item){ return item.name.toLowerCase().endsWith('.mp4'); });
           if (mp4items.length === 0) return;
@@ -638,7 +638,7 @@
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
-        }, 6 * 60 * 60 * 1000); // 6 hodin
+        }, 1 * 60 * 60 * 1000); // 1 hodina
       }
 
       // Spustit po auth (anon stačí pro public read)
