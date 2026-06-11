@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.15.5"/>
+  <meta name="version" content="2.15.7"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -576,11 +576,14 @@
     window.deleteObject = deleteObject; // Pro mazání souborů
     window.listAll = listAll; // Pro náhodné video
 
-    // === NÁHODNÉ VIDEO Z FIREBASE STORAGE (root, jen MP4) ===
+    // === NÁHODNÉ VIDEO Z FIREBASE STORAGE (složka 'videa', jen MP4) ===
     (function() {
       var _videoList = [];
       var _videoIndex = 0;
       var _videoInterval = null;
+      var _nextChangeAt = 0; // timestamp příští změny (ms)
+      var _countdownTimer = null;
+      var CHANGE_MS = 60 * 60 * 1000; // 1 hodina
 
       function shuffle(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
@@ -592,16 +595,21 @@
 
       async function loadVideoList() {
         try {
-          var videosRef = storageRef(storage, 'videa');
+          var videosRef = storageRef(storage, 'video');
           var result = await listAll(videosRef);
           var mp4items = result.items.filter(function(item){ return item.name.toLowerCase().endsWith('.mp4'); });
-          if (mp4items.length === 0) return;
+          console.log('KladyxVideo: nalezeno MP4 ve složce video/:', mp4items.length);
+          if (mp4items.length === 0) {
+            console.warn('KladyxVideo: ve složce video/ nejsou žádné .mp4 soubory');
+            return;
+          }
           _videoList = shuffle(mp4items.slice());
           _videoIndex = 0;
           playVideoAt(0);
           scheduleNextChange();
+          startCountdown();
         } catch(e) {
-          console.warn('KladyxVideo: nelze načíst root storage', e);
+          console.error('KladyxVideo: nelze načíst video/', e && e.code, e && e.message, e);
         }
       }
 
@@ -615,42 +623,71 @@
           v.src = url;
           v.load();
           v.play().catch(function(){});
-          // Smyčka – při konci přehraj znovu (dokud nepřijde auto-change)
           v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
+          console.log('KladyxVideo: přehrávám', item.name);
         } catch(e) {
-          console.warn('KladyxVideo: nelze přehrát video', e);
+          console.error('KladyxVideo: nelze přehrát', item && item.name, e && e.code, e && e.message);
         }
       }
 
       function nextVideo() {
+        if (_videoList.length === 0) return;
         _videoIndex = (_videoIndex + 1) % _videoList.length;
-        // Po projití celého listu znovu zamíchej
         if (_videoIndex === 0) shuffle(_videoList);
         playVideoAt(_videoIndex);
-        // Reset 6h intervalu
-        if (_videoInterval) clearInterval(_videoInterval);
         scheduleNextChange();
       }
 
       function scheduleNextChange() {
         if (_videoInterval) clearInterval(_videoInterval);
+        _nextChangeAt = Date.now() + CHANGE_MS;
         _videoInterval = setInterval(function() {
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
-        }, 1 * 60 * 60 * 1000); // 1 hodina
+          _nextChangeAt = Date.now() + CHANGE_MS;
+        }, CHANGE_MS);
       }
 
-      // Spustit po auth (anon stačí pro public read)
-      window.kladyxNextVideo = nextVideo;
-      window.addEventListener('DOMContentLoaded', function() {
-        // Pokud je auth hotový, načti hned; jinak počkej
-        if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-          loadVideoList();
-        } else {
-          setTimeout(loadVideoList, 2000);
+      function startCountdown() {
+        if (_countdownTimer) clearInterval(_countdownTimer);
+        var el = document.getElementById('next-video-countdown');
+        function tick() {
+          if (!el) el = document.getElementById('next-video-countdown');
+          if (!el) return;
+          var ms = _nextChangeAt - Date.now();
+          if (ms < 0) ms = 0;
+          var m = Math.floor(ms / 60000);
+          var s = Math.floor((ms % 60000) / 1000);
+          el.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
         }
-      });
+        tick();
+        _countdownTimer = setInterval(tick, 1000);
+      }
+
+      window.kladyxNextVideo = nextVideo;
+
+      // Spolehlivé čekání na auth — Firebase posílá onAuthStateChanged i pro anonymní login
+      function startWhenReady() {
+        if (window.firebaseAuth) {
+          if (window.firebaseAuth.currentUser) {
+            loadVideoList();
+          } else {
+            var unsub = window.firebaseAuth.onAuthStateChanged(function(user) {
+              if (user) { unsub && unsub(); loadVideoList(); }
+            });
+            // Pojistka — pokud auth nestihne, zkus i bez něj (Storage public read)
+            setTimeout(function(){ if (_videoList.length === 0) loadVideoList(); }, 4000);
+          }
+        } else {
+          setTimeout(startWhenReady, 300);
+        }
+      }
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', startWhenReady);
+      } else {
+        startWhenReady();
+      }
     })();
     
     // Storage functions - již nejsou potřebné
@@ -1858,7 +1895,10 @@
         <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
         <div style="padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;">&#x1F3AC; KLADYXLAND BROADCAST</div>
-          <button id="next-video-btn" class="edit-only" onclick="window.kladyxNextVideo &amp;&amp; window.kladyxNextVideo()" style="display:none;font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:3px 8px;cursor:pointer;letter-spacing:.06em;">&#x23ED; NEXT VIDEO</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-family:'Orbitron',monospace;font-size:0.55rem;color:rgba(0,245,255,.7);letter-spacing:.08em;">⏱ DALŠÍ ZA <span id="next-video-countdown" style="color:#00f5ff;font-weight:700;">--:--</span></span>
+            <button id="next-video-btn" class="edit-only" onclick="window.kladyxNextVideo &amp;&amp; window.kladyxNextVideo()" style="display:none;font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:3px 8px;cursor:pointer;letter-spacing:.06em;">&#x23ED; NEXT VIDEO</button>
+          </div>
         </div>
       </div>
 
