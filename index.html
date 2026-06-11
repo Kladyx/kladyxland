@@ -519,7 +519,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp, runTransaction, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, listAll } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const firebaseConfig = {
@@ -1105,11 +1105,64 @@
           const v = document.getElementById('main-video');
           if (v) {
             const source = v.querySelector('source');
-            if (source) { source.src = url; v.load(); }
+            if (source) { source.src = url; v.load(); v.play().catch(()=>{}); }
           }
+          // ruční video má přednost, vypnout rotaci
+          window._kladyxVideoManual = true;
+        } else {
+          window._kladyxVideoManual = false;
+          startVideoRotation();
         }
       });
-    } catch(e) {}
+    } catch(e) { startVideoRotation(); }
+
+    // ROTACE VIDEÍ Z FIREBASE STORAGE (videos/) - každých 6 hodin jiné video
+    let _videoQueue = [];
+    let _videoQueueIdx = 0;
+    let _videoRotationStarted = false;
+    function _shuffleArr(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    async function _loadVideoQueue() {
+      try {
+        const listResult = await listAll(storageRef(storage, '/'));
+        const videoExt = /\.(mp4|webm|mov|m4v)$/i;
+        const videoItems = listResult.items.filter(item => videoExt.test(item.name));
+        if (!videoItems.length) return;
+        const urls = await Promise.all(videoItems.map(item => getDownloadURL(item)));
+        _videoQueue = _shuffleArr(urls);
+        _videoQueueIdx = 0;
+      } catch(e) { console.error('Video rotation list error:', e); }
+    }
+    function _playNextRotationVideo() {
+      if (window._kladyxVideoManual) return;
+      if (!_videoQueue.length) return;
+      if (_videoQueueIdx >= _videoQueue.length) {
+        _videoQueue = _shuffleArr(_videoQueue);
+        _videoQueueIdx = 0;
+      }
+      const v = document.getElementById('main-video');
+      if (!v) return;
+      const source = v.querySelector('source');
+      const url = _videoQueue[_videoQueueIdx++];
+      if (source) { source.src = url; }
+      v.src = url;
+      v.load();
+      v.play().catch(()=>{});
+    }
+    async function startVideoRotation() {
+      if (_videoRotationStarted || window._kladyxVideoManual) return;
+      _videoRotationStarted = true;
+      await _loadVideoQueue();
+      if (_videoQueue.length) {
+        _playNextRotationVideo();
+        setInterval(_playNextRotationVideo, 6 * 60 * 60 * 1000); // 6 hodin
+      }
+    }
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
       const btn = document.getElementById('obs-save-btn');
@@ -2978,7 +3031,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.15.5';
+  const CURRENT_VERSION = '2.15.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
