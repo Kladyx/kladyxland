@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.16.0"/>
+  <meta name="version" content="2.16.1"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -639,14 +639,31 @@
       }
 
       function scheduleNextChange() {
-        if (_videoInterval) clearInterval(_videoInterval);
-        _nextChangeAt = Date.now() + CHANGE_MS;
-        _videoInterval = setInterval(function() {
+        if (_videoInterval) { clearTimeout(_videoInterval); _videoInterval = null; }
+        // Pokus o obnovu z localStorage – odpočet pokračuje i po reloadu
+        var saved = 0;
+        try { saved = parseInt(localStorage.getItem('kladyx_next_change') || '0', 10) || 0; } catch(e) {}
+        if (saved && saved > Date.now() && saved < Date.now() + CHANGE_MS) {
+          // Kotva ze sessionStorage je platná → použij ji
+          _nextChangeAt = saved;
+        } else {
+          // Nová kotva
+          _nextChangeAt = Date.now() + CHANGE_MS;
+          try { localStorage.setItem('kladyx_next_change', String(_nextChangeAt)); } catch(e) {}
+        }
+        // Naplánuj přepnutí na přesný čas kotvy (ne každých CHANGE_MS od teď)
+        var msToNext = _nextChangeAt - Date.now();
+        if (msToNext < 0) msToNext = 0;
+        setTimeout(function tickChange(){
+          if (_videoList.length === 0) return;
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
           _nextChangeAt = Date.now() + CHANGE_MS;
-        }, CHANGE_MS);
+          try { localStorage.setItem('kladyx_next_change', String(_nextChangeAt)); } catch(e) {}
+          // Naplánuj další
+          _videoInterval = setTimeout(tickChange, CHANGE_MS);
+        }, msToNext);
       }
 
       function startCountdown() {
@@ -698,7 +715,7 @@
           v.play().catch(function(){});
           v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
           // Pozastav auto-rotaci
-          if (_videoInterval) { clearInterval(_videoInterval); _videoInterval = null; }
+          if (_videoInterval) { clearTimeout(_videoInterval); _videoInterval = null; }
           var el = document.getElementById('next-video-countdown');
           if (el) el.textContent = 'MANUAL';
           if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
@@ -3111,7 +3128,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.16.0';
+  const CURRENT_VERSION = '2.16.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
