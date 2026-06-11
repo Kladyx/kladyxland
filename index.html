@@ -574,6 +574,83 @@
     window.uploadBytesResumable = uploadBytesResumable; // Pro nahrávání s progress
     window.getDownloadURL = getDownloadURL; // Pro získání URL
     window.deleteObject = deleteObject; // Pro mazání souborů
+    window.listAll = listAll; // Pro náhodné video
+
+    // === NÁHODNÉ VIDEO Z FIREBASE STORAGE (složka videos/) ===
+    (function() {
+      var _videoList = [];
+      var _videoIndex = 0;
+      var _videoInterval = null;
+
+      function shuffle(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+      }
+
+      async function loadVideoList() {
+        try {
+          var videosRef = storageRef(storage, 'videos/');
+          var result = await listAll(videosRef);
+          if (result.items.length === 0) return;
+          _videoList = shuffle(result.items.slice());
+          _videoIndex = 0;
+          playVideoAt(0);
+          scheduleNextChange();
+        } catch(e) {
+          console.warn('KladyxVideo: nelze načíst videos/', e);
+        }
+      }
+
+      async function playVideoAt(idx) {
+        if (_videoList.length === 0) return;
+        var item = _videoList[idx % _videoList.length];
+        try {
+          var url = await getDownloadURL(item);
+          var v = document.getElementById('main-video');
+          if (!v) return;
+          v.src = url;
+          v.load();
+          v.play().catch(function(){});
+          // Smyčka – při konci přehraj znovu (dokud nepřijde auto-change)
+          v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
+        } catch(e) {
+          console.warn('KladyxVideo: nelze přehrát video', e);
+        }
+      }
+
+      function nextVideo() {
+        _videoIndex = (_videoIndex + 1) % _videoList.length;
+        // Po projití celého listu znovu zamíchej
+        if (_videoIndex === 0) shuffle(_videoList);
+        playVideoAt(_videoIndex);
+        // Reset 6h intervalu
+        if (_videoInterval) clearInterval(_videoInterval);
+        scheduleNextChange();
+      }
+
+      function scheduleNextChange() {
+        if (_videoInterval) clearInterval(_videoInterval);
+        _videoInterval = setInterval(function() {
+          _videoIndex = (_videoIndex + 1) % _videoList.length;
+          if (_videoIndex === 0) shuffle(_videoList);
+          playVideoAt(_videoIndex);
+        }, 6 * 60 * 60 * 1000); // 6 hodin
+      }
+
+      // Spustit po auth (anon stačí pro public read)
+      window.kladyxNextVideo = nextVideo;
+      window.addEventListener('DOMContentLoaded', function() {
+        // Pokud je auth hotový, načti hned; jinak počkej
+        if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+          loadVideoList();
+        } else {
+          setTimeout(loadVideoList, 2000);
+        }
+      });
+    })();
     
     // Storage functions - již nejsou potřebné
     // Ale ref, remove, set, get musí být dostupné globálně pro gallery
@@ -1105,64 +1182,11 @@
           const v = document.getElementById('main-video');
           if (v) {
             const source = v.querySelector('source');
-            if (source) { source.src = url; v.load(); v.play().catch(()=>{}); }
+            if (source) { source.src = url; v.load(); }
           }
-          // ruční video má přednost, vypnout rotaci
-          window._kladyxVideoManual = true;
-        } else {
-          window._kladyxVideoManual = false;
-          startVideoRotation();
         }
       });
-    } catch(e) { startVideoRotation(); }
-
-    // ROTACE VIDEÍ Z FIREBASE STORAGE (videos/) - každých 6 hodin jiné video
-    let _videoQueue = [];
-    let _videoQueueIdx = 0;
-    let _videoRotationStarted = false;
-    function _shuffleArr(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-    async function _loadVideoQueue() {
-      try {
-        const listResult = await listAll(storageRef(storage, '/'));
-        const videoExt = /\.(mp4|webm|mov|m4v)$/i;
-        const videoItems = listResult.items.filter(item => videoExt.test(item.name));
-        if (!videoItems.length) return;
-        const urls = await Promise.all(videoItems.map(item => getDownloadURL(item)));
-        _videoQueue = _shuffleArr(urls);
-        _videoQueueIdx = 0;
-      } catch(e) { console.error('Video rotation list error:', e); }
-    }
-    function _playNextRotationVideo() {
-      if (window._kladyxVideoManual) return;
-      if (!_videoQueue.length) return;
-      if (_videoQueueIdx >= _videoQueue.length) {
-        _videoQueue = _shuffleArr(_videoQueue);
-        _videoQueueIdx = 0;
-      }
-      const v = document.getElementById('main-video');
-      if (!v) return;
-      const source = v.querySelector('source');
-      const url = _videoQueue[_videoQueueIdx++];
-      if (source) { source.src = url; }
-      v.src = url;
-      v.load();
-      v.play().catch(()=>{});
-    }
-    async function startVideoRotation() {
-      if (_videoRotationStarted || window._kladyxVideoManual) return;
-      _videoRotationStarted = true;
-      await _loadVideoQueue();
-      if (_videoQueue.length) {
-        _playNextRotationVideo();
-        setInterval(_playNextRotationVideo, 6 * 60 * 60 * 1000); // 6 hodin
-      }
-    }
+    } catch(e) {}
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
       const btn = document.getElementById('obs-save-btn');
@@ -1830,20 +1854,11 @@
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
       <div id="video-embed-box" style="width:100%;margin:6px 0;border-radius:6px;overflow:hidden;background:rgba(255,30,0,.05);border:2px solid rgba(255,60,0,.4);">
-        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;">
-          <source src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/gemini_generated_video_87f161e2.mp4?alt=media&token=006a59d7-8ab4-4758-be20-2f1864801da6" type="video/mp4">
-        </video>
-        <script>
-        // Firebase video loop
-        var v = document.getElementById('main-video');
-        if(v) {
-          v.addEventListener('ended', function() {
-            v.currentTime = 0;
-            v.play().catch(function(){});
-          });
-        }
-        </script>
-        <div style="padding:8px;font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;text-align:center;">🎬 KLADYXLAND BROADCAST</div>
+        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
+        <div style="padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;">&#x1F3AC; KLADYXLAND BROADCAST</div>
+          <button id="next-video-btn" class="edit-only" onclick="window.kladyxNextVideo &amp;&amp; window.kladyxNextVideo()" style="display:none;font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:3px 8px;cursor:pointer;letter-spacing:.06em;">&#x23ED; NEXT VIDEO</button>
+        </div>
       </div>
 
       <!-- CENTER: VERZE + TLAMPAČ -->
@@ -2245,6 +2260,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const logoutBtn=document.getElementById('admin-logout-btn');if(logoutBtn)logoutBtn.style.display='block';
     // Zobrazit broadcast tlačítko jen adminovi
     const broadcastBtn=document.getElementById('broadcast-btn');if(broadcastBtn)broadcastBtn.style.display='block';
+    const nextVideoBtn=document.getElementById('next-video-btn');if(nextVideoBtn)nextVideoBtn.style.display='inline-block';
     const obsStatus=document.getElementById('obs-ws-status');if(obsStatus)obsStatus.style.display='inline';
     const obsPwRow=document.getElementById('obs-pw-row');if(obsPwRow){obsPwRow.style.display='flex';const inp=document.getElementById('obs-pw-input');if(inp)inp.value=localStorage.getItem('kladyx_obs_pw')||'';}
     const obsDbg=document.getElementById('obs-debug-wrap');if(obsDbg)obsDbg.style.display='block';
@@ -2277,6 +2293,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const logoutBtn=document.getElementById('admin-logout-btn');if(logoutBtn)logoutBtn.style.display='none';
     // Skrýt broadcast tlačítko pro neadminy
     const broadcastBtn2=document.getElementById('broadcast-btn');if(broadcastBtn2)broadcastBtn2.style.display='none';
+    const nextVideoBtn2=document.getElementById('next-video-btn');if(nextVideoBtn2)nextVideoBtn2.style.display='none';
     const obsStatus2=document.getElementById('obs-ws-status');if(obsStatus2)obsStatus2.style.display='none';
     const obsPwRow2=document.getElementById('obs-pw-row');if(obsPwRow2)obsPwRow2.style.display='none';
     const obsDbg2=document.getElementById('obs-debug-wrap');if(obsDbg2)obsDbg2.style.display='none';
@@ -3031,7 +3048,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.15.7';
+  const CURRENT_VERSION = '2.15.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
