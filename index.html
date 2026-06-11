@@ -576,7 +576,7 @@
     window.deleteObject = deleteObject; // Pro mazání souborů
     window.listAll = listAll; // Pro náhodné video
 
-    // === NÁHODNÉ VIDEO Z FIREBASE STORAGE (složka videos/) ===
+    // === NÁHODNÉ VIDEO Z FIREBASE STORAGE (root, jen MP4) ===
     (function() {
       var _videoList = [];
       var _videoIndex = 0;
@@ -592,15 +592,16 @@
 
       async function loadVideoList() {
         try {
-          var videosRef = storageRef(storage, 'videos/');
+          var videosRef = storageRef(storage, '');
           var result = await listAll(videosRef);
-          if (result.items.length === 0) return;
-          _videoList = shuffle(result.items.slice());
+          var mp4items = result.items.filter(function(item){ return item.name.toLowerCase().endsWith('.mp4'); });
+          if (mp4items.length === 0) return;
+          _videoList = shuffle(mp4items.slice());
           _videoIndex = 0;
           playVideoAt(0);
           scheduleNextChange();
         } catch(e) {
-          console.warn('KladyxVideo: nelze načíst videos/', e);
+          console.warn('KladyxVideo: nelze načíst root storage', e);
         }
       }
 
