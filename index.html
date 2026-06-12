@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.16.1"/>
+  <meta name="version" content="2.15.8"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -583,7 +583,7 @@
       var _videoInterval = null;
       var _nextChangeAt = 0; // timestamp příští změny (ms)
       var _countdownTimer = null;
-      var CHANGE_MS = 30 * 60 * 1000; // 30 minut
+      var CHANGE_MS = 60 * 60 * 1000; // 1 hodina
 
       function shuffle(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
@@ -595,12 +595,12 @@
 
       async function loadVideoList() {
         try {
-          var videosRef = storageRef(storage, '');
+          var videosRef = storageRef(storage, 'videos');
           var result = await listAll(videosRef);
           var mp4items = result.items.filter(function(item){ return item.name.toLowerCase().endsWith('.mp4'); });
-          console.log('KladyxVideo: nalezeno MP4 ve složce video/:', mp4items.length);
+          console.log('KladyxVideo: nalezeno MP4 ve složce videos/:', mp4items.length);
           if (mp4items.length === 0) {
-            console.warn('KladyxVideo: ve složce video/ nejsou žádné .mp4 soubory');
+            console.warn('KladyxVideo: ve složce videos/ nejsou žádné .mp4 soubory');
             return;
           }
           _videoList = shuffle(mp4items.slice());
@@ -639,31 +639,14 @@
       }
 
       function scheduleNextChange() {
-        if (_videoInterval) { clearTimeout(_videoInterval); _videoInterval = null; }
-        // Pokus o obnovu z localStorage – odpočet pokračuje i po reloadu
-        var saved = 0;
-        try { saved = parseInt(localStorage.getItem('kladyx_next_change') || '0', 10) || 0; } catch(e) {}
-        if (saved && saved > Date.now() && saved < Date.now() + CHANGE_MS) {
-          // Kotva ze sessionStorage je platná → použij ji
-          _nextChangeAt = saved;
-        } else {
-          // Nová kotva
-          _nextChangeAt = Date.now() + CHANGE_MS;
-          try { localStorage.setItem('kladyx_next_change', String(_nextChangeAt)); } catch(e) {}
-        }
-        // Naplánuj přepnutí na přesný čas kotvy (ne každých CHANGE_MS od teď)
-        var msToNext = _nextChangeAt - Date.now();
-        if (msToNext < 0) msToNext = 0;
-        setTimeout(function tickChange(){
-          if (_videoList.length === 0) return;
+        if (_videoInterval) clearInterval(_videoInterval);
+        _nextChangeAt = Date.now() + CHANGE_MS;
+        _videoInterval = setInterval(function() {
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
           _nextChangeAt = Date.now() + CHANGE_MS;
-          try { localStorage.setItem('kladyx_next_change', String(_nextChangeAt)); } catch(e) {}
-          // Naplánuj další
-          _videoInterval = setTimeout(tickChange, CHANGE_MS);
-        }, msToNext);
+        }, CHANGE_MS);
       }
 
       function startCountdown() {
@@ -674,68 +657,13 @@
           if (!el) return;
           var ms = _nextChangeAt - Date.now();
           if (ms < 0) ms = 0;
-          var totalSec = Math.floor(ms / 1000);
-          var h = Math.floor(totalSec / 3600);
-          var m = Math.floor((totalSec % 3600) / 60);
-          var s = totalSec % 60;
-          var pad = function(n){ return n < 10 ? '0' + n : '' + n; };
-          el.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+          var m = Math.floor(ms / 60000);
+          var s = Math.floor((ms % 60000) / 1000);
+          el.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
         }
         tick();
         _countdownTimer = setInterval(tick, 1000);
       }
-
-      // Manuální vložení URL — uloží do Firebase, vidí všichni
-      function playManualUrl(url) {
-        if (!url) return;
-        url = ('' + url).trim();
-        if (!url) return;
-        // Ulož do Firebase – listener pak přehraje u všech (i u mě)
-        try {
-          if (window.firebaseDb && window.dbRef && window.dbSet) {
-            window.dbSet(window.dbRef(window.firebaseDb, 'config/videoUrl'), url)
-              .catch(function(e){ console.error('KladyxVideo: ulož chyba', e); _playLocal(url); });
-          } else {
-            _playLocal(url);
-          }
-        } catch(e) {
-          console.error('KladyxVideo: manuální URL chyba', e);
-          _playLocal(url);
-        }
-      }
-
-      // Přehrát konkrétní URL lokálně (volá Firebase listener u všech návštěvníků)
-      function _playLocal(url) {
-        if (!url) return;
-        var v = document.getElementById('main-video');
-        if (!v) return;
-        try {
-          v.src = url;
-          v.load();
-          v.play().catch(function(){});
-          v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
-          // Pozastav auto-rotaci
-          if (_videoInterval) { clearTimeout(_videoInterval); _videoInterval = null; }
-          var el = document.getElementById('next-video-countdown');
-          if (el) el.textContent = 'MANUAL';
-          if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
-        } catch(e) {
-          console.error('KladyxVideo: lokál chyba', e);
-        }
-      }
-
-      window.kladyxPlayManualUrl = playManualUrl;
-      window._kladyxPlayLocal = _playLocal;
-      window._kladyxRestartAutoRotation = function(){
-        // Pokud auto-rotace neběží a list existuje, restartuj
-        if (!_videoInterval && _videoList.length > 0) {
-          playVideoAt(_videoIndex);
-          scheduleNextChange();
-          startCountdown();
-        } else if (_videoList.length === 0) {
-          loadVideoList();
-        }
-      };
 
       window.kladyxNextVideo = nextVideo;
 
@@ -769,7 +697,6 @@
     window.dbSet = set;
     window.dbGet = get;
     window.dbOnValue = onValue;
-    window.firebaseDb = db;
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -1251,21 +1178,50 @@
       } catch(e) {}
     }
     window.obsConnect = obsConnect;
-    // Staré funkce ponechány jako no-op (volaly element který už neexistuje)
-    window.saveVideoUrl = function() {};
-    window.clearVideoUrl = function() {};
-    // Načíst aktuální video URL z Firebase – synchronizace pro všechny návštěvníky
+    window.saveVideoUrl = function() {
+      const url = document.getElementById('video-url-input').value.trim();
+      if (!url) {
+        document.getElementById('video-url-saved').style.display = 'none';
+        return;
+      }
+      try {
+        set(ref(db, 'config/videoUrl'), url).then(() => {
+          const btn = document.getElementById('video-save-btn');
+          if (btn) {
+            btn.style.background = 'rgba(100,200,255,.25)';
+            btn.style.borderColor = 'rgba(100,200,255,.6)';
+          }
+          document.getElementById('video-url-saved').style.display = 'inline';
+          setTimeout(() => { document.getElementById('video-url-saved').style.display = 'none'; }, 2000);
+        }).catch(e => {
+          console.error('Video URL save error:', e);
+        });
+      } catch(e) {
+        console.error('Video URL error:', e);
+      }
+    };
+    window.clearVideoUrl = function() {
+      try {
+        set(ref(db, 'config/videoUrl'), '').then(() => {
+          document.getElementById('video-url-input').value = '';
+          const saved = document.getElementById('video-url-saved');
+          if (saved) { saved.textContent = '✓ Smazáno'; saved.style.color = '#f87171'; saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; saved.textContent = '✓ Uloženo'; saved.style.color = '#60a5fa'; }, 2000); }
+        }).catch(e => { console.error('Video URL clear error:', e); });
+      } catch(e) { console.error('Video URL clear error:', e); }
+    };
+    // Načíst aktuální video URL z Firebase
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
-        const url = (snap.exists() && snap.val()) ? snap.val() : '';
-        const inp = document.getElementById('manual-video-url');
-        if (inp) inp.value = url;
-        if (url) {
-          // Manuální URL je nastavená → přehraj ji u všech
-          if (window._kladyxPlayLocal) window._kladyxPlayLocal(url);
-        } else {
-          // URL je prázdná → spusť auto-rotaci z rootu (pokud ještě neběží)
-          if (window._kladyxRestartAutoRotation) window._kladyxRestartAutoRotation();
+        if (snap.exists() && snap.val()) {
+          const url = snap.val();
+          const inp = document.getElementById('video-url-input');
+          if (inp) inp.value = url;
+          // Aktualizovat video element
+          const v = document.getElementById('main-video');
+          if (v) {
+            const source = v.querySelector('source');
+            if (source) { source.src = url; v.load(); }
+          }
         }
       });
     } catch(e) {}
@@ -1940,14 +1896,9 @@
         <div style="padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;">&#x1F3AC; KLADYXLAND BROADCAST</div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-family:'Orbitron',monospace;font-size:0.55rem;color:rgba(0,245,255,.7);letter-spacing:.08em;">⏱ DALŠÍ ZA <span id="next-video-countdown" style="color:#00f5ff;font-weight:700;">--:--:--</span></span>
+            <span style="font-family:'Orbitron',monospace;font-size:0.55rem;color:rgba(0,245,255,.7);letter-spacing:.08em;">⏱ DALŠÍ ZA <span id="next-video-countdown" style="color:#00f5ff;font-weight:700;">--:--</span></span>
             <button id="next-video-btn" class="edit-only" onclick="window.kladyxNextVideo &amp;&amp; window.kladyxNextVideo()" style="display:none;font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:3px 8px;cursor:pointer;letter-spacing:.06em;">&#x23ED; NEXT VIDEO</button>
           </div>
-        </div>
-        <div id="manual-video-row" class="edit-only" style="display:none;padding:0 8px 8px 8px;gap:6px;align-items:center;flex-wrap:wrap;">
-          <input id="manual-video-url" type="text" placeholder="Vlož URL videa (Firebase Storage)..." style="flex:1;min-width:180px;font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;" onkeydown="if(event.key==='Enter'){window.kladyxPlayManualUrl &amp;&amp; window.kladyxPlayManualUrl(this.value);}"/>
-          <button onclick="var i=document.getElementById('manual-video-url'); window.kladyxPlayManualUrl &amp;&amp; window.kladyxPlayManualUrl(i.value);" style="font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.4);border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">▶ VLOŽIT URL</button>
-          <button onclick="if(window.firebaseDb&amp;&amp;window.dbRef&amp;&amp;window.dbSet){window.dbSet(window.dbRef(window.firebaseDb,'config/videoUrl'),'');}var i=document.getElementById('manual-video-url');if(i)i.value='';" style="font-family:'Orbitron',monospace;font-size:0.55rem;background:rgba(200,50,50,.15);color:#f87171;border:1px solid rgba(255,100,100,.35);border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:.06em;">🗑 ZRUŠIT</button>
         </div>
       </div>
 
@@ -1996,6 +1947,18 @@
           <button id="obs-save-btn" onclick="window.obsSavePassword()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+        </div>
+        <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
+          <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
+            <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
+              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
+              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
+          </div>
+          <button id="video-save-btn" onclick="window.saveVideoUrl()"
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
+          <button id="video-clear-btn" onclick="window.clearVideoUrl()"
+            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(200,50,50,.15);border:1px solid rgba(255,100,100,.35);color:#f87171;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🗑 VYMAŽ</button>
+          <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -2339,7 +2302,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     // Zobrazit broadcast tlačítko jen adminovi
     const broadcastBtn=document.getElementById('broadcast-btn');if(broadcastBtn)broadcastBtn.style.display='block';
     const nextVideoBtn=document.getElementById('next-video-btn');if(nextVideoBtn)nextVideoBtn.style.display='inline-block';
-    const manualVideoRow=document.getElementById('manual-video-row');if(manualVideoRow)manualVideoRow.style.display='flex';
     const obsStatus=document.getElementById('obs-ws-status');if(obsStatus)obsStatus.style.display='inline';
     const obsPwRow=document.getElementById('obs-pw-row');if(obsPwRow){obsPwRow.style.display='flex';const inp=document.getElementById('obs-pw-input');if(inp)inp.value=localStorage.getItem('kladyx_obs_pw')||'';}
     const obsDbg=document.getElementById('obs-debug-wrap');if(obsDbg)obsDbg.style.display='block';
@@ -2373,7 +2335,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     // Skrýt broadcast tlačítko pro neadminy
     const broadcastBtn2=document.getElementById('broadcast-btn');if(broadcastBtn2)broadcastBtn2.style.display='none';
     const nextVideoBtn2=document.getElementById('next-video-btn');if(nextVideoBtn2)nextVideoBtn2.style.display='none';
-    const manualVideoRow2=document.getElementById('manual-video-row');if(manualVideoRow2)manualVideoRow2.style.display='none';
     const obsStatus2=document.getElementById('obs-ws-status');if(obsStatus2)obsStatus2.style.display='none';
     const obsPwRow2=document.getElementById('obs-pw-row');if(obsPwRow2)obsPwRow2.style.display='none';
     const obsDbg2=document.getElementById('obs-debug-wrap');if(obsDbg2)obsDbg2.style.display='none';
@@ -3128,7 +3089,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.16.1';
+  const CURRENT_VERSION = '2.15.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
