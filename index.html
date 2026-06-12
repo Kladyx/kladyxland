@@ -11,7 +11,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.15.8"/>
+  <meta name="version" content="2.15.9"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -583,7 +583,8 @@
       var _videoInterval = null;
       var _nextChangeAt = 0; // timestamp příští změny (ms)
       var _countdownTimer = null;
-      var CHANGE_MS = 60 * 60 * 1000; // 1 hodina
+      var CHANGE_MS = 30 * 60 * 1000; // 30 minut
+      var NEXT_CHANGE_KEY = 'kladyx_next_change';
 
       function shuffle(arr) {
         for (var i = arr.length - 1; i > 0; i--) {
@@ -606,7 +607,19 @@
           _videoList = shuffle(mp4items.slice());
           _videoIndex = 0;
           playVideoAt(0);
-          scheduleNextChange();
+
+          // Persistence: zkontroluj uložený čas příští změny
+          var saved = null;
+          try { saved = parseInt(localStorage.getItem(NEXT_CHANGE_KEY), 10); } catch(e) {}
+          var now = Date.now();
+          if (saved && !isNaN(saved) && saved > now && (saved - now) <= CHANGE_MS) {
+            // Platný uložený čas - naváž na něj, neresetuj
+            _nextChangeAt = saved;
+            scheduleNextChange(true);
+          } else {
+            // Žádný platný uložený čas - nastav nový
+            scheduleNextChange();
+          }
           startCountdown();
         } catch(e) {
           console.error('KladyxVideo: nelze načíst video/', e && e.code, e && e.message, e);
@@ -638,15 +651,25 @@
         scheduleNextChange();
       }
 
-      function scheduleNextChange() {
+      function scheduleNextChange(keepExisting) {
         if (_videoInterval) clearInterval(_videoInterval);
-        _nextChangeAt = Date.now() + CHANGE_MS;
-        _videoInterval = setInterval(function() {
+        var delay;
+        if (keepExisting && _nextChangeAt > Date.now()) {
+          delay = _nextChangeAt - Date.now();
+        } else {
+          _nextChangeAt = Date.now() + CHANGE_MS;
+          delay = CHANGE_MS;
+        }
+        try { localStorage.setItem(NEXT_CHANGE_KEY, String(_nextChangeAt)); } catch(e) {}
+
+        _videoInterval = setTimeout(function() {
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
           _nextChangeAt = Date.now() + CHANGE_MS;
-        }, CHANGE_MS);
+          try { localStorage.setItem(NEXT_CHANGE_KEY, String(_nextChangeAt)); } catch(e) {}
+          scheduleNextChange();
+        }, delay);
       }
 
       function startCountdown() {
@@ -3089,7 +3112,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.15.8';
+  const CURRENT_VERSION = '2.15.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
