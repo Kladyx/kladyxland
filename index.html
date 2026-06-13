@@ -628,6 +628,7 @@
 
       async function playVideoAt(idx) {
         if (_videoList.length === 0) return;
+        if (window._manualVideoActive) return; // ruční URL aktivní - nepřepisuj
         var item = _videoList[idx % _videoList.length];
         try {
           var url = await getDownloadURL(item);
@@ -652,7 +653,8 @@
       }
 
       function scheduleNextChange(keepExisting) {
-        if (_videoInterval) clearInterval(_videoInterval);
+        if (_videoInterval) clearTimeout(_videoInterval);
+        if (window._manualVideoActive) return; // ruční URL aktivní - neplánuj rotaci
         var delay;
         if (keepExisting && _nextChangeAt > Date.now()) {
           delay = _nextChangeAt - Date.now();
@@ -663,6 +665,7 @@
         try { localStorage.setItem(NEXT_CHANGE_KEY, String(_nextChangeAt)); } catch(e) {}
 
         _videoInterval = setTimeout(function() {
+          if (window._manualVideoActive) return;
           _videoIndex = (_videoIndex + 1) % _videoList.length;
           if (_videoIndex === 0) shuffle(_videoList);
           playVideoAt(_videoIndex);
@@ -670,6 +673,7 @@
           try { localStorage.setItem(NEXT_CHANGE_KEY, String(_nextChangeAt)); } catch(e) {}
           scheduleNextChange();
         }, delay);
+        window._videoInterval = _videoInterval;
       }
 
       function startCountdown() {
@@ -1235,16 +1239,23 @@
     // Načíst aktuální video URL z Firebase
     try {
       onValue(ref(db, 'config/videoUrl'), snap => {
+        const v = document.getElementById('main-video');
         if (snap.exists() && snap.val()) {
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
-          // Aktualizovat video element
-          const v = document.getElementById('main-video');
-          if (v) {
-            const source = v.querySelector('source');
-            if (source) { source.src = url; v.load(); }
+          // Zastav auto-rotaci videí ze složky /videos/
+          window._manualVideoActive = true;
+          try { if (window._videoInterval) { clearTimeout(window._videoInterval); window._videoInterval = null; } } catch(e) {}
+          // Nastav video přímo přes src (žádný <source> element)
+          if (v && v.src !== url) {
+            v.src = url;
+            v.load();
+            v.play().catch(()=>{});
           }
+        } else {
+          // URL prázdná - obnov auto-rotaci
+          window._manualVideoActive = false;
         }
       });
     } catch(e) {}
@@ -1925,6 +1936,19 @@
         </div>
       </div>
 
+      <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
+        <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
+          <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
+            style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
+            onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
+        </div>
+        <button id="video-save-btn" onclick="window.saveVideoUrl()"
+          style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
+        <button id="video-clear-btn" onclick="window.clearVideoUrl()"
+          style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(200,50,50,.15);border:1px solid rgba(255,100,100,.35);color:#f87171;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🗑 VYMAŽ</button>
+        <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+      </div>
+
       <!-- CENTER: VERZE + TLAMPAČ -->
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="version-display" id="version-label">ver.—</div>
@@ -1970,18 +1994,6 @@
           <button id="obs-save-btn" onclick="window.obsSavePassword()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
-        </div>
-        <div id="video-url-row" class="edit-only" style="display:none;margin-top:6px;align-items:center;gap:4px;flex-wrap:wrap;">
-          <div style="position:relative;display:flex;align-items:center;flex:1;min-width:200px;">
-            <input id="video-url-input" type="text" placeholder="Firebase Storage video URL..."
-              style="font-family:'Exo 2',sans-serif;font-size:.7rem;background:rgba(0,10,40,.9);border:1px solid rgba(100,150,255,.25);color:#cce5ff;padding:5px 8px;border-radius:2px;outline:none;width:100%;max-width:300px;"
-              onkeydown="if(event.key==='Enter')window.saveVideoUrl()"/>
-          </div>
-          <button id="video-save-btn" onclick="window.saveVideoUrl()"
-            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(100,150,200,.15);border:1px solid rgba(100,200,255,.35);color:#60a5fa;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🎬 ULOŽ</button>
-          <button id="video-clear-btn" onclick="window.clearVideoUrl()"
-            style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(200,50,50,.15);border:1px solid rgba(255,100,100,.35);color:#f87171;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">🗑 VYMAŽ</button>
-          <span id="video-url-saved" style="display:none;font-size:.6rem;color:#60a5fa;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -3112,7 +3124,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.15.9';
+  const CURRENT_VERSION = '2.16.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
