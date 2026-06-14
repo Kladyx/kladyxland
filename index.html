@@ -11,7 +11,6 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
-  <meta name="version" content="2.16.9"/>
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet"/>
   <meta name="googlebot" content="noindex, nofollow"/>
   
@@ -821,12 +820,18 @@
     // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
     const introRef = ref(db, 'content/intro');
     const hwdRef   = ref(db, 'content/hwDisclaimer');
+    let _introLoaded = false, _hwdLoaded = false;
     onValue(introRef, snap => {
-      if (snap.exists()) document.getElementById('intro-text').innerHTML = snap.val();
+      if (snap.exists()) { document.getElementById('intro-text').innerHTML = snap.val(); _introLoaded = true; }
     });
     onValue(hwdRef, snap => {
-      if (snap.exists()) document.getElementById('hw-disclaimer-text').innerHTML = snap.val();
+      if (snap.exists()) { document.getElementById('hw-disclaimer-text').innerHTML = snap.val(); _hwdLoaded = true; }
     });
+    // Fallback: pokud onValue za 2s nedoručí (cache/pomalé spojení), zkus get()
+    setTimeout(() => {
+      if (!_introLoaded) get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
+      if (!_hwdLoaded)   get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
+    }, 2000);
     window._fbIntroRef = introRef;
     window._fbHwdRef   = hwdRef;
 
@@ -1796,7 +1801,7 @@
         <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="display:none;font-size:.5rem;padding:3px 8px;margin-top:2px;">🔴 Vypnout web</button>
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná -->
-        <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;">
+        <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;transform:translateX(-110px);">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
             <div class="gs-switch">
@@ -2499,7 +2504,10 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   function renderHw(data){const tbody=document.getElementById('hw-tbody');if(!tbody||!Array.isArray(data))return;tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+(item.brandClass||'hw-brand-col')+'" style="'+(item.brandStyle||'')+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}
   function loadHw(){/* data se načítají realtime z Firebase listeneru níže */}
   // Realtime listener – hardware tabulku vidí všichni
-  if(window.dbOnValue&&window.dbRef&&window.db){window.dbOnValue(window.dbRef(window.db,'content/hardware'),snap=>{if(snap.exists())renderHw(snap.val());});}
+  let _hwTableLoaded = false;
+  if(window.dbOnValue&&window.dbRef&&window.db){window.dbOnValue(window.dbRef(window.db,'content/hardware'),snap=>{if(snap.exists()){renderHw(snap.val());_hwTableLoaded=true;}});}
+  // Fallback po 2s: pokud onValue nedoručil, zkus get()
+  setTimeout(()=>{if(!_hwTableLoaded&&window.dbGet&&window.dbRef&&window.db){window.dbGet(window.dbRef(window.db,'content/hardware')).then(s=>{if(s.exists())renderHw(s.val());}).catch(()=>{});}},2000);
 
 
   // DIGI HODINY (lang-aware)
@@ -3124,7 +3132,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.16.9';
+  const CURRENT_VERSION = '2.17.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -3151,7 +3159,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       sessionStorage.removeItem('kladyx_rp');
     }
   });
-  document.querySelector('meta[name="version"]').setAttribute('content', CURRENT_VERSION);
   const vLabel = document.getElementById('version-label');
   if (vLabel) vLabel.textContent = 'ver.' + CURRENT_VERSION + 'Uc';
 
