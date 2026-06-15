@@ -1801,7 +1801,7 @@
         <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="display:none;font-size:.5rem;padding:3px 8px;margin-top:2px;">🔴 Vypnout web</button>
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná -->
-        <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;transform:translateX(-110px);">
+        <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;transform:translateX(100px);">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
             <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
             <div class="gs-switch">
@@ -3132,7 +3132,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.17.1';
+  const CURRENT_VERSION = '2.17.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
