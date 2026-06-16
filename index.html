@@ -469,7 +469,7 @@
     #site-off-overlay.active{display:flex;}
     #site-off-overlay .off-icon{font-size:4rem;margin-bottom:18px;opacity:.5;}
     #site-off-overlay .off-msg{font-size:1.1rem;letter-spacing:.15em;text-transform:uppercase;opacity:.6;}
-    #site-off-toggle{display:none;margin-top:8px;width:100%;text-align:center;}
+    #site-off-toggle{display:none;text-align:center;}
     #site-off-toggle.on{border-color:rgba(231,76,60,.6);color:#e74c3c;background:rgba(231,76,60,.1);}
     /* Grayscale 3-pozicový přepínač */
     .lever-wrap{display:none;margin-top:10px;align-items:center;justify-content:center;gap:14px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;}
@@ -503,9 +503,9 @@
     .th-btn.active-relax{background:rgba(0,200,100,.18);color:#00c864;text-shadow:0 0 8px rgba(0,200,100,.8);border-color:rgba(0,200,100,.7);}
     .th-btn.active-christmas{background:rgba(220,30,30,.18);color:#ff4444;text-shadow:0 0 8px rgba(220,30,30,.8);border-color:rgba(220,30,30,.7);}
     .th-btn.active-studio{background:rgba(140,0,255,.18);color:#aa44ff;text-shadow:0 0 8px rgba(140,0,255,.8);border-color:rgba(140,0,255,.7);}
-    .gs-switch{display:flex;flex-direction:column;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;width:56px;}
-    .gs-btn{width:100%;padding:9px 0;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-bottom:1px solid rgba(0,245,255,.1);}
-    .gs-btn:last-child{border-bottom:none;}
+    .gs-switch{display:inline-flex;flex-direction:row;align-items:center;gap:0;background:rgba(0,10,30,.9);border:2px solid rgba(0,245,255,.25);border-radius:12px;overflow:hidden;}
+    .gs-btn{padding:5px 10px;text-align:center;font-family:'Orbitron',monospace;font-size:.48rem;letter-spacing:.1em;color:#556;cursor:pointer;border:none;background:none;transition:all .2s;border-right:1px solid rgba(0,245,255,.1);}
+    .gs-btn:last-child{border-right:none;}
     .gs-btn.active-on{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);}
     .gs-btn.active-auto{background:rgba(255,200,0,.15);color:#ffc800;text-shadow:0 0 8px rgba(255,200,0,.6);}
     .gs-btn.active-off{background:rgba(100,100,120,.18);color:#aab;text-shadow:none;}
@@ -1797,22 +1797,22 @@
           <span id="obs-ws-status" style="display:none;font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.08em;color:#ffcc00;">📡 OBS: HLEDÁM...</span>
         </span>
 
-        <!-- ADMIN: Přepínač Vypnout/Zapnout web -->
-        <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="display:none;font-size:.5rem;padding:3px 8px;margin-top:2px;">🔴 Vypnout web</button>
-
-        <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná -->
-        <div id="grayscale-wrap" class="lever-wrap" style="display:none;flex-direction:column;align-items:center;gap:4px;transform:translateX(100px);">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;">
-            <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
-            <div class="gs-switch">
-              <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Jen střed černobílá">ČB</button>
-              <button id="gs-btn-full" class="gs-btn" onclick="setGrayscale('full')" title="Vše černobílá">ČB+</button>
-              <button id="gs-btn-auto" class="gs-btn active-auto" onclick="setGrayscale('auto')" title="Auto: ČB v noci, barevná ve dne">AUTO</button>
-              <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
+        <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná - vedle Vypnout web -->
+        <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
+          <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
+            <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
+              <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
+              <div class="gs-switch">
+                <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Jen střed černobílá">ČB</button>
+                <button id="gs-btn-full" class="gs-btn" onclick="setGrayscale('full')" title="Vše černobílá">ČB+</button>
+                <button id="gs-btn-auto" class="gs-btn active-auto" onclick="setGrayscale('auto')" title="Auto: ČB v noci, barevná ve dne">AUTO</button>
+                <button id="gs-btn-off" class="gs-btn" onclick="setGrayscale('off')" title="Vždy barevná">BAR</button>
+              </div>
             </div>
+            <div id="gs-status" style="font-size:.4rem;letter-spacing:.08em;color:rgba(255,200,0,.7);font-family:'Orbitron',monospace;text-align:center;line-height:1.3;"></div>
           </div>
-          <div id="gs-status" style="font-size:.4rem;letter-spacing:.08em;color:rgba(255,200,0,.7);font-family:'Orbitron',monospace;text-align:center;line-height:1.3;"></div>
-        </div>
+        </span>
       </span>
       <a href="#" class="logo" onclick="hideAll();return false;"><span class="logo-eq"><span></span><span></span><span></span><span></span><span></span></span> KLADYXLAND</a>
       <div class="nav-online" id="nav-online"><span class="dot"></span><span id="vc2">0</span> online</div>
@@ -2353,8 +2353,9 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     document.querySelectorAll('.ann-del').forEach(b=>b.style.display='block');
 
     const countdownEditBtn=document.getElementById('countdown-edit-btn');if(countdownEditBtn)countdownEditBtn.style.display='inline-block';
-    const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='block';
-    const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='flex';
+    const vypGsRow=document.getElementById('vypnout-grayscale-row');if(vypGsRow)vypGsRow.style.display='inline-flex';
+    const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='inline-block';
+    const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='inline-flex';
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='inline-block';
     const themeWrap=document.getElementById('theme-wrap');if(themeWrap)themeWrap.style.display='flex';
     populateTextEdits();
@@ -2386,6 +2387,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
     const countdownEditBtn=document.getElementById('countdown-edit-btn');if(countdownEditBtn)countdownEditBtn.style.display='none';
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='none';
+    const vypGsRowOff=document.getElementById('vypnout-grayscale-row');if(vypGsRowOff)vypGsRowOff.style.display='none';
     const siteOffToggle=document.getElementById('site-off-toggle');if(siteOffToggle)siteOffToggle.style.display='none';
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='none';
     const countdownInputWrap=document.getElementById('countdown-input-wrap');if(countdownInputWrap)countdownInputWrap.style.display='none';
@@ -3132,7 +3134,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.17.2';
+  const CURRENT_VERSION = '2.17.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
