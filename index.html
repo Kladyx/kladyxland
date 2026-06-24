@@ -645,8 +645,18 @@
 
       function nextVideo() {
         if (_videoList.length === 0) return;
-        _videoIndex = (_videoIndex + 1) % _videoList.length;
-        if (_videoIndex === 0) shuffle(_videoList);
+        if (_videoList.length === 1) { playVideoAt(0); return; }
+        // Najdi další index různý od aktuálního, navíc nepřehraj nedávno přehrané
+        if (!window._videoHistory) window._videoHistory = [];
+        var maxHist = Math.min(Math.floor(_videoList.length / 2), 5);
+        if (window._videoHistory.length >= maxHist) window._videoHistory.shift();
+        var prev = _videoIndex;
+        var attempts = 0;
+        do {
+          _videoIndex = Math.floor(Math.random() * _videoList.length);
+          attempts++;
+        } while ((_videoIndex === prev || window._videoHistory.includes(_videoIndex)) && attempts < 20);
+        window._videoHistory.push(_videoIndex);
         playVideoAt(_videoIndex);
         scheduleNextChange();
       }
@@ -665,8 +675,18 @@
 
         _videoInterval = setTimeout(function() {
           if (window._manualVideoActive) return;
-          _videoIndex = (_videoIndex + 1) % _videoList.length;
-          if (_videoIndex === 0) shuffle(_videoList);
+          if (_videoList.length > 1) {
+            if (!window._videoHistory) window._videoHistory = [];
+            var maxHist = Math.min(Math.floor(_videoList.length / 2), 5);
+            if (window._videoHistory.length >= maxHist) window._videoHistory.shift();
+            var prev = _videoIndex;
+            var attempts = 0;
+            do {
+              _videoIndex = Math.floor(Math.random() * _videoList.length);
+              attempts++;
+            } while ((_videoIndex === prev || window._videoHistory.includes(_videoIndex)) && attempts < 20);
+            window._videoHistory.push(_videoIndex);
+          }
           playVideoAt(_videoIndex);
           _nextChangeAt = Date.now() + CHANGE_MS;
           try { localStorage.setItem(NEXT_CHANGE_KEY, String(_nextChangeAt)); } catch(e) {}
@@ -681,6 +701,7 @@
         function tick() {
           if (!el) el = document.getElementById('next-video-countdown');
           if (!el) return;
+          if (window._manualVideoActive) { el.textContent = '--:--'; return; }
           var ms = _nextChangeAt - Date.now();
           if (ms < 0) ms = 0;
           var m = Math.floor(ms / 60000);
@@ -689,9 +710,19 @@
         }
         tick();
         _countdownTimer = setInterval(tick, 1000);
+        window._countdownTimerGlobal = _countdownTimer;
       }
 
       window.kladyxNextVideo = nextVideo;
+      window.kladyxRestartRotation = function() {
+        try { localStorage.removeItem(NEXT_CHANGE_KEY); } catch(e) {}
+        _nextChangeAt = Date.now() + CHANGE_MS;
+        shuffle(_videoList);
+        _videoIndex = 0;
+        playVideoAt(0);
+        scheduleNextChange();
+        startCountdown();
+      };
 
       // Spolehlivé čekání na auth — Firebase posílá onAuthStateChanged i pro anonymní login
       function startWhenReady() {
@@ -1252,6 +1283,10 @@
           // Zastav auto-rotaci videí ze složky /videos/
           window._manualVideoActive = true;
           try { if (window._videoInterval) { clearTimeout(window._videoInterval); window._videoInterval = null; } } catch(e) {}
+          // Zastav countdown a skryj ho
+          try { if (window._countdownTimerGlobal) { clearInterval(window._countdownTimerGlobal); window._countdownTimerGlobal = null; } } catch(e) {}
+          var cd = document.getElementById('next-video-countdown');
+          if (cd) cd.textContent = '--:--';
           // Nastav video přímo přes src (žádný <source> element)
           if (v && v.src !== url) {
             v.src = url;
@@ -1260,7 +1295,11 @@
           }
         } else {
           // URL prázdná - obnov auto-rotaci
+          var wasManual = window._manualVideoActive;
           window._manualVideoActive = false;
+          if (wasManual && typeof window.kladyxRestartRotation === 'function') {
+            window.kladyxRestartRotation();
+          }
         }
       });
     } catch(e) {}
@@ -2223,7 +2262,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     👁 TOTAL VISITORS
     <div class="tv-count" id="total-visitors-count">···</div>
   </div>
-  <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026-27</footer>
+  <footer>© KLADYXLAND TRANSMISSION UNIT 01 &nbsp;·&nbsp; ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT &nbsp;·&nbsp; Artwork by Michal Kovalčík 2026</footer>
 
   <!-- MOTIVY – jen admin -->
   <div id="theme-wrap" style="display:none;flex-direction:column;align-items:stretch;gap:7px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
@@ -3134,7 +3173,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.17.3';
+  const CURRENT_VERSION = '2.17.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
