@@ -634,8 +634,9 @@
           var v = document.getElementById('main-video');
           if (!v) return;
           v.src = url;
+          v.preload = 'auto';
           v.load();
-          v.play().catch(function(){});
+          v.oncanplay = function() { v.play().catch(function(){}); };
           v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
           console.log('KladyxVideo: přehrávám', item.name);
         } catch(e) {
@@ -1970,7 +1971,7 @@
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
       <div id="video-embed-box" style="width:100%;margin:6px 0;border-radius:6px;overflow:hidden;background:rgba(255,30,0,.05);border:2px solid rgba(255,60,0,.4);">
-        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
+        <video id="main-video" width="100%" height="auto" autoplay muted playsinline webkit-playsinline preload="auto" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
         <div style="padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;">&#x1F3AC; KLADYXLAND BROADCAST</div>
           <div style="display:flex;align-items:center;gap:8px;">
