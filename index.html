@@ -1997,6 +1997,8 @@
       <!-- CENTER: VERZE + TLAMPAČ -->
       <div style="display:flex;align-items:center;gap:10px;">
         <div class="version-display" id="version-label">ver.—</div>
+        <div id="update-dot" title="Kliknutím obnovíš" onclick="if(confirm('Nová verze webu je dostupná. Obnovit stránku?'))location.reload(true);" style="display:none;width:12px;height:12px;border-radius:50%;background:#ffaa00;box-shadow:0 0 8px #ffaa00,0 0 16px #ffaa00;cursor:pointer;animation:updatePulse 1.2s infinite;"></div>
+        <style>@keyframes updatePulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}</style>
         <button class="speaker-btn" id="speaker-btn" onclick="playGreeting()" title="Přehrát uvítání 1">📢</button>
         <audio id="greeting-audio" src="1.mp3" preload="auto"></audio>
         <button class="speaker-btn" id="speaker-btn2" onclick="playGreeting2()" title="Přehrát uvítání 2">📢</button>
@@ -3203,6 +3205,21 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   });
   const vLabel = document.getElementById('version-label');
   if (vLabel) vLabel.textContent = 'ver.' + CURRENT_VERSION + 'Uc';
+
+  // === Kontrola nové verze (jednou při načtení, ~30 B download) ===
+  (function(){
+    var URL_JSON = 'https://kladyx.github.io/kladyxland/version.json?t=' + Date.now();
+    fetch(URL_JSON, {cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+      if(!j || !j.kladyxland) return;
+      if(j.kladyxland !== CURRENT_VERSION){
+        var d = document.getElementById('update-dot');
+        if(d){
+          d.style.display = 'block';
+          d.title = 'Nová verze ' + j.kladyxland + ' je dostupná (aktuální: ' + CURRENT_VERSION + '). Klikni pro obnovení.';
+        }
+      }
+    }).catch(function(){});
+  })();
 
   // České svátky (jmeniny)
   (function(){
