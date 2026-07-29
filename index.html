@@ -72,7 +72,7 @@
     .onair-dot{width:10px;height:10px;border-radius:50%;background:#ff2200;box-shadow:0 0 8px #ff2200,0 0 18px #ff220088;animation:onair-blink 1.1s ease-in-out infinite;flex-shrink:0;}
     @keyframes onair-blink{0%,100%{opacity:1;box-shadow:0 0 8px #ff2200,0 0 20px #ff220099;}50%{opacity:.25;box-shadow:none;}}
     .onair-text{font-family:"Orbitron",monospace;font-size:.75rem;font-weight:900;letter-spacing:.2em;color:#ff3300;text-shadow:0 0 8px #ff330099;}
-    .broadcast-toggle{font-family:"Orbitron",monospace;font-size:.5rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,30,0,.15);border:1px solid rgba(255,60,0,.5);color:#ff4400;padding:5px 12px;cursor:pointer;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);transition:all .3s;margin-top:3px;position:relative;z-index:210;}
+    .broadcast-toggle{font-family:"Orbitron",monospace;font-size:.5rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,30,0,.15);border:2px solid rgba(255,60,0,.5);color:#ff4400;padding:8px 16px;cursor:pointer;transition:all .3s;margin-top:3px;position:relative;z-index:210;pointer-events:auto !important;border-radius:3px;}
     .broadcast-toggle.live{background:rgba(0,255,80,.15);border-color:rgba(0,255,100,.5);color:#00ff66;}
     .onair-dot.live{background:var(--green)!important;box-shadow:0 0 8px var(--green),0 0 20px rgba(0,255,136,.7)!important;animation:onair-blink-green 1.1s ease-in-out infinite!important;}
     @keyframes onair-blink-green{0%,100%{opacity:1;box-shadow:0 0 10px var(--green),0 0 24px rgba(0,255,136,.8);}50%{opacity:.2;box-shadow:none;}}
