@@ -1091,17 +1091,13 @@
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
       if (window._isLive) {
-        // Pokud je OBS připojen lokálně, zastav přímo
-        if (_obsConnected && _obsWs && _obsWs.readyState === WebSocket.OPEN) {
-          obsStopStream();
-        } else {
-          // Mobil nebo OBS není připojen – zapiš stopRequest do Firebase
-          try {
-            const auth = window.firebaseAuth;
-            if (auth && !auth.currentUser) await window.firebaseSignInAnon();
-          } catch(e) {}
-          set(ref(db, 'onair/stopRequest'), true).catch(e => console.warn('stopRequest err:', e));
-        }
+        // STOP — vždy přes Firebase (funguje z PC i mobilu)
+        try {
+          const auth = window.firebaseAuth;
+          if (auth && !auth.currentUser) await window.firebaseSignInAnon();
+        } catch(e) {}
+        if (typeof window.firebaseSetLive === 'function') window.firebaseSetLive(false);
+        set(ref(db, 'onair/stopRequest'), true).catch(e => console.warn('stopRequest err:', e));
       } else {
         if (typeof window.firebaseSetLive === 'function') window.firebaseSetLive(true);
       }
