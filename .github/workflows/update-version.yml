@@ -5,6 +5,9 @@ on:
     paths:
       - 'index.html'
 
+permissions:
+  contents: write
+
 jobs:
   update-version:
     runs-on: ubuntu-latest
