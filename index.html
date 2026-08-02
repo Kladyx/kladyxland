@@ -2003,8 +2003,6 @@
         <audio id="greeting-audio3" src="3.mp3" preload="auto"></audio>
         <button class="speaker-btn" id="speaker-btn4" onclick="playGreeting4()" title="Posloucháte Kladyxland">📢</button>
         <audio id="greeting-audio4" src="4_mp3.mp3" preload="auto"></audio>
-        <button class="speaker-btn" id="speaker-btn5k" onclick="playKladyxland()" title="Posloucháš Kladyxland. Vítej!">📢</button>
-        <audio id="kladyxland-audio" src="Kladyxland.mp3" preload="auto"></audio>
         <button class="speaker-btn" id="speaker-btn6k" onclick="playKladyxGates()" title="The Kladyx Gates">📢</button>
         <audio id="kladyx-gates-audio" src="the_kladyx_gates.mp3" preload="auto"></audio>
         <button class="speaker-btn" id="speaker-btn5" onclick="playDanceRadio()" title="Dance Radio CZ">📻</button>
@@ -3121,23 +3119,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; };
   }
 
-  function playKladyxland(){
-    const audio = document.getElementById('kladyxland-audio');
-    const btn = document.getElementById('speaker-btn5k');
-    if(audio.paused){
-      audio.currentTime = 0;
-      audio.play();
-      btn.classList.add('playing');
-      btn.textContent = '🔊';
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-      btn.classList.remove('playing');
-      btn.textContent = '📢';
-    }
-    audio.onended = () => { btn.classList.remove('playing'); btn.textContent = '📢'; };
-  }
-
   function playKladyxGates(){
     const audio = document.getElementById('kladyx-gates-audio');
     const btn = document.getElementById('speaker-btn6k');
@@ -3194,7 +3175,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '2.18.1';
+  const CURRENT_VERSION = '2.18.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
