@@ -267,7 +267,8 @@
     body.edit-mode #chat-clear-btn{display:inline-block!important;}
     body.edit-mode #chat-toggle-btn{display:inline-block!important;}
     #chat-toggle-btn{font-size:.55rem;padding:4px 10px;margin-left:6px;letter-spacing:.08em;}
-    #chat-toggle-btn.chat-off{background:rgba(255,68,68,.2);border-color:rgba(255,68,68,.5);color:#ff6666;}
+    #chat-toggle-btn.chat-off{background:rgba(255,68,68,.2);border-color:rgba(255,68,68,.5);color:#ff6666;animation:chatOffPulse 1.5s ease-in-out infinite;}
+    @keyframes chatOffPulse{0%,100%{opacity:1;box-shadow:0 0 6px rgba(255,68,68,.4);}50%{opacity:.5;box-shadow:0 0 14px rgba(255,68,68,.8);}}
     .btn-del-row{font-family:"Orbitron",monospace;font-size:.52rem;background:rgba(200,0,0,.2);border:1px solid rgba(255,60,60,.4);color:#ff6666;padding:5px 9px;cursor:pointer;}
     .btn-del-row:hover{background:rgba(255,0,0,.35);}
     .pioneer{color:#e8a000;}.presonus{color:#00aaff;}.reloop{color:#aa44ff;}
@@ -1751,14 +1752,14 @@
         if (inputWrap) inputWrap.style.display = '';
         if (messagesWrap) messagesWrap.style.display = '';
         if (emptyWrap) emptyWrap.style.display = '';
-        if (toggleBtn) { toggleBtn.textContent = '\U0001f4e1 CHAT: ON'; toggleBtn.classList.remove('chat-off'); }
+        if (toggleBtn) { toggleBtn.textContent = '📡 CHAT: ON'; toggleBtn.classList.remove('chat-off'); }
         startChatListener();
       } else {
         stopChatListener();
         if (inputWrap) inputWrap.style.display = 'none';
         if (messagesWrap) messagesWrap.style.display = 'none';
         if (emptyWrap) emptyWrap.style.display = 'none';
-        if (toggleBtn) { toggleBtn.textContent = '\U0001f6ab CHAT: OFF'; toggleBtn.classList.add('chat-off'); }
+        if (toggleBtn) { toggleBtn.textContent = '🚫 CHAT: OFF'; toggleBtn.classList.add('chat-off'); }
       }
     }
 
