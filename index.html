@@ -235,6 +235,7 @@
     .chat-msg-text{color:#cce5ff;font-size:.85rem;margin-top:4px;line-height:1.4;word-wrap:break-word;}
     .chat-msg-admin .chat-msg-name{color:#00ff88;}
     .chat-msg-del{position:absolute;top:6px;right:8px;background:none;border:none;color:#ff4444;cursor:pointer;font-size:14px;display:none;}
+    #s-chat{display:none;}
 
     /* PASSWORD MODAL */
     .modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,5,20,.88);backdrop-filter:blur(8px);justify-content:center;align-items:center;}
@@ -1688,6 +1689,8 @@
 
     // ── CHAT ──────────────────────────────────────────────
     const chatRef = ref(db, 'chat');
+    const chatOnRef = ref(db, 'chatEnabled');
+    let chatOn = false;
 
     function renderChat(snap) {
       const wrap = document.getElementById('chat-messages');
@@ -1715,7 +1718,7 @@
         document.querySelectorAll('.chat-msg-del').forEach(b => b.style.display = 'block');
     }
     let chatCount = -1;
-    let chatActive = true;
+
     let chatUnsub = null;
 
     function attachChatListener() {
@@ -1739,19 +1742,23 @@
       renderChat(snap);
       });
     }
-    attachChatListener();
+    // chatEnabled — řídí viditelnost chatu pro všechny návštěvníky
+    onValue(chatOnRef, snap => {
+      chatOn = snap.val() !== false;
+      const sec = document.getElementById('s-chat');
+      if (sec) sec.style.display = chatOn ? '' : 'none';
+      const btn = document.getElementById('chat-toggle-btn');
+      if (btn) {
+        btn.textContent = chatOn ? '💬 Chat ON' : '💬 Chat OFF';
+        btn.style.color = chatOn ? '#2ecc71' : '#e74c3c';
+        btn.style.borderColor = chatOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
+      }
+      if (chatOn && !chatUnsub) attachChatListener();
+      else if (!chatOn && chatUnsub) { chatUnsub(); chatUnsub = null; }
+    });
 
     window.toggleChat = function() {
-      const btn = document.getElementById('chat-toggle-btn');
-      if (chatActive) {
-        if (chatUnsub) { chatUnsub(); chatUnsub = null; }
-        chatActive = false;
-        if (btn) { btn.textContent = '💬 Chat OFF'; btn.style.color = '#e74c3c'; btn.style.borderColor = 'rgba(231,76,60,.4)'; }
-      } else {
-        attachChatListener();
-        chatActive = true;
-        if (btn) { btn.textContent = '💬 Chat ON'; btn.style.color = '#2ecc71'; btn.style.borderColor = 'rgba(46,204,113,.4)'; }
-      }
+      set(chatOnRef, !chatOn).catch(e => console.error(e));
     };
 
     window.sendChatMsg = function() {
