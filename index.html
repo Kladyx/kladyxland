@@ -1746,7 +1746,7 @@
     onValue(chatOnRef, snap => {
       chatOn = snap.val() !== false;
       const sec = document.getElementById('s-chat');
-      if (sec) sec.style.display = chatOn ? '' : 'none';
+      if (sec) sec.style.display = chatOn ? 'block' : 'none';
       const btn = document.getElementById('chat-toggle-btn');
       if (btn) {
         btn.textContent = chatOn ? '💬 Chat ON' : '💬 Chat OFF';
