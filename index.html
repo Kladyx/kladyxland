@@ -1715,7 +1715,11 @@
         document.querySelectorAll('.chat-msg-del').forEach(b => b.style.display = 'block');
     }
     let chatCount = -1;
-    onValue(query(chatRef, limitToLast(50)), (snap) => {
+    let chatActive = true;
+    let chatUnsub = null;
+
+    function attachChatListener() {
+      chatUnsub = onValue(query(chatRef, limitToLast(50)), (snap) => {
       const newCount = snap.exists() ? Object.keys(snap.val()).length : 0;
       if (chatCount >= 0 && newCount > chatCount && document.body.classList.contains('edit-mode')) {
         // Pípnutí při nové zprávě (jen admin)
@@ -1733,7 +1737,22 @@
       }
       chatCount = newCount;
       renderChat(snap);
-    });
+      });
+    }
+    attachChatListener();
+
+    window.toggleChat = function() {
+      const btn = document.getElementById('chat-toggle-btn');
+      if (chatActive) {
+        if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+        chatActive = false;
+        if (btn) { btn.textContent = '💬 Chat OFF'; btn.style.color = '#e74c3c'; btn.style.borderColor = 'rgba(231,76,60,.4)'; }
+      } else {
+        attachChatListener();
+        chatActive = true;
+        if (btn) { btn.textContent = '💬 Chat ON'; btn.style.color = '#2ecc71'; btn.style.borderColor = 'rgba(46,204,113,.4)'; }
+      }
+    };
 
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
@@ -1844,6 +1863,7 @@
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná - vedle Vypnout web -->
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
           <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
+          <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
               <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
