@@ -1745,11 +1745,13 @@
     // chatEnabled — řídí viditelnost chatu pro všechny návštěvníky
     onValue(chatOnRef, snap => {
       chatOn = snap.val() !== false;
+      window._chatOn = chatOn;
       const sec = document.getElementById('s-chat');
       if (sec) sec.style.display = chatOn ? 'block' : 'none';
       const btn = document.getElementById('chat-toggle-btn');
       if (btn) {
-        btn.textContent = chatOn ? '💬 Chat ON' : '💬 Chat OFF';
+        if (window.updateChatToggleBtnText) window.updateChatToggleBtnText();
+        else btn.textContent = chatOn ? '💬 Chat ON' : '💬 Chat OFF';
         btn.style.color = chatOn ? '#2ecc71' : '#e74c3c';
         btn.style.borderColor = chatOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
       }
@@ -1799,7 +1801,7 @@
 </head>
 <body>
   <div id="admin-onair-banner" style="display:none;"><span class="banner-dot"></span>🎙 VYSÍLÁŠ — BUĎ OPATRNÝ — NESAHEJ NA NASTAVENÍ WEBU<span class="banner-dot" style="margin-left:8px;margin-right:0;"></span></div>
-  <div id="site-off-overlay"><div class="off-icon">⛔</div><div class="off-msg">Stránka je dočasně vypnuta</div></div>
+  <div id="site-off-overlay"><div class="off-icon">⛔</div><div class="off-msg" data-i18n="overlay.off-msg">Stránka je dočasně vypnuta</div></div>
 
 <!-- HVĚZDIČKY (celá plocha) -->
 <div class="starfield" id="starfield"></div>
@@ -1852,7 +1854,37 @@
       'home.live-title': '📡 Živé vysílání',
       'home.live-desc': 'Když vysíláme — připoj se přímo na Mixcloud:',
       'home.intro-save': '✓ Uložit úvod',
-      'home.disclaimer': '⚠️ <strong>Disclaimer:</strong> Tento projekt není spojen s žádnou firmou ani značkou. Veškerá technika je zakoupena z vlastních prostředků. Jde čistě o soukromý koníček a záliba k muzice, bez jakékoliv komerční vazby.'
+      'home.disclaimer': '⚠️ <strong>Disclaimer:</strong> Tento projekt není spojen s žádnou firmou ani značkou. Veškerá technika je zakoupena z vlastních prostředků. Jde čistě o soukromý koníček a záliba k muzice, bez jakékoliv komerční vazby.',
+      'hw.title': 'KLADYXLAND HARDWARE',
+      'hw.edit': '✏️ Upravit',
+      'hw.save': '✓ Uložit text',
+      'gal.title': 'GALERIE',
+      'gal.upload-btn': '📷 Nahrát média',
+      'gal.pick-files': '📁 Vyber fotky / videa z PC',
+      'gal.drag-hint': 'nebo přetáhni soubory sem',
+      'gal.limits': 'Fotky, GIF, MP4/WebM (max 50 MB)',
+      'gal.empty': 'Zatím žádné fotky ani videa',
+      'arch.title': '📻 ARCHIVE STREAM',
+      'arch.loading': '⏳ NAČÍTÁM...',
+      'arch.empty': 'Žádné záznamy nenalezeny.',
+      'arch.more': '⬇ NAČÍST DALŠÍ',
+      'chat.title': '💬 CHAT',
+      'chat.clear': '🗑 Smazat vše',
+      'chat.name-ph': 'Tvoje jméno...',
+      'chat.text-ph': 'Napiš zprávu...',
+      'chat.send': '📤 Odeslat',
+      'chat.empty': 'Zatím žádné zprávy. Buď první!',
+      'admin.logout': 'Odhlásit',
+      'admin.site-off-btn': '🔴 Vypnout web',
+      'admin.chat-on': '💬 Chat ON',
+      'admin.chat-off': '💬 Chat OFF',
+      'admin.mode-label': 'Režim:',
+      'overlay.off-msg': 'Stránka je dočasně vypnuta',
+      'modal.title': '🔐 PŘÍSTUP PRO EDITACI',
+      'modal.subtitle': 'Přihlas se svým Google účtem',
+      'modal.google-btn': 'Přihlásit se přes Google',
+      'modal.cancel': '✕ Zrušit',
+      'modal.err': '❌ Chyba přihlášení'
     },
     en: {
       'nav.back': '⟵ Back',
@@ -1866,7 +1898,37 @@
       'home.live-title': '📡 Live Stream',
       'home.live-desc': "When we're live — join directly on Mixcloud:",
       'home.intro-save': '✓ Save intro',
-      'home.disclaimer': '⚠️ <strong>Disclaimer:</strong> This project is not affiliated with any company or brand. All equipment was purchased with personal funds. It is purely a private hobby and passion for music, with no commercial ties.'
+      'home.disclaimer': '⚠️ <strong>Disclaimer:</strong> This project is not affiliated with any company or brand. All equipment was purchased with personal funds. It is purely a private hobby and passion for music, with no commercial ties.',
+      'hw.title': 'KLADYXLAND HARDWARE',
+      'hw.edit': '✏️ Edit',
+      'hw.save': '✓ Save text',
+      'gal.title': 'GALLERY',
+      'gal.upload-btn': '📷 Upload media',
+      'gal.pick-files': '📁 Choose photos / videos from PC',
+      'gal.drag-hint': 'or drag files here',
+      'gal.limits': 'Photos, GIF, MP4/WebM (max 50 MB)',
+      'gal.empty': 'No photos or videos yet',
+      'arch.title': '📻 ARCHIVE STREAM',
+      'arch.loading': '⏳ LOADING...',
+      'arch.empty': 'No recordings found.',
+      'arch.more': '⬇ LOAD MORE',
+      'chat.title': '💬 CHAT',
+      'chat.clear': '🗑 Clear all',
+      'chat.name-ph': 'Your name...',
+      'chat.text-ph': 'Write a message...',
+      'chat.send': '📤 Send',
+      'chat.empty': 'No messages yet. Be the first!',
+      'admin.logout': 'Logout',
+      'admin.site-off-btn': '🔴 Turn off site',
+      'admin.chat-on': '💬 Chat ON',
+      'admin.chat-off': '💬 Chat OFF',
+      'admin.mode-label': 'Mode:',
+      'overlay.off-msg': 'Site is temporarily offline',
+      'modal.title': '🔐 ACCESS FOR EDITING',
+      'modal.subtitle': 'Sign in with your Google account',
+      'modal.google-btn': 'Sign in with Google',
+      'modal.cancel': '✕ Cancel',
+      'modal.err': '❌ Login error'
     }
   };
 
@@ -1876,11 +1938,25 @@
       const dict = I18N[lang] || I18N.cs;
       if (dict[key] !== undefined) el.innerHTML = dict[key];
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const dict = I18N[lang] || I18N.cs;
+      if (dict[key] !== undefined) el.placeholder = dict[key];
+    });
     document.documentElement.lang = lang;
     const btn = document.getElementById('lang-toggle-btn');
     if (btn) btn.textContent = lang === 'cs' ? '🇬🇧' : '🇨🇿';
     localStorage.setItem('kladyxLang', lang);
+    if (window.updateChatToggleBtnText) window.updateChatToggleBtnText();
   }
+
+  window.updateChatToggleBtnText = function() {
+    const btn = document.getElementById('chat-toggle-btn');
+    if (!btn || typeof window._chatOn === 'undefined') return;
+    const lang = localStorage.getItem('kladyxLang') || 'cs';
+    const dict = I18N[lang] || I18N.cs;
+    btn.textContent = window._chatOn ? dict['admin.chat-on'] : dict['admin.chat-off'];
+  };
 
   window.toggleLanguage = function() {
     const current = localStorage.getItem('kladyxLang') || 'cs';
@@ -1895,16 +1971,16 @@
 <!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
-    <div class="modal-title">🔐 PŘÍSTUP PRO EDITACI</div>
-    <p style="font-family:'Exo 2',sans-serif;font-size:.75rem;color:rgba(0,245,255,.6);text-align:center;margin-bottom:20px;">Přihlas se svým Google účtem</p>
+    <div class="modal-title" data-i18n="modal.title">🔐 PŘÍSTUP PRO EDITACI</div>
+    <p style="font-family:'Exo 2',sans-serif;font-size:.75rem;color:rgba(0,245,255,.6);text-align:center;margin-bottom:20px;" data-i18n="modal.subtitle">Přihlas se svým Google účtem</p>
     <div class="modal-btns" style="flex-direction:column;gap:10px;">
       <button class="modal-ok" id="google-login-btn" onclick="adminGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Přihlásit se přes Google
+        <span data-i18n="modal.google-btn">Přihlásit se přes Google</span>
       </button>
-      <button class="modal-cancel" onclick="closeModal()">✕ Zrušit</button>
+      <button class="modal-cancel" data-i18n="modal.cancel" onclick="closeModal()">✕ Zrušit</button>
     </div>
-    <div class="modal-err" id="pw-err">❌ Chyba přihlášení</div>
+    <div class="modal-err" id="pw-err" data-i18n="modal.err">❌ Chyba přihlášení</div>
   </div>
 </div>
 
@@ -1920,17 +1996,17 @@
         <span style="display:inline-flex;align-items:center;gap:4px;">
           <a href="#" class="nbtn" id="admin-login-btn" onclick="openModal('edit');return false;" style="color:#ff8800;border-color:rgba(255,136,0,.4);font-size:.5rem;padding:2px 6px;">🔑 Login</a>
           <span id="admin-status" style="display:none;font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;color:#4ade80;">🔓 ADMIN</span>
-          <a href="#" class="nbtn" id="admin-logout-btn" onclick="logoutAdmin();return false;" style="display:none;color:#e74c3c;border-color:rgba(231,76,60,.4);font-size:.5rem;padding:2px 6px;">Odhlásit</a>
+          <a href="#" class="nbtn" id="admin-logout-btn" data-i18n="admin.logout" onclick="logoutAdmin();return false;" style="display:none;color:#e74c3c;border-color:rgba(231,76,60,.4);font-size:.5rem;padding:2px 6px;">Odhlásit</a>
           <span id="obs-ws-status" style="display:none;font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.08em;color:#ffcc00;">📡 OBS: HLEDÁM...</span>
         </span>
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná - vedle Vypnout web -->
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
-          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
+          <button id="site-off-toggle" class="nbtn" data-i18n="admin.site-off-btn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
-              <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
+              <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="admin.mode-label">Režim:</span>
               <div class="gs-switch">
                 <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Jen střed černobílá">ČB</button>
                 <button id="gs-btn-full" class="gs-btn" onclick="setGrayscale('full')" title="Vše černobílá">ČB+</button>
@@ -2259,8 +2335,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div class="section" id="s-hardware">
       <div class="content-wrap single">
         <div class="stitle">
-          <span>KLADYXLAND HARDWARE</span>
-          <button class="edit-btn" id="hw-edit-btn" onclick="openModal('hw')">✏️ Upravit</button>
+          <span data-i18n="hw.title">KLADYXLAND HARDWARE</span>
+          <button class="edit-btn" id="hw-edit-btn" data-i18n="hw.edit" onclick="openModal('hw')">✏️ Upravit</button>
         </div>
         <div class="disclaimer col-full">
           <span id="hw-disclaimer-text">O zvukovou kvalitu se stará technika těchto značek:<br>
@@ -2271,7 +2347,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           • <strong>Elgato</strong> – streamovací kontrola a makro ovládání, Stream Deck Mini<br><br>
           Signál vedu přes kabeláž značek <strong>Adam Hall (série 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker a Lindy</strong>, aby byl přenos co nejstabilnější a bez zbytečného šumu 🚦🎇🔊🎧.</span>
           <textarea id="hw-disclaimer-edit" class="text-edit-area" style="display:none;" rows="6"></textarea>
-          <button class="btn-add-save text-save-btn" id="hw-disclaimer-save-btn" style="display:none;margin-top:8px;" onclick="saveHwDisclaimer()">✓ Uložit text</button>
+          <button class="btn-add-save text-save-btn" id="hw-disclaimer-save-btn" data-i18n="hw.save" style="display:none;margin-top:8px;" onclick="saveHwDisclaimer()">✓ Uložit text</button>
         </div>
         <div style="display:flex;justify-content:center;align-items:center;gap:16px;padding:18px 0 8px;flex-wrap:wrap;">
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Messenger_creation_0D485D82-A05E-458E-B12A-1073C84E8AE9.jpeg?alt=media&token=7a3859ed-7e98-4365-91b4-526077953d5d"
@@ -2291,34 +2367,34 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div class="section" id="s-galerie">
       <div class="content-wrap single">
         <div class="stitle">
-          <span>GALERIE</span>
-          <button class="edit-btn" id="gal-edit-btn" onclick="openModal('galerie')">📷 Nahrát média</button>
+          <span data-i18n="gal.title">GALERIE</span>
+          <button class="edit-btn" id="gal-edit-btn" data-i18n="gal.upload-btn" onclick="openModal('galerie')">📷 Nahrát média</button>
         </div>
         <div class="gallery-upload" id="gallery-upload" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');uploadGalleryFiles(event.dataTransfer.files)">
-          <label class="gallery-upload-btn" for="gal-file-input">📁 Vyber fotky / videa z PC</label>
-          <div style="margin-top:8px;font-size:.7rem;color:rgba(0,245,255,.4);">nebo přetáhni soubory sem</div>
+          <label class="gallery-upload-btn" for="gal-file-input" data-i18n="gal.pick-files">📁 Vyber fotky / videa z PC</label>
+          <div style="margin-top:8px;font-size:.7rem;color:rgba(0,245,255,.4);" data-i18n="gal.drag-hint">nebo přetáhni soubory sem</div>
           <input type="file" id="gal-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple onchange="uploadGalleryFiles(this.files)"/>
-          <div style="margin-top:8px;color:rgba(200,220,255,.4);font-size:.75rem;">Fotky, GIF, MP4/WebM (max 50 MB)</div>
+          <div style="margin-top:8px;color:rgba(200,220,255,.4);font-size:.75rem;" data-i18n="gal.limits">Fotky, GIF, MP4/WebM (max 50 MB)</div>
           <div class="gallery-progress" id="gal-progress">
             <div class="gallery-progress-bar" id="gal-progress-bar"></div>
           </div>
           <div id="gal-upload-status" style="margin-top:8px;font-size:.75rem;color:#00ff99;"></div>
         </div>
         <div id="gallery-grid" class="gallery-grid"></div>
-        <div class="gallery-empty" id="gallery-empty">Zatím žádné fotky ani videa</div>
+        <div class="gallery-empty" id="gallery-empty" data-i18n="gal.empty">Zatím žádné fotky ani videa</div>
       </div>
     </div>
 
     <!-- ARCHIV -->
     <div class="section" id="s-archiv">
       <div class="content-wrap single">
-        <div class="stitle"><span>📻 ARCHIVE STREAM</span></div>
-        <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;">⏳ NAČÍTÁM...</div>
+        <div class="stitle"><span data-i18n="arch.title">📻 ARCHIVE STREAM</span></div>
+        <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;" data-i18n="arch.loading">⏳ NAČÍTÁM...</div>
         <div id="archiv-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;"></div>
         <div id="archiv-list" style="display:none;"></div>
-        <div id="archiv-empty" style="display:none;text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Žádné záznamy nenalezeny.</div>
+        <div id="archiv-empty" style="display:none;text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;" data-i18n="arch.empty">Žádné záznamy nenalezeny.</div>
         <div id="archiv-more-wrap" style="display:none;text-align:center;margin-top:14px;">
-          <button id="archiv-more-btn" onclick="loadArchiv(true)" style="font-family:'Orbitron',monospace;font-size:.6rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;padding:8px 22px;cursor:pointer;border-radius:3px;letter-spacing:.1em;">⬇ NAČÍST DALŠÍ</button>
+          <button id="archiv-more-btn" onclick="loadArchiv(true)" data-i18n="arch.more" style="font-family:'Orbitron',monospace;font-size:.6rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;padding:8px 22px;cursor:pointer;border-radius:3px;letter-spacing:.1em;">⬇ NAČÍST DALŠÍ</button>
         </div>
       </div>
     </div>
@@ -2326,16 +2402,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <!-- CHAT -->
     <div class="section" id="s-chat">
       <div class="content-wrap single">
-        <div class="stitle"><span>💬 CHAT</span>
-          <button class="edit-btn" onclick="clearAllChat()" style="display:none;" id="chat-clear-btn">🗑 Smazat vše</button>
+        <div class="stitle"><span data-i18n="chat.title">💬 CHAT</span>
+          <button class="edit-btn" onclick="clearAllChat()" data-i18n="chat.clear" style="display:none;" id="chat-clear-btn">🗑 Smazat vše</button>
         </div>
         <div class="chat-input-wrap">
-          <input type="text" id="chat-name" placeholder="Tvoje jméno..." maxlength="30"/>
-          <textarea id="chat-text" placeholder="Napiš zprávu..." maxlength="500"></textarea>
-          <button class="chat-send-btn" onclick="sendChatMsg()">📤 Odeslat</button>
+          <input type="text" id="chat-name" data-i18n-placeholder="chat.name-ph" placeholder="Tvoje jméno..." maxlength="30"/>
+          <textarea id="chat-text" data-i18n-placeholder="chat.text-ph" placeholder="Napiš zprávu..." maxlength="500"></textarea>
+          <button class="chat-send-btn" data-i18n="chat.send" onclick="sendChatMsg()">📤 Odeslat</button>
         </div>
         <div id="chat-messages"></div>
-        <div id="chat-empty" style="text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Zatím žádné zprávy. Buď první!</div>
+        <div id="chat-empty" data-i18n="chat.empty" style="text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Zatím žádné zprávy. Buď první!</div>
       </div>
     </div>
 
@@ -3274,7 +3350,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.0.8';
+  const CURRENT_VERSION = '3.0.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
