@@ -858,23 +858,43 @@
       else window.addEventListener('DOMContentLoaded', () => renderGallery(items));
     }).catch(e => console.warn('galleryRef:', e));
 
-    // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
-    const introRef = ref(db, 'content/intro');
-    const hwdRef   = ref(db, 'content/hwDisclaimer');
-    let _introLoaded = false, _hwdLoaded = false;
-    onValue(introRef, snap => {
-      if (snap.exists()) { document.getElementById('intro-text').innerHTML = snap.val(); _introLoaded = true; }
-    });
-    onValue(hwdRef, snap => {
-      if (snap.exists()) { document.getElementById('hw-disclaimer-text').innerHTML = snap.val(); _hwdLoaded = true; }
-    });
-    // Fallback: pokud onValue za 2s nedoručí (cache/pomalé spojení), zkus get()
-    setTimeout(() => {
-      if (!_introLoaded) get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
-      if (!_hwdLoaded)   get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
-    }, 2000);
-    window._fbIntroRef = introRef;
-    window._fbHwdRef   = hwdRef;
+    // ── EDITOVATELNÉ TEXTY z Firebase RTDB — jazykově citlivé: content/intro/{cs|en} ──
+    const introBase = 'content/intro';
+    const hwdBase   = 'content/hwDisclaimer';
+    let introUnsub = null, hwdUnsub = null;
+
+    function attachEditableText(base, elementId, lang) {
+      if (base === introBase && introUnsub) { introUnsub(); introUnsub = null; }
+      if (base === hwdBase && hwdUnsub) { hwdUnsub(); hwdUnsub = null; }
+      const langRef = ref(db, base + '/' + lang);
+      const unsub = onValue(langRef, snap => {
+        if (snap.exists()) {
+          document.getElementById(elementId).innerHTML = snap.val();
+        } else if (lang === 'en') {
+          // EN zatím nevyplněna → fallback na CS
+          get(ref(db, base + '/cs')).then(s => {
+            if (s.exists()) document.getElementById(elementId).innerHTML = s.val();
+          }).catch(()=>{});
+        } else {
+          // stará plochá struktura před migrací → fallback na přímý řetězec
+          get(ref(db, base)).then(s => {
+            if (s.exists() && typeof s.val() === 'string') document.getElementById(elementId).innerHTML = s.val();
+          }).catch(()=>{});
+        }
+      });
+      if (base === introBase) introUnsub = unsub; else hwdUnsub = unsub;
+    }
+
+    const _startLang = localStorage.getItem('kladyxLang') || 'cs';
+    attachEditableText(introBase, 'intro-text', _startLang);
+    attachEditableText(hwdBase, 'hw-disclaimer-text', _startLang);
+
+    window._fbIntroBase = introBase;
+    window._fbHwdBase   = hwdBase;
+    window._reattachEditableTexts = function(lang) {
+      attachEditableText(introBase, 'intro-text', lang);
+      attachEditableText(hwdBase, 'hw-disclaimer-text', lang);
+    };
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
     const liveRef = ref(db, 'onair/live');
@@ -1948,6 +1968,7 @@
     if (btn) btn.textContent = lang === 'cs' ? '🇬🇧' : '🇨🇿';
     localStorage.setItem('kladyxLang', lang);
     if (window.updateChatToggleBtnText) window.updateChatToggleBtnText();
+    if (window._reattachEditableTexts) window._reattachEditableTexts(lang);
   }
 
   window.updateChatToggleBtnText = function() {
@@ -2683,12 +2704,18 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   function saveIntro() {
     const val = document.getElementById('intro-edit').value;
     document.getElementById('intro-text').innerHTML = val;
-    if (window._fbIntroRef) window.dbSet(window._fbIntroRef, val).catch(e => console.error('Intro save error:', e));
+    const lang = localStorage.getItem('kladyxLang') || 'cs';
+    if (window._fbIntroBase && window.dbRef && window.dbSet && window.db) {
+      window.dbSet(window.dbRef(window.db, window._fbIntroBase + '/' + lang), val).catch(e => console.error('Intro save error:', e));
+    }
   }
   function saveHwDisclaimer() {
     const val = document.getElementById('hw-disclaimer-edit').value;
     document.getElementById('hw-disclaimer-text').innerHTML = val;
-    if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
+    const lang = localStorage.getItem('kladyxLang') || 'cs';
+    if (window._fbHwdBase && window.dbRef && window.dbSet && window.db) {
+      window.dbSet(window.dbRef(window.db, window._fbHwdBase + '/' + lang), val).catch(e => console.error('HW text save error:', e));
+    }
   }
   function populateTextEdits() {
     try {
@@ -3350,7 +3377,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.0.9';
+  const CURRENT_VERSION = '3.1.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
