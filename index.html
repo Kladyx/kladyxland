@@ -963,12 +963,6 @@
     }
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
 
-    // ── OBS STREAMING AUTO-DETECT (status/obs/state) ─────────────────────
-    onValue(ref(db,'status/obs/state'), function(snap){
-      const s = snap.val() === 'online';
-      if(typeof window.firebaseSetLive==='function') window.firebaseSetLive(s);
-    });
-
     // ── MIXCLOUD STATUS INDICATOR ─────────────────────────────────────────
     // Indikátor kopíruje ON AIR stav (viz applyLiveState). Žádný samostatný listener.
     const mcLiveRef = ref(db, 'mixcloud/isLive');
@@ -3223,7 +3217,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.0.6';
+  const CURRENT_VERSION = '3.0.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
