@@ -964,9 +964,26 @@
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
 
     // ── OBS STREAMING AUTO-DETECT (status/obs/state) ─────────────────────
-    onValue(ref(db,'status/obs/state'), function(snap){
-      const s = snap.val() === 'online';
+    onValue(ref(db,'status/obs'), function(snap){
+      const val = snap.val();
+      if(!val) return;
+      const s = val.state === 'online';
       if(typeof window.firebaseSetLive==='function') window.firebaseSetLive(s);
+      const el = document.getElementById('bridge-status');
+      if(el && el.style.display !== 'none'){
+        const age = Date.now() - (val.ts || 0);
+        if(age < 10000){
+          el.textContent = '🟢 BRIDGE ON';
+          el.style.color = '#00ff88';
+          el.style.borderColor = 'rgba(0,255,100,.5)';
+          el.style.background = 'rgba(0,255,100,.1)';
+        } else {
+          el.textContent = '🔴 BRIDGE OFF';
+          el.style.color = '#ff4444';
+          el.style.borderColor = 'rgba(255,60,60,.5)';
+          el.style.background = 'rgba(255,0,0,.1)';
+        }
+      }
     });
 
     // ── MIXCLOUD STATUS INDICATOR ─────────────────────────────────────────
@@ -2080,6 +2097,7 @@
           <button id="obs-save-btn" onclick="window.obsSavePassword()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
+          <span id="bridge-status" class="edit-only" style="display:none;font-size:.55rem;font-family:'Orbitron',monospace;padding:5px 8px;border-radius:2px;border:1px solid rgba(255,60,60,.5);background:rgba(255,0,0,.1);color:#ff4444;">🔴 BRIDGE OFF</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -3223,7 +3241,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.0.8';
+  const CURRENT_VERSION = '3.0.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
