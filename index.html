@@ -76,6 +76,16 @@
     .broadcast-toggle.live{background:rgba(0,255,80,.15);border-color:rgba(0,255,100,.5);color:#00ff66;}
     .onair-dot.live{background:var(--green)!important;box-shadow:0 0 8px var(--green),0 0 20px rgba(0,255,136,.7)!important;animation:onair-blink-green 1.1s ease-in-out infinite!important;}
     @keyframes onair-blink-green{0%,100%{opacity:1;box-shadow:0 0 10px var(--green),0 0 24px rgba(0,255,136,.8);}50%{opacity:.2;box-shadow:none;}}
+    
+    /* BRIDGE STATUS */
+    #bridge-status{transition:all 0.3s ease;}
+    #bridge-status.online{
+      border-color:rgba(0,255,100,.7)!important;
+      background:rgba(0,255,100,.12)!important;
+      color:#00ff88!important;
+      animation:bridge-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes bridge-pulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(0,255,100,.5);}50%{opacity:.5;box-shadow:0 0 16px rgba(0,255,100,.8);}}
     .onair-text.live{color:var(--green)!important;text-shadow:0 0 8px rgba(0,255,136,.8)!important;}
     
     /* Fixed Status Button - vidět všude */
@@ -962,27 +972,28 @@
       }
     }
     onValue(liveRef, snap => applyLiveState(snap.val() === true));
-
-    // ── OBS STREAMING AUTO-DETECT (status/obs/state) ─────────────────────
-    onValue(ref(db,'status/obs'), function(snap){
-      const val = snap.val();
-      if(!val) return;
-      const s = val.state === 'online';
-      if(typeof window.firebaseSetLive==='function') window.firebaseSetLive(s);
-      const el = document.getElementById('bridge-status');
-      if(el && el.style.display !== 'none'){
-        const age = Date.now() - (val.ts || 0);
-        if(age < 10000){
-          el.textContent = '🟢 BRIDGE ON';
-          el.style.color = '#00ff88';
-          el.style.borderColor = 'rgba(0,255,100,.5)';
-          el.style.background = 'rgba(0,255,100,.1)';
-        } else {
-          el.textContent = '🔴 BRIDGE OFF';
-          el.style.color = '#ff4444';
-          el.style.borderColor = 'rgba(255,60,60,.5)';
-          el.style.background = 'rgba(255,0,0,.1)';
+    
+    // ── AUTO DETECT OBS STREAM (status/obs/state) ────────────────────────────
+    // Když v OBS klikneš "Vysílat", bridge to detekuje a zapíše state: "online"
+    // Web se automaticky přepne na ON AIR bez nutnosti ručně klikat START
+    const obsStatusRef = ref(db, 'status/obs/state');
+    const bridgeStatusEl = document.getElementById('bridge-status');
+    onValue(obsStatusRef, snap => {
+      const obsState = snap.val();
+      if (obsState === 'online') {
+        applyLiveState(true);
+        if (bridgeStatusEl) {
+          bridgeStatusEl.textContent = '🟢 ONLINE';
+          bridgeStatusEl.classList.add('online');
         }
+        console.log('OBS LIVE DETECTED → ON AIR AUTO ENABLED');
+      } else if (obsState === 'offline') {
+        applyLiveState(false);
+        if (bridgeStatusEl) {
+          bridgeStatusEl.textContent = '🔴 OFFLINE';
+          bridgeStatusEl.classList.remove('online');
+        }
+        console.log('OBS OFFLINE → ON AIR AUTO DISABLED');
       }
     });
 
@@ -2097,7 +2108,7 @@
           <button id="obs-save-btn" onclick="window.obsSavePassword()"
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
-          <span id="bridge-status" class="edit-only" style="display:none;font-size:.55rem;font-family:'Orbitron',monospace;padding:5px 8px;border-radius:2px;border:1px solid rgba(255,60,60,.5);background:rgba(255,0,0,.1);color:#ff4444;">🔴 BRIDGE OFF</span>
+          <span id="bridge-status" style="font-size:.55rem;font-family:'Orbitron',monospace;padding:5px 8px;border-radius:2px;border:1px solid rgba(255,60,60,.5);background:rgba(255,0,0,.1);color:#ff4444;">🔴 OFFLINE</span>
         </div>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
@@ -3241,7 +3252,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.0.9';
+  const CURRENT_VERSION = '3.1.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
