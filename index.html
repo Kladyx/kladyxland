@@ -78,7 +78,7 @@
     @keyframes onair-blink-green{0%,100%{opacity:1;box-shadow:0 0 10px var(--green),0 0 24px rgba(0,255,136,.8);}50%{opacity:.2;box-shadow:none;}}
     
     /* BRIDGE STATUS */
-    #bridge-status{transition:all 0.3s ease;}
+    #bridge-status{transition:all 0.3s ease;display:inline-block;width:fit-content;}
     #bridge-status.online{
       border-color:rgba(0,255,100,.7)!important;
       background:rgba(0,255,100,.12)!important;
@@ -2111,7 +2111,7 @@
             style="font-family:'Orbitron',monospace;font-size:.55rem;background:rgba(0,200,80,.15);border:1px solid rgba(0,255,100,.35);color:#44ff88;padding:5px 10px;cursor:pointer;border-radius:2px;transition:all 0.3s;">💾 SYNC</button>
           <span id="obs-pw-saved" style="display:none;font-size:.6rem;color:#00ff99;font-family:'Orbitron',monospace;">✓ Uloženo</span>
         </div>
-        <span id="bridge-status" style="display:inline-block;font-size:.55rem;font-family:'Orbitron',monospace;padding:2px 6px;border-radius:2px;border:1px solid rgba(255,60,60,.5);background:rgba(255,0,0,.1);color:#ff4444;">🔴 OFFLINE</span>
+        <span id="bridge-status" style="display:inline-block;width:fit-content;font-size:.55rem;font-family:'Orbitron',monospace;padding:2px 6px;border-radius:2px;border:1px solid rgba(255,60,60,.5);background:rgba(255,0,0,.1);color:#ff4444;">🔴 OFFLINE</span>
         <div class="signal-status">
           <span class="signal-icon">📡</span>
           <span class="signal-text" id="signal-text">SIGNAL LOCKED</span>
@@ -3272,7 +3272,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.1.4';
+  const CURRENT_VERSION = '3.1.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
