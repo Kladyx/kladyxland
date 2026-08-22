@@ -1137,16 +1137,20 @@
     };
     // Nová jednoduchá funkce pro manuální přepnutí live stavu (záloha když OBS není připojen)
     window._toggleLive = async function() {
+      // Zajisti auth před zápisem
+      try {
+        const auth = window.firebaseAuth;
+        if (auth && !auth.currentUser) await window.firebaseSignInAnon();
+      } catch(e) {}
       if (window._isLive) {
-        // STOP — vždy přes Firebase (funguje z PC i mobilu)
-        try {
-          const auth = window.firebaseAuth;
-          if (auth && !auth.currentUser) await window.firebaseSignInAnon();
-        } catch(e) {}
+        // STOP
         if (typeof window.firebaseSetLive === 'function') window.firebaseSetLive(false);
         set(ref(db, 'onair/stopRequest'), true).catch(e => console.warn('stopRequest err:', e));
+        set(ref(db, 'status/command'), {action: 'stop', ts: Date.now()}).catch(e => console.warn('cmd err:', e));
       } else {
+        // START
         if (typeof window.firebaseSetLive === 'function') window.firebaseSetLive(true);
+        set(ref(db, 'status/command'), {action: 'start', ts: Date.now()}).catch(e => console.warn('cmd err:', e));
       }
     };
 
