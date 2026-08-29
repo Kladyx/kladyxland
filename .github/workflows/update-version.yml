@@ -16,7 +16,7 @@ jobs:
 
       - name: Extract version and write JSON
         run: |
-          VERSION=$(grep -oP "CURRENT_VERSION = '\K[^']+" index.html)
+          VERSION=$(grep -oP "const CURRENT_VERSION = '\K[^']+" index.html)
           echo "{\"kladyxland\": \"$VERSION\"}" > version.json
 
       - name: Commit version.json
