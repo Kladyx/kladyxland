@@ -781,6 +781,13 @@
     window.dbOnValue = onValue;
     window.dbPush = push;
 
+    // ── HW OBRÁZKY listener ─────────────────────────────────────────────
+    onValue(ref(db, 'hardwareDb/images'), snap => {
+      if (typeof renderHwImages === 'function') {
+        renderHwImages(snap.exists() ? snap.val() : null);
+      }
+    });
+
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
     const presenceRef = ref(db, 'presence');
@@ -2662,12 +2669,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     window.dbRemove(window.dbRef(window.db, 'hardwareDb/images/' + key))
       .catch(e => console.error('delHwImage:', e));
   }
-  // Realtime listener na hw obrázky
-  if (window.dbOnValue && window.dbRef && window.db) {
-    window.dbOnValue(window.dbRef(window.db, 'hardwareDb/images'), snap => {
-      renderHwImages(snap.exists() ? snap.val() : null);
-    });
-  }
+  // HW obrázky listener je registrován v Firebase init bloku
   function populateTextEdits() {
     try {
       const it=document.getElementById('intro-text'); const ie=document.getElementById('intro-edit'); if(it&&ie) ie.value=it.innerText;
@@ -3346,7 +3348,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.1.9';
+  const CURRENT_VERSION = '3.2.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
