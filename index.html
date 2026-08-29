@@ -287,6 +287,7 @@
     /* ADD FORM */
     .add-form{display:none;background:rgba(0,20,55,.9);border:1px solid rgba(0,245,255,.25);border-radius:3px;padding:18px;margin-top:14px;flex-direction:column;gap:9px;}
     body.edit-mode .add-form{display:flex;}
+    body.edit-mode .edit-only{display:block!important;}
     .add-form label{font-family:"Orbitron",monospace;font-size:.54rem;color:rgba(0,245,255,.6);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
     .add-form input{font-family:"Exo 2",sans-serif;font-size:.85rem;background:rgba(0,10,40,.8);border:1px solid rgba(0,245,255,.25);color:#cce5ff;padding:9px 13px;border-radius:2px;outline:none;transition:border .2s;}
     .add-form input:focus{border-color:var(--cyan);}
@@ -3345,7 +3346,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.1.8';
+  const CURRENT_VERSION = '3.1.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
