@@ -778,6 +778,7 @@
     window.dbSet = set;
     window.dbGet = get;
     window.dbOnValue = onValue;
+    window.dbPush = push;
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -2270,6 +2271,17 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
                alt="PreSonus logo"
                style="max-width:180px;width:45%;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
         </div>
+        <!-- Dynamické obrázky z Firebase -->
+        <div id="hw-dyn-imgs" style="display:flex;justify-content:center;align-items:center;gap:16px;padding:8px 0;flex-wrap:wrap;"></div>
+        <!-- Admin formulář - viditelný jen v edit-mode -->
+        <div class="edit-only" style="display:none;margin-top:14px;padding:12px;background:rgba(0,245,255,.06);border-radius:8px;border:1px solid rgba(0,245,255,.15);">
+          <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;">🖼 Přidat obrázek (URL z Firebase Storage)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="hw-img-url" type="url" placeholder="https://firebasestorage.googleapis.com/..." style="flex:1;min-width:200px;padding:8px 10px;background:rgba(0,0,30,.5);border:1px solid rgba(0,245,255,.3);border-radius:6px;color:#e0f4ff;font-size:.8rem;"/>
+            <button onclick="addHwImage()" style="padding:8px 16px;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.4);border-radius:6px;color:#00f5ff;cursor:pointer;font-size:.8rem;">+ Přidat</button>
+          </div>
+          <div id="hw-img-status" style="font-size:.72rem;margin-top:6px;color:rgba(0,245,255,.5);"></div>
+        </div>
 
       </div>
     </div>
@@ -2602,6 +2614,58 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const val = document.getElementById('hw-disclaimer-edit').value;
     document.getElementById('hw-disclaimer-text').innerHTML = val;
     if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
+  }
+
+  // ── HW OBRÁZKY ─────────────────────────────────────────────────────────
+  function renderHwImages(data) {
+    const wrap = document.getElementById('hw-dyn-imgs');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    if (!data) return;
+    const isAdmin = document.body.classList.contains('edit-mode');
+    Object.keys(data).forEach(key => {
+      const url = data[key];
+      const div = document.createElement('div');
+      div.style.cssText = 'position:relative;display:inline-block;';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'hw';
+      img.loading = 'lazy';
+      img.style.cssText = 'max-width:180px;width:45%;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
+      div.appendChild(img);
+      if (isAdmin) {
+        const btn = document.createElement('button');
+        btn.textContent = '✕';
+        btn.title = 'Smazat obrázek';
+        btn.style.cssText = 'position:absolute;top:4px;right:4px;background:rgba(200,0,0,.75);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;line-height:1;';
+        btn.onclick = function() { delHwImage(key); };
+        div.appendChild(btn);
+      }
+      wrap.appendChild(div);
+    });
+  }
+  function addHwImage() {
+    const inp = document.getElementById('hw-img-url');
+    const st = document.getElementById('hw-img-status');
+    const url = (inp ? inp.value : '').trim();
+    if (!url || !url.startsWith('http')) { if(st) st.textContent = '⚠ Zadej platnou URL'; return; }
+    if (!window.dbPush || !window.dbRef || !window.db) { if(st) st.textContent = '⚠ Firebase není připojen'; return; }
+    if(st) st.textContent = '⏳ Ukládám...';
+    window.dbPush(window.dbRef(window.db, 'hardwareDb/images'), url)
+      .then(() => { if(st) st.textContent = '✅ Přidáno'; if(inp) inp.value = ''; })
+      .catch(e => { if(st) st.textContent = '❌ Chyba: ' + e.message; });
+  }
+  function delHwImage(key) {
+    if (!window.dbRemove || !window.dbRef || !window.db) return;
+    if (!confirm('Smazat tento obrázek?')) return;
+    window.dbRemove(window.dbRef(window.db, 'hardwareDb/images/' + key))
+      .catch(e => console.error('delHwImage:', e));
+  }
+  // Realtime listener na hw obrázky
+  if (window.dbOnValue && window.dbRef && window.db) {
+    window.dbOnValue(window.dbRef(window.db, 'hardwareDb/images'), snap => {
+      renderHwImages(snap.exists() ? snap.val() : null);
+    });
   }
   function populateTextEdits() {
     try {
@@ -3281,7 +3345,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.1.7';
+  const CURRENT_VERSION = '3.1.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
