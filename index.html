@@ -781,12 +781,12 @@
     window.dbOnValue = onValue;
     window.dbPush = push;
 
-    // ── HW OBRÁZKY listener ─────────────────────────────────────────────
-    onValue(ref(db, 'hardwareDb/images'), snap => {
+    // ── HW OBRÁZKY - jednorázové načtení ───────────────────────────────
+    get(ref(db, 'hardwareDb/images')).then(snap => {
       if (typeof renderHwImages === 'function') {
         renderHwImages(snap.exists() ? snap.val() : null);
       }
-    });
+    }).catch(e => console.warn('hwImages:', e));
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -2660,13 +2660,25 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     if (!window.dbPush || !window.dbRef || !window.db) { if(st) st.textContent = '⚠ Firebase není připojen'; return; }
     if(st) st.textContent = '⏳ Ukládám...';
     window.dbPush(window.dbRef(window.db, 'hardwareDb/images'), url)
-      .then(() => { if(st) st.textContent = '✅ Přidáno'; if(inp) inp.value = ''; })
+      .then(() => {
+        if(st) st.textContent = '✅ Přidáno';
+        if(inp) inp.value = '';
+        // Znovu načíst obrázky
+        window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
+          renderHwImages(snap.exists() ? snap.val() : null);
+        });
+      })
       .catch(e => { if(st) st.textContent = '❌ Chyba: ' + e.message; });
   }
   function delHwImage(key) {
     if (!window.dbRemove || !window.dbRef || !window.db) return;
     if (!confirm('Smazat tento obrázek?')) return;
     window.dbRemove(window.dbRef(window.db, 'hardwareDb/images/' + key))
+      .then(() => {
+        window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
+          renderHwImages(snap.exists() ? snap.val() : null);
+        });
+      })
       .catch(e => console.error('delHwImage:', e));
   }
   // HW obrázky listener je registrován v Firebase init bloku
@@ -3348,7 +3360,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.1';
+  const CURRENT_VERSION = '3.2.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
