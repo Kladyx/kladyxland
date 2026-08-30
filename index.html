@@ -884,18 +884,8 @@
     // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
     const introRef = ref(db, 'content/intro');
     const hwdRef   = ref(db, 'content/hwDisclaimer');
-    let _introLoaded = false, _hwdLoaded = false;
-    onValue(introRef, snap => {
-      if (snap.exists()) { document.getElementById('intro-text').innerHTML = snap.val(); _introLoaded = true; }
-    });
-    onValue(hwdRef, snap => {
-      if (snap.exists()) { document.getElementById('hw-disclaimer-text').innerHTML = snap.val(); _hwdLoaded = true; }
-    });
-    // Fallback: pokud onValue za 2s nedoručí (cache/pomalé spojení), zkus get()
-    setTimeout(() => {
-      if (!_introLoaded) get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
-      if (!_hwdLoaded)   get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
-    }, 2000);
+    get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
+    get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
     window._fbIntroRef = introRef;
     window._fbHwdRef   = hwdRef;
 
@@ -1053,17 +1043,16 @@
     }
     // Načti URL z Firebase při startu — pokud není uložena, ulož default
     THEMES.forEach(t => {
-      onValue(ref(db, `themes/${t}/bgUrl`), snap => {
+      get(ref(db, `themes/${t}/bgUrl`)).then(snap => {
         const url = snap.val();
         if (!url && DEFAULT_BG[t]) {
-          // Prvně uloží default do Firebase
           set(ref(db, `themes/${t}/bgUrl`), DEFAULT_BG[t]).catch(()=>{});
         }
         const finalUrl = url || DEFAULT_BG[t];
         applyThemeBgUrl(t, finalUrl);
         const inp = document.getElementById('th-url-' + t);
         if (inp) inp.value = finalUrl || '';
-      });
+      }).catch(()=>{});
     });
     // Uložení URL adminem
     window.saveThemeUrl = async function(theme) {
@@ -1090,7 +1079,7 @@
     // ── VLASTNÍ POZADÍ (custom backgrounds) ──────────────────────────────
     const customBgRef = ref(db, 'themes/custom');
     // Načti a zobraz custom pozadí
-    onValue(customBgRef, snap => {
+    get(customBgRef).then(snap => {
       const list = document.getElementById('th-custom-list');
       if (!list) return;
       list.innerHTML = '';
@@ -1107,7 +1096,7 @@
           <button class="th-url-del" onclick="deleteCustomBg('${key}')">🗑️</button>`;
         list.appendChild(row);
       });
-    });
+    }).catch(()=>{});
     window.addCustomBg = async function() {
       const urlInp  = document.getElementById('th-new-url');
       const nameInp = document.getElementById('th-new-name');
@@ -1131,7 +1120,7 @@
       try { set(ref(db, 'themes/activeBg'), url).catch(()=>{}); } catch(e) {}
     };
     // Načti aktivní custom bg při startu
-    onValue(ref(db, 'themes/activeBg'), snap => {
+    get(ref(db, 'themes/activeBg')).then(snap => {
       const url = snap.val();
       if (url) {
         document.body.style.backgroundImage = `url('${url}')`;
@@ -1139,7 +1128,7 @@
         document.body.style.backgroundPosition = 'center';
         document.body.style.backgroundAttachment = 'fixed';
       }
-    });
+    }).catch(()=>{});
     window.deleteCustomBg = async function(key) {
       try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
       set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
@@ -1331,34 +1320,24 @@
     };
     // Načíst aktuální video URL z Firebase
     try {
-      onValue(ref(db, 'config/videoUrl'), snap => {
+      get(ref(db, 'config/videoUrl')).then(snap => {
         const v = document.getElementById('main-video');
         if (snap.exists() && snap.val()) {
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
-          // Zastav auto-rotaci videí ze složky /videos/
           window._manualVideoActive = true;
           try { if (window._videoInterval) { clearTimeout(window._videoInterval); window._videoInterval = null; } } catch(e) {}
-          // Zastav countdown a skryj ho
           try { if (window._countdownTimerGlobal) { clearInterval(window._countdownTimerGlobal); window._countdownTimerGlobal = null; } } catch(e) {}
           var cd = document.getElementById('next-video-countdown');
           if (cd) cd.textContent = '--:--';
-          // Nastav video přímo přes src (žádný <source> element)
-          if (v && v.src !== url) {
-            v.src = url;
-            v.load();
-            v.play().catch(()=>{});
-          }
+          if (v && v.src !== url) { v.src = url; v.load(); v.play().catch(()=>{}); }
         } else {
-          // URL prázdná - obnov auto-rotaci
           var wasManual = window._manualVideoActive;
           window._manualVideoActive = false;
-          if (wasManual && typeof window.kladyxRestartRotation === 'function') {
-            window.kladyxRestartRotation();
-          }
+          if (wasManual && typeof window.kladyxRestartRotation === 'function') window.kladyxRestartRotation();
         }
-      });
+      }).catch(()=>{});
     } catch(e) {}
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
@@ -1387,17 +1366,16 @@
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
     };
-    // Načíst OBS heslo z Firebase při startu + real-time sync
+    // Načíst OBS heslo z Firebase při startu
     try {
-      onValue(ref(db, 'tapoDb/obsPassword'), snap => {
+      get(ref(db, 'tapoDb/obsPassword')).then(snap => {
         if (snap.exists() && snap.val()) {
           const pw = snap.val();
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
           if (inp) inp.value = pw;
-          // Nic dalšího - obsConnect a pulzování řeší jen vlastní uložení
         }
-      });
+      }).catch(()=>{});
     } catch(e) {}
     obsConnect();
 
@@ -1451,12 +1429,12 @@
 
     // ── TÉMA sync z Firebase ──
     const siteThemeRef = ref(db, 'siteTheme');
-    onValue(siteThemeRef, snap => {
+    get(siteThemeRef).then(snap => {
       const t = snap.val() || 'dark';
       window._theme = t;
       localStorage.setItem('kladyx-theme', t);
       if(typeof applyTheme === 'function') applyTheme(t);
-    });
+    }).catch(()=>{});
 
     // ── GRAYSCALE AUTO + OVERRIDE ──────────────────────────────────────
     const grayscaleRef = ref(db, 'grayscale');
@@ -1512,10 +1490,8 @@
         stEl.textContent = txt;
       }
     }
-    onValue(grayscaleRef, snap => {
+    get(grayscaleRef).then(snap => {
       const val = snap.val();
-      // null = auto, true = on, false = off, 'full' = full grayscale
-      // Pokud Firebase vrátí null, vždy auto bez ohledu na localStorage
       if (val === null || val === undefined) {
         window._grayscaleMode = 'auto';
       } else if (val === 'full') {
@@ -1525,7 +1501,7 @@
       }
       localStorage.setItem('gs-mode', window._grayscaleMode);
       applyGrayscale();
-    });
+    }).catch(()=>{});
     // Kontrola každou minutu pro auto režim
     setInterval(applyGrayscale, 60000);
     // Přepnout hned při návratu na stránku
@@ -1719,7 +1695,7 @@
       if (document.body.classList.contains('edit-mode'))
         document.querySelectorAll('.ann-del').forEach(b => b.style.display='block');
     }
-    onValue(annRef, renderAnnouncements);
+    get(annRef).then(snap => renderAnnouncements(snap)).catch(()=>{});
 
     window.publishAnnouncement = function() {
       const title = document.getElementById('ann-title').value.trim();
@@ -2696,11 +2672,9 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     if(window.dbSet&&window.dbRef&&window.db){window.dbSet(window.dbRef(window.db,'content/hardware'),data).catch(e=>console.error('HW save error:',e));}}
   function renderHw(data){const tbody=document.getElementById('hw-tbody');if(!tbody||!Array.isArray(data))return;tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+(item.brandClass||'hw-brand-col')+'" style="'+(item.brandStyle||'')+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}
   function loadHw(){/* data se načítají realtime z Firebase listeneru níže */}
-  // Realtime listener – hardware tabulku vidí všichni
+  // Jednorázové načtení hardware tabulky
   let _hwTableLoaded = false;
-  if(window.dbOnValue&&window.dbRef&&window.db){window.dbOnValue(window.dbRef(window.db,'content/hardware'),snap=>{if(snap.exists()){renderHw(snap.val());_hwTableLoaded=true;}});}
-  // Fallback po 2s: pokud onValue nedoručil, zkus get()
-  setTimeout(()=>{if(!_hwTableLoaded&&window.dbGet&&window.dbRef&&window.db){window.dbGet(window.dbRef(window.db,'content/hardware')).then(s=>{if(s.exists())renderHw(s.val());}).catch(()=>{});}},2000);
+  if(window.dbGet&&window.dbRef&&window.db){window.dbGet(window.dbRef(window.db,'content/hardware')).then(snap=>{if(snap.exists()){renderHw(snap.val());_hwTableLoaded=true;}}).catch(()=>{});}
 
 
   // DIGI HODINY (lang-aware)
@@ -3360,7 +3334,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.2';
+  const CURRENT_VERSION = '3.2.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
