@@ -275,6 +275,7 @@
     .hw-name-col{font-size:.82rem;font-weight:600;color:#cce5ff;padding:10px 8px;}
     .hw-cat{font-size:.68rem;color:rgba(0,200,255,.45);padding:10px 7px;white-space:nowrap;}
     .hw-del{display:none;padding:7px 5px;text-align:center;}
+    .hw-logo{width:160px;height:100px;object-fit:contain;opacity:0.9;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));}
     body.edit-mode .hw-del{display:table-cell;}
     body.edit-mode .chat-msg-del{display:block!important;}
     body.edit-mode #chat-clear-btn{display:inline-block!important;}
@@ -287,7 +288,6 @@
     /* ADD FORM */
     .add-form{display:none;background:rgba(0,20,55,.9);border:1px solid rgba(0,245,255,.25);border-radius:3px;padding:18px;margin-top:14px;flex-direction:column;gap:9px;}
     body.edit-mode .add-form{display:flex;}
-    body.edit-mode .edit-only{display:block!important;}
     .add-form label{font-family:"Orbitron",monospace;font-size:.54rem;color:rgba(0,245,255,.6);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
     .add-form input{font-family:"Exo 2",sans-serif;font-size:.85rem;background:rgba(0,10,40,.8);border:1px solid rgba(0,245,255,.25);color:#cce5ff;padding:9px 13px;border-radius:2px;outline:none;transition:border .2s;}
     .add-form input:focus{border-color:var(--cyan);}
@@ -779,14 +779,6 @@
     window.dbSet = set;
     window.dbGet = get;
     window.dbOnValue = onValue;
-    window.dbPush = push;
-
-    // ── HW OBRÁZKY - jednorázové načtení ───────────────────────────────
-    get(ref(db, 'hardwareDb/images')).then(snap => {
-      if (typeof renderHwImages === 'function') {
-        renderHwImages(snap.exists() ? snap.val() : null);
-      }
-    }).catch(e => console.warn('hwImages:', e));
 
     // ── ONLINE PRESENCE (real-time počet návštěvníků) ───────────────────
     const connectedRef = ref(db, '.info/connected');
@@ -884,8 +876,18 @@
     // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
     const introRef = ref(db, 'content/intro');
     const hwdRef   = ref(db, 'content/hwDisclaimer');
-    get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
-    get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
+    let _introLoaded = false, _hwdLoaded = false;
+    onValue(introRef, snap => {
+      if (snap.exists()) { document.getElementById('intro-text').innerHTML = snap.val(); _introLoaded = true; }
+    });
+    onValue(hwdRef, snap => {
+      if (snap.exists()) { document.getElementById('hw-disclaimer-text').innerHTML = snap.val(); _hwdLoaded = true; }
+    });
+    // Fallback: pokud onValue za 2s nedoručí (cache/pomalé spojení), zkus get()
+    setTimeout(() => {
+      if (!_introLoaded) get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
+      if (!_hwdLoaded)   get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
+    }, 2000);
     window._fbIntroRef = introRef;
     window._fbHwdRef   = hwdRef;
 
@@ -1043,16 +1045,17 @@
     }
     // Načti URL z Firebase při startu — pokud není uložena, ulož default
     THEMES.forEach(t => {
-      get(ref(db, `themes/${t}/bgUrl`)).then(snap => {
+      onValue(ref(db, `themes/${t}/bgUrl`), snap => {
         const url = snap.val();
         if (!url && DEFAULT_BG[t]) {
+          // Prvně uloží default do Firebase
           set(ref(db, `themes/${t}/bgUrl`), DEFAULT_BG[t]).catch(()=>{});
         }
         const finalUrl = url || DEFAULT_BG[t];
         applyThemeBgUrl(t, finalUrl);
         const inp = document.getElementById('th-url-' + t);
         if (inp) inp.value = finalUrl || '';
-      }).catch(()=>{});
+      });
     });
     // Uložení URL adminem
     window.saveThemeUrl = async function(theme) {
@@ -1079,7 +1082,7 @@
     // ── VLASTNÍ POZADÍ (custom backgrounds) ──────────────────────────────
     const customBgRef = ref(db, 'themes/custom');
     // Načti a zobraz custom pozadí
-    get(customBgRef).then(snap => {
+    onValue(customBgRef, snap => {
       const list = document.getElementById('th-custom-list');
       if (!list) return;
       list.innerHTML = '';
@@ -1096,7 +1099,7 @@
           <button class="th-url-del" onclick="deleteCustomBg('${key}')">🗑️</button>`;
         list.appendChild(row);
       });
-    }).catch(()=>{});
+    });
     window.addCustomBg = async function() {
       const urlInp  = document.getElementById('th-new-url');
       const nameInp = document.getElementById('th-new-name');
@@ -1120,7 +1123,7 @@
       try { set(ref(db, 'themes/activeBg'), url).catch(()=>{}); } catch(e) {}
     };
     // Načti aktivní custom bg při startu
-    get(ref(db, 'themes/activeBg')).then(snap => {
+    onValue(ref(db, 'themes/activeBg'), snap => {
       const url = snap.val();
       if (url) {
         document.body.style.backgroundImage = `url('${url}')`;
@@ -1128,7 +1131,7 @@
         document.body.style.backgroundPosition = 'center';
         document.body.style.backgroundAttachment = 'fixed';
       }
-    }).catch(()=>{});
+    });
     window.deleteCustomBg = async function(key) {
       try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
       set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
@@ -1320,24 +1323,34 @@
     };
     // Načíst aktuální video URL z Firebase
     try {
-      get(ref(db, 'config/videoUrl')).then(snap => {
+      onValue(ref(db, 'config/videoUrl'), snap => {
         const v = document.getElementById('main-video');
         if (snap.exists() && snap.val()) {
           const url = snap.val();
           const inp = document.getElementById('video-url-input');
           if (inp) inp.value = url;
+          // Zastav auto-rotaci videí ze složky /videos/
           window._manualVideoActive = true;
           try { if (window._videoInterval) { clearTimeout(window._videoInterval); window._videoInterval = null; } } catch(e) {}
+          // Zastav countdown a skryj ho
           try { if (window._countdownTimerGlobal) { clearInterval(window._countdownTimerGlobal); window._countdownTimerGlobal = null; } } catch(e) {}
           var cd = document.getElementById('next-video-countdown');
           if (cd) cd.textContent = '--:--';
-          if (v && v.src !== url) { v.src = url; v.load(); v.play().catch(()=>{}); }
+          // Nastav video přímo přes src (žádný <source> element)
+          if (v && v.src !== url) {
+            v.src = url;
+            v.load();
+            v.play().catch(()=>{});
+          }
         } else {
+          // URL prázdná - obnov auto-rotaci
           var wasManual = window._manualVideoActive;
           window._manualVideoActive = false;
-          if (wasManual && typeof window.kladyxRestartRotation === 'function') window.kladyxRestartRotation();
+          if (wasManual && typeof window.kladyxRestartRotation === 'function') {
+            window.kladyxRestartRotation();
+          }
         }
-      }).catch(()=>{});
+      });
     } catch(e) {}
     window.obsSavePassword = function() {
       const pw = document.getElementById('obs-pw-input').value;
@@ -1366,16 +1379,17 @@
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
     };
-    // Načíst OBS heslo z Firebase při startu
+    // Načíst OBS heslo z Firebase při startu + real-time sync
     try {
-      get(ref(db, 'tapoDb/obsPassword')).then(snap => {
+      onValue(ref(db, 'tapoDb/obsPassword'), snap => {
         if (snap.exists() && snap.val()) {
           const pw = snap.val();
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
           if (inp) inp.value = pw;
+          // Nic dalšího - obsConnect a pulzování řeší jen vlastní uložení
         }
-      }).catch(()=>{});
+      });
     } catch(e) {}
     obsConnect();
 
@@ -1429,12 +1443,12 @@
 
     // ── TÉMA sync z Firebase ──
     const siteThemeRef = ref(db, 'siteTheme');
-    get(siteThemeRef).then(snap => {
+    onValue(siteThemeRef, snap => {
       const t = snap.val() || 'dark';
       window._theme = t;
       localStorage.setItem('kladyx-theme', t);
       if(typeof applyTheme === 'function') applyTheme(t);
-    }).catch(()=>{});
+    });
 
     // ── GRAYSCALE AUTO + OVERRIDE ──────────────────────────────────────
     const grayscaleRef = ref(db, 'grayscale');
@@ -1490,8 +1504,10 @@
         stEl.textContent = txt;
       }
     }
-    get(grayscaleRef).then(snap => {
+    onValue(grayscaleRef, snap => {
       const val = snap.val();
+      // null = auto, true = on, false = off, 'full' = full grayscale
+      // Pokud Firebase vrátí null, vždy auto bez ohledu na localStorage
       if (val === null || val === undefined) {
         window._grayscaleMode = 'auto';
       } else if (val === 'full') {
@@ -1501,7 +1517,7 @@
       }
       localStorage.setItem('gs-mode', window._grayscaleMode);
       applyGrayscale();
-    }).catch(()=>{});
+    });
     // Kontrola každou minutu pro auto režim
     setInterval(applyGrayscale, 60000);
     // Přepnout hned při návratu na stránku
@@ -1695,7 +1711,7 @@
       if (document.body.classList.contains('edit-mode'))
         document.querySelectorAll('.ann-del').forEach(b => b.style.display='block');
     }
-    get(annRef).then(snap => renderAnnouncements(snap)).catch(()=>{});
+    onValue(annRef, renderAnnouncements);
 
     window.publishAnnouncement = function() {
       const title = document.getElementById('ann-title').value.trim();
@@ -2247,24 +2263,13 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         <div style="display:flex;justify-content:center;align-items:center;gap:16px;padding:18px 0 8px;flex-wrap:wrap;">
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Messenger_creation_0D485D82-A05E-458E-B12A-1073C84E8AE9.jpeg?alt=media&token=7a3859ed-7e98-4365-91b4-526077953d5d"
                alt="PreSonus"
-               style="max-width:180px;width:45%;opacity:0.85;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+               class="hw-logo"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/62c34c38-8561-4b41-92f7-c8d3c790e880.png?alt=media&token=732b5ad4-a707-4ee8-949f-b17589a934fd"
                alt="Kladyxland Powered by PreSonus Fender"
-               style="max-width:180px;width:45%;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+               class="hw-logo"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260829_081527_Claude.jpg?alt=media&token=8b4d8086-4d39-416b-ab84-f035a17bc6ba"
                alt="PreSonus logo"
-               style="max-width:180px;width:45%;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
-        </div>
-        <!-- Dynamické obrázky z Firebase -->
-        <div id="hw-dyn-imgs" style="display:flex;justify-content:center;align-items:center;gap:16px;padding:8px 0;flex-wrap:wrap;"></div>
-        <!-- Admin formulář - viditelný jen v edit-mode -->
-        <div class="edit-only" style="display:none;margin-top:14px;padding:12px;background:rgba(0,245,255,.06);border-radius:8px;border:1px solid rgba(0,245,255,.15);">
-          <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;">🖼 Přidat obrázek (URL z Firebase Storage)</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input id="hw-img-url" type="url" placeholder="https://firebasestorage.googleapis.com/..." style="flex:1;min-width:200px;padding:8px 10px;background:rgba(0,0,30,.5);border:1px solid rgba(0,245,255,.3);border-radius:6px;color:#e0f4ff;font-size:.8rem;"/>
-            <button onclick="addHwImage()" style="padding:8px 16px;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.4);border-radius:6px;color:#00f5ff;cursor:pointer;font-size:.8rem;">+ Přidat</button>
-          </div>
-          <div id="hw-img-status" style="font-size:.72rem;margin-top:6px;color:rgba(0,245,255,.5);"></div>
+               class="hw-logo"/>
         </div>
 
       </div>
@@ -2599,65 +2604,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     document.getElementById('hw-disclaimer-text').innerHTML = val;
     if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
   }
-
-  // ── HW OBRÁZKY ─────────────────────────────────────────────────────────
-  function renderHwImages(data) {
-    const wrap = document.getElementById('hw-dyn-imgs');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    if (!data) return;
-    const isAdmin = document.body.classList.contains('edit-mode');
-    Object.keys(data).forEach(key => {
-      const url = data[key];
-      const div = document.createElement('div');
-      div.style.cssText = 'position:relative;display:inline-block;';
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'hw';
-      img.loading = 'lazy';
-      img.style.cssText = 'max-width:180px;width:45%;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
-      div.appendChild(img);
-      if (isAdmin) {
-        const btn = document.createElement('button');
-        btn.textContent = '✕';
-        btn.title = 'Smazat obrázek';
-        btn.style.cssText = 'position:absolute;top:4px;right:4px;background:rgba(200,0,0,.75);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;line-height:1;';
-        btn.onclick = function() { delHwImage(key); };
-        div.appendChild(btn);
-      }
-      wrap.appendChild(div);
-    });
-  }
-  function addHwImage() {
-    const inp = document.getElementById('hw-img-url');
-    const st = document.getElementById('hw-img-status');
-    const url = (inp ? inp.value : '').trim();
-    if (!url || !url.startsWith('http')) { if(st) st.textContent = '⚠ Zadej platnou URL'; return; }
-    if (!window.dbPush || !window.dbRef || !window.db) { if(st) st.textContent = '⚠ Firebase není připojen'; return; }
-    if(st) st.textContent = '⏳ Ukládám...';
-    window.dbPush(window.dbRef(window.db, 'hardwareDb/images'), url)
-      .then(() => {
-        if(st) st.textContent = '✅ Přidáno';
-        if(inp) inp.value = '';
-        // Znovu načíst obrázky
-        window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
-          renderHwImages(snap.exists() ? snap.val() : null);
-        });
-      })
-      .catch(e => { if(st) st.textContent = '❌ Chyba: ' + e.message; });
-  }
-  function delHwImage(key) {
-    if (!window.dbRemove || !window.dbRef || !window.db) return;
-    if (!confirm('Smazat tento obrázek?')) return;
-    window.dbRemove(window.dbRef(window.db, 'hardwareDb/images/' + key))
-      .then(() => {
-        window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
-          renderHwImages(snap.exists() ? snap.val() : null);
-        });
-      })
-      .catch(e => console.error('delHwImage:', e));
-  }
-  // HW obrázky listener je registrován v Firebase init bloku
   function populateTextEdits() {
     try {
       const it=document.getElementById('intro-text'); const ie=document.getElementById('intro-edit'); if(it&&ie) ie.value=it.innerText;
@@ -2672,9 +2618,11 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     if(window.dbSet&&window.dbRef&&window.db){window.dbSet(window.dbRef(window.db,'content/hardware'),data).catch(e=>console.error('HW save error:',e));}}
   function renderHw(data){const tbody=document.getElementById('hw-tbody');if(!tbody||!Array.isArray(data))return;tbody.innerHTML='';data.forEach((item,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(i+1).padStart(2,'0')+'</td><td class="'+(item.brandClass||'hw-brand-col')+'" style="'+(item.brandStyle||'')+'">'+item.brand+'</td><td class="hw-name-col">'+item.name+'</td><td class="hw-cat">'+item.cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);});}
   function loadHw(){/* data se načítají realtime z Firebase listeneru níže */}
-  // Jednorázové načtení hardware tabulky
+  // Realtime listener – hardware tabulku vidí všichni
   let _hwTableLoaded = false;
-  if(window.dbGet&&window.dbRef&&window.db){window.dbGet(window.dbRef(window.db,'content/hardware')).then(snap=>{if(snap.exists()){renderHw(snap.val());_hwTableLoaded=true;}}).catch(()=>{});}
+  if(window.dbOnValue&&window.dbRef&&window.db){window.dbOnValue(window.dbRef(window.db,'content/hardware'),snap=>{if(snap.exists()){renderHw(snap.val());_hwTableLoaded=true;}});}
+  // Fallback po 2s: pokud onValue nedoručil, zkus get()
+  setTimeout(()=>{if(!_hwTableLoaded&&window.dbGet&&window.dbRef&&window.db){window.dbGet(window.dbRef(window.db,'content/hardware')).then(s=>{if(s.exists())renderHw(s.val());}).catch(()=>{});}},2000);
 
 
   // DIGI HODINY (lang-aware)
@@ -3299,7 +3247,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const audio = document.getElementById('dance-radio-audio');
     const btn = document.getElementById('speaker-btn5');
     if(!audio.src || audio.src === window.location.href){
-      audio.src = 'https://icepool.silvacast.com/GAYFM.mp3';
+      audio.src = 'https://ice.actve.net/dance-radio128.mp3';
     }
     if(audio.paused){
       audio.play();
@@ -3334,7 +3282,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.4';
+  const CURRENT_VERSION = '3.1.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
