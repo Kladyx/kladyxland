@@ -2261,9 +2261,9 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260829_081527_Claude.jpg?alt=media&token=8b4d8086-4d39-416b-ab84-f035a17bc6ba"
                alt="PreSonus logo"
                style="width:160px;height:160px;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+          <!-- Dynamické obrázky z Firebase — display:contents = pokračují ve stejném gridu -->
+          <div id="hw-dyn-imgs" style="display:contents;"></div>
         </div>
-        <!-- Dynamické obrázky z Firebase -->
-        <div id="hw-dyn-imgs" style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:8px 0;justify-items:center;align-items:center;max-width:400px;margin:0 auto;"></div>
         <!-- Admin formulář - viditelný jen v edit-mode -->
         <div class="edit-only" style="display:none;margin-top:14px;padding:12px;background:rgba(0,245,255,.06);border-radius:8px;border:1px solid rgba(0,245,255,.15);">
           <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;">🖼 Přidat obrázek (URL z Firebase Storage)</div>
@@ -3341,7 +3341,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.7';
+  const CURRENT_VERSION = '3.2.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
