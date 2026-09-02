@@ -529,10 +529,11 @@
     body.grayscale-full{filter:grayscale(1);transition:filter .5s;}
 
     /* ── HW Lightbox ── */
-    #hw-lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.93);z-index:9999;justify-content:center;align-items:center;cursor:pointer;}
-    #hw-lightbox.open{display:flex;}
-    #hw-lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 0 40px rgba(0,245,255,0.25);}
-    #hw-lightbox-close{position:fixed;top:18px;right:22px;color:#00f5ff;font-size:2rem;line-height:1;cursor:pointer;user-select:none;}
+    #hw-lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0);z-index:9999;justify-content:center;align-items:center;cursor:pointer;opacity:0;transition:opacity 0.3s ease,background 0.3s ease;}
+    #hw-lightbox.open{display:flex;opacity:1;background:rgba(0,0,0,0.93);}
+    #hw-lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 0 40px rgba(0,245,255,0.25);transform:scale(0.9);transition:transform 0.3s ease;}
+    #hw-lightbox.open img{transform:scale(1);}
+    #hw-lightbox-close{position:fixed;top:18px;right:22px;color:#00f5ff;font-size:2rem;line-height:1;cursor:pointer;user-select:none;z-index:10000;}
 
   </style>
 
@@ -2620,11 +2621,19 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     if (!lb || !lbImg) return;
     lbImg.src = src;
     lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
-  function closeLightbox() {
+  function closeLightbox(e) {
+    if (e && e.target && e.target.id === 'hw-lightbox-img') return;
     const lb = document.getElementById('hw-lightbox');
     if (lb) lb.classList.remove('open');
+    document.body.style.overflow = '';
   }
+  document.addEventListener('keydown', function(e) {
+    const lb = document.getElementById('hw-lightbox');
+    if (!lb || !lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+  });
   window.openLightbox = openLightbox;
   window.closeLightbox = closeLightbox;
 
