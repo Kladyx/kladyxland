@@ -2260,13 +2260,13 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:18px 0 8px;justify-items:center;align-items:center;max-width:400px;margin:0 auto;">
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Messenger_creation_0D485D82-A05E-458E-B12A-1073C84E8AE9.jpeg?alt=media&token=7a3859ed-7e98-4365-91b4-526077953d5d"
-               alt="PreSonus" onclick="openLightbox(this.src)"
+               alt="PreSonus" onclick="openLightboxFromUrl(this.src)"
                style="width:160px;height:160px;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));cursor:pointer;"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/62c34c38-8561-4b41-92f7-c8d3c790e880.png?alt=media&token=732b5ad4-a707-4ee8-949f-b17589a934fd"
-               alt="Kladyxland Powered by PreSonus Fender" onclick="openLightbox(this.src)"
+               alt="Kladyxland Powered by PreSonus Fender" onclick="openLightboxFromUrl(this.src)"
                style="width:160px;height:160px;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));cursor:pointer;"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260829_081527_Claude.jpg?alt=media&token=8b4d8086-4d39-416b-ab84-f035a17bc6ba"
-               alt="PreSonus logo" onclick="openLightbox(this.src)"
+               alt="PreSonus logo" onclick="openLightboxFromUrl(this.src)"
                style="width:160px;height:160px;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));cursor:pointer;"/>
           <!-- Dynamické obrázky z Firebase — display:contents = pokračují ve stejném gridu -->
           <div id="hw-dyn-imgs" style="display:contents;"></div>
@@ -2615,25 +2615,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   }
 
   // ── HW OBRÁZKY ─────────────────────────────────────────────────────────
-  function openLightbox(src) {
-    const lb = document.getElementById('hw-lightbox');
-    const lbImg = document.getElementById('hw-lightbox-img');
-    if (!lb || !lbImg) return;
-    lbImg.src = src;
-    lb.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeLightbox(e) {
-    if (e && e.target && e.target.id === 'hw-lightbox-img') return;
-    const lb = document.getElementById('hw-lightbox');
-    if (lb) lb.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  document.addEventListener('keydown', function(e) {
-    const lb = document.getElementById('hw-lightbox');
-    if (!lb || !lb.classList.contains('open')) return;
-    if (e.key === 'Escape') closeLightbox();
-  });
+
   window.openLightbox = openLightbox;
   window.closeLightbox = closeLightbox;
 
@@ -2987,6 +2969,11 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     capSave.style.display = 'none';
   }
 
+  function openLightboxFromUrl(src) {
+    lightboxIndex = 0;
+    galleryItems = [{ src: src, type: 'image', name: 'Hardware Image', caption: '' }];
+    openLightbox(0);
+  }
   function openLightbox(idx) {
     lightboxIndex = idx;
     const lb = document.getElementById('lightbox');
@@ -3659,10 +3646,5 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 })();
 </script>
 
-<!-- HW Lightbox overlay -->
-<div id="hw-lightbox" onclick="closeLightbox()">
-  <span id="hw-lightbox-close" onclick="closeLightbox()">✕</span>
-  <img id="hw-lightbox-img" src="" alt=""/>
-</div>
 </body>
 </html>
