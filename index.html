@@ -891,6 +891,7 @@
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
     const liveRef = ref(db, 'onair/live');
+    window._isLive = false; // výchozí stav – stopky netečou dokud není potvrzen live stav
     function applyLiveState(state) {
       document.body.classList.toggle('live-on', state);
       // Admin ON AIR banner
@@ -1557,7 +1558,13 @@
     const liveStartRef = ref(db, 'onair/startTime');
     onValue(liveStartRef, snap => {
       const val = snap.val();
-      liveStartTime = val ? val : null;
+      // Pokud nejsme live, stará hodnota v DB se ignoruje a smaže
+      if (val && window._isLive === false) {
+        set(liveStartRef, null).catch(() => {});
+        liveStartTime = null;
+      } else {
+        liveStartTime = val ? val : null;
+      }
       const el = document.getElementById('live-timer');
       if (el && !liveStartTime) el.textContent = '00:00:00';
       // tick běží přes setInterval níže
@@ -1655,7 +1662,7 @@
 
     // Jeden setInterval pro oba timery – žádné dvojité setTimeout chainy
     setInterval(() => {
-      if (liveStartTime) updateLiveTimer();
+      if (liveStartTime && window._isLive) updateLiveTimer();
       if (countdownTarget) updateCountdown();
     }, 1000);
 
@@ -3334,7 +3341,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.6';
+  const CURRENT_VERSION = '3.2.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
