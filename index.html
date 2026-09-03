@@ -1374,6 +1374,12 @@
           localStorage.setItem('kladyx_obs_pw', pw);
           const inp = document.getElementById('obs-pw-input');
           if (inp) inp.value = pw;
+          // Automaticky aktivovat SYNC pulz pri startu
+          const btn = document.getElementById('obs-save-btn');
+          if (btn && !btn.classList.contains('obs-sync-pulse')) {
+            btn.classList.add('obs-sync-pulse');
+            btn.textContent = 'SYNC';
+          }
         }
       }).catch(()=>{});
     } catch(e) {}
