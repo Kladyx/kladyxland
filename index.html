@@ -2389,7 +2389,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v3.2.8
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v3.2.9
 // ═══════════════════════════════════════════════════════════════
 var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 
@@ -2724,7 +2724,7 @@ function setLang(lang) {
 
 // Inicializace jazyka po DOM load
 document.addEventListener('DOMContentLoaded', function() {
-  if (curLang !== 'cs') setLang(curLang);
+  setLang(curLang);
   var csB = document.getElementById('lang-cs');
   var enB = document.getElementById('lang-en');
   if (csB) csB.className = curLang === 'cs' ? 'active' : '';
@@ -3689,7 +3689,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.8';
+  const CURRENT_VERSION = '3.2.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
