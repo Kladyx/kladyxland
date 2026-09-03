@@ -206,6 +206,10 @@
     body.edit-mode #hw-disclaimer-text{display:none;}
 
     /* LANGUAGE SWITCHER */
+    .lang-switch{display:inline-flex;align-items:center;gap:2px;margin-left:8px;}
+    .lang-switch button{background:none;border:none;font-size:1.1rem;cursor:pointer;opacity:.5;transition:opacity .2s,transform .2s;padding:2px;}
+    .lang-switch button:hover{transform:scale(1.2);}
+    .lang-switch button.active{opacity:1;text-shadow:0 0 8px rgba(255,255,255,.6);}
     .version{font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.08em;color:rgba(0,255,100,.45);border:1px solid rgba(0,255,100,.25);padding:5px 12px;border-radius:4px;margin-left:10px;flex-shrink:0;}
 
     /* ANNOUNCE ADMIN */
@@ -808,7 +812,7 @@
         // Ntfy – odeslat pouze pokud není admin
         fetch('https://ntfy.sh/kladyx_dark_side_notify', {
           method: 'POST',
-          body: '👤 Nový návštěvník na webu KLADYXLAND!'
+          body: t('ntfy_visitor')
         }).catch(() => {});
       }).catch((err) => {
         console.error('❌ Presence chyba:', err.message);
@@ -922,14 +926,14 @@
       if (state) {
         // ON AIR – zelená
         dot.classList.add('live'); text.classList.add('live');
-        text.textContent = 'ON AIR';
-        if (btn) { btn.classList.add('live'); btn.textContent = '■ STOP BROADCAST'; }
+        text.textContent = t('on_air');
+        if (btn) { btn.classList.add('live'); btn.textContent = t('stop_broadcast'); }
         fixedDot.classList.add('live'); fixedText.classList.add('live');
-        fixedText.textContent = 'ON AIR';
+        fixedText.textContent = t('on_air');
         if (liveLinkBox) liveLinkBox.classList.add('live');
         if (onairBanner) onairBanner.classList.add('live');
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#00aa44,#00ff66)'; watchBtn.style.boxShadow='0 0 25px rgba(0,255,100,.7)'; }
-        if (watchText) watchText.textContent = '▶ SLEDOVAT ŽIVĚ';
+        if (watchText) watchText.textContent = t('watch_live');
         const embedBox = document.getElementById('mixcloud-embed-box');
         if (embedBox) embedBox.style.display = 'block';
         if (videoBox) videoBox.style.display = 'none'; // VIDEO SCHOVANÉ
@@ -940,14 +944,14 @@
       } else {
         // OFFLINE – červená
         dot.classList.remove('live'); text.classList.remove('live');
-        text.textContent = 'OFFLINE';
-        if (btn) { btn.classList.remove('live'); btn.textContent = '▶ START BROADCAST'; }
+        text.textContent = t('offline');
+        if (btn) { btn.classList.remove('live'); btn.textContent = t('start_broadcast'); }
         fixedDot.classList.remove('live'); fixedText.classList.remove('live');
-        fixedText.textContent = 'OFFLINE';
+        fixedText.textContent = t('offline');
         if (liveLinkBox) liveLinkBox.classList.remove('live');
         if (onairBanner) onairBanner.classList.remove('live');
         if (watchBtn)  { watchBtn.style.background='linear-gradient(135deg,#cc0000,#ff2200)'; watchBtn.style.boxShadow='0 0 22px rgba(255,0,0,.6)'; }
-        if (watchText) watchText.textContent = '● OFFLINE';
+        if (watchText) watchText.textContent = t('watch_offline');
         const embedBox = document.getElementById('mixcloud-embed-box');
         if (embedBox) embedBox.style.display = 'none';
         if (videoBox) videoBox.style.display = 'block'; // VIDEO VIDITELNÉ
@@ -986,14 +990,14 @@
       if (obsState === 'online') {
         applyLiveState(true);
         if (bridgeStatusEl) {
-          bridgeStatusEl.textContent = '🟢 ONLINE';
+          bridgeStatusEl.textContent = t('bridge_online');
           bridgeStatusEl.classList.add('online');
         }
         console.log('OBS LIVE DETECTED → ON AIR AUTO ENABLED');
       } else if (obsState === 'offline') {
         applyLiveState(false);
         if (bridgeStatusEl) {
-          bridgeStatusEl.textContent = '🔴 OFFLINE';
+          bridgeStatusEl.textContent = t('bridge_offline');
           bridgeStatusEl.classList.remove('online');
         }
         console.log('OBS OFFLINE → ON AIR AUTO DISABLED');
@@ -1187,10 +1191,10 @@
     function obsUpdateIndicator(state, extra) {
       const el = document.getElementById('obs-ws-status');
       if (!el) return;
-      if (state === 'connected')      { el.textContent = '📡 OBS: PŘIPOJEN'; el.style.color = '#00ff99'; }
-      else if (state === 'authfail')  { el.textContent = '📡 OBS: ŠPATNÉ HESLO'; el.style.color = '#ff4444'; }
-      else if (state === 'disconnected') { el.textContent = '📡 OBS: ODPOJEN'; el.style.color = '#ff6644'; }
-      else                            { el.textContent = '📡 OBS: HLEDÁM...'; el.style.color = '#ffcc00'; }
+      if (state === 'connected')      { el.textContent = t('obs_connected'); el.style.color = '#00ff99'; }
+      else if (state === 'authfail')  { el.textContent = t('obs_wrong_pw'); el.style.color = '#ff4444'; }
+      else if (state === 'disconnected') { el.textContent = t('obs_disconnected'); el.style.color = '#ff6644'; }
+      else                            { el.textContent = t('obs_searching'); el.style.color = '#ffcc00'; }
     }
 
     // OBS WebSocket v5 autentizace
@@ -1873,16 +1877,16 @@
 <!-- PASSWORD MODAL -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
-    <div class="modal-title">🔐 PŘÍSTUP PRO EDITACI</div>
-    <p style="font-family:'Exo 2',sans-serif;font-size:.75rem;color:rgba(0,245,255,.6);text-align:center;margin-bottom:20px;">Přihlas se svým Google účtem</p>
+    <div class="modal-title" data-i18n="modal_title">🔐 PŘÍSTUP PRO EDITACI</div>
+    <p style="font-family:'Exo 2',sans-serif;font-size:.75rem;color:rgba(0,245,255,.6);text-align:center;margin-bottom:20px;" data-i18n="modal_desc">Přihlas se svým Google účtem</p>
     <div class="modal-btns" style="flex-direction:column;gap:10px;">
       <button class="modal-ok" id="google-login-btn" onclick="adminGoogleLogin()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Přihlásit se přes Google
+        <span data-i18n="google_login">Přihlásit se přes Google</span>
       </button>
-      <button class="modal-cancel" onclick="closeModal()">✕ Zrušit</button>
+      <button class="modal-cancel" onclick="closeModal()" data-i18n="cancel">✕ Zrušit</button>
     </div>
-    <div class="modal-err" id="pw-err">❌ Chyba přihlášení</div>
+    <div class="modal-err" id="pw-err" data-i18n="login_err">❌ Chyba přihlášení</div>
   </div>
 </div>
 
@@ -1894,15 +1898,15 @@
       <span id="admin-bar" style="display:inline-flex;flex-direction:column;gap:4px;margin-bottom:4px;align-items:flex-start;">
 
         <span style="display:inline-flex;align-items:center;gap:4px;">
-          <a href="#" class="nbtn" id="admin-login-btn" onclick="openModal('edit');return false;" style="color:#ff8800;border-color:rgba(255,136,0,.4);font-size:.5rem;padding:2px 6px;">🔑 Login</a>
+          <a href="#" class="nbtn" id="admin-login-btn" onclick="openModal('edit');return false;" style="color:#ff8800;border-color:rgba(255,136,0,.4);font-size:.5rem;padding:2px 6px;" data-i18n="login">🔑 Login</a>
           <span id="admin-status" style="display:none;font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;color:#4ade80;">🔓 ADMIN</span>
-          <a href="#" class="nbtn" id="admin-logout-btn" onclick="logoutAdmin();return false;" style="display:none;color:#e74c3c;border-color:rgba(231,76,60,.4);font-size:.5rem;padding:2px 6px;">Odhlásit</a>
+          <a href="#" class="nbtn" id="admin-logout-btn" onclick="logoutAdmin();return false;" style="display:none;color:#e74c3c;border-color:rgba(231,76,60,.4);font-size:.5rem;padding:2px 6px;" data-i18n="logout">Odhlásit</a>
           <span id="obs-ws-status" style="display:none;font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.08em;color:#ffcc00;">📡 OBS: HLEDÁM...</span>
         </span>
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná - vedle Vypnout web -->
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
-          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
+          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;" data-i18n="site_off">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
@@ -1922,12 +1926,12 @@
       <div class="nav-online" id="nav-online"><span class="dot"></span><span id="vc2">0</span> online</div>
     </div>
     <div class="nav-links">
-      <a href="#" class="nbtn nbtn-back" id="nav-back" onclick="hideAll();return false;">⟵ Zpět</a>
-      <a href="#" class="nbtn on" id="nb-home" onclick="show('home');return false;">Home</a>
-      <a href="#" class="nbtn" id="nb-hardware" onclick="show('hardware');return false;">Hardware</a>
-      <a href="#" class="nbtn" id="nb-galerie" onclick="show('galerie');return false;">Galerie</a>
-      <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;">Chat</a>
-      <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;">📻 Archive Stream</a>
+      <a href="#" class="nbtn nbtn-back" id="nav-back" onclick="hideAll();return false;" data-i18n="back">⟵ Zpět</a>
+      <a href="#" class="nbtn on" id="nb-home" onclick="show('home');return false;" data-i18n="home">Home</a>
+      <a href="#" class="nbtn" id="nb-hardware" onclick="show('hardware');return false;" data-i18n="hardware">Hardware</a>
+      <a href="#" class="nbtn" id="nb-galerie" onclick="show('galerie');return false;" data-i18n="galerie">Galerie</a>
+      <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;" data-i18n="chat_nav">Chat</a>
+      <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;" data-i18n="archiv_nav">📻 Archive Stream</a>
     </div>
   </nav>
 
@@ -1961,7 +1965,7 @@
     <!-- ON AIR BANNER - vidí jen admin -->
     <div class="onair-banner" id="onair-banner">
       <span class="onair-banner-dot"></span>
-      <span class="onair-banner-text">🟢 PRÁVĚ VYSÍLÁM ŽIVĚ</span>
+      <span class="onair-banner-text" data-i18n="live_banner">🟢 PRÁVĚ VYSÍLÁM ŽIVĚ</span>
       <span class="onair-banner-dot"></span>
     </div>
 
@@ -2060,8 +2064,8 @@
 
       <!-- CENTER: VERZE + TLAMPAČ -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <div class="version-display" id="version-label">ver.—</div>
-        <div id="update-dot" title="Kliknutím obnovíš" onclick="if(confirm('Nová verze webu je dostupná. Obnovit stránku?'))location.reload(true);" style="display:none;width:12px;height:12px;border-radius:50%;background:#ffaa00;box-shadow:0 0 8px #ffaa00,0 0 16px #ffaa00;cursor:pointer;animation:updatePulse 1.2s infinite;"></div>
+        <div class="version-display" id="version-label">ver.—</div><div class="lang-switch" id="lang-switch"><button onclick="setLang('cs')" id="lang-cs" class="active" title="Čeština">🇨🇿</button><button onclick="setLang('en')" id="lang-en" title="English">🇬🇧</button></div>
+        <div id="update-dot" title="Kliknutím obnovíš" onclick="if(confirm(t('confirm_reload')))location.reload(true);" style="display:none;width:12px;height:12px;border-radius:50%;background:#ffaa00;box-shadow:0 0 8px #ffaa00,0 0 16px #ffaa00;cursor:pointer;animation:updatePulse 1.2s infinite;"></div>
         <style>@keyframes updatePulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}</style>
         <button class="speaker-btn" id="speaker-btn" onclick="playGreeting()" title="Přehrát uvítání 1">📢</button>
         <audio id="greeting-audio" src="1.mp3" preload="auto"></audio>
@@ -2078,7 +2082,7 @@
         <button class="speaker-btn speaker-btn-live" id="speaker-btn6" onclick="openLiveAudio()" title="Live vysílání - jen zvuk">🎙️</button>
         <audio id="bg-music-13" src="alec_koff-carnaval-484622.mp3" preload="auto"></audio>
         <div id="nameday-box" style="font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.08em;color:#00f5ff;text-align:center;line-height:1.3;white-space:nowrap;margin-left:auto;">
-          <div style="color:#ff8800;font-size:.42rem;letter-spacing:.12em;">SVÁTEK</div>
+          <div style="color:#ff8800;font-size:.42rem;letter-spacing:.12em;" data-i18n="nameday">SVÁTEK</div>
           <div id="nameday-name">—</div>
         </div>
       </div>
@@ -2116,11 +2120,11 @@
         </div>
         <div class="timers-wrap">
           <div class="timer-box">
-            <div class="timer-label">LIVE TIME</div>
+            <div class="timer-label" data-i18n="live_time">LIVE TIME</div>
             <div class="timer-display" id="live-timer">00:00:00</div>
           </div>
           <div class="timer-box">
-            <div class="timer-label">NEXT STREAM</div>
+            <div class="timer-label" data-i18n="next_stream">NEXT STREAM</div>
             <div class="timer-display" id="countdown-timer">--:--:--</div>
             <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;justify-content:center;">
               <button class="timer-edit-btn edit-only" id="countdown-edit-btn" onclick="toggleCountdownInput()" style="display:none;font-size:0.7rem;">✏️ Nastav čas</button>
@@ -2172,16 +2176,16 @@
 
     <div class="control-bar">
       <div class="ctrl-nav">
-        <a href="#" class="cbtn" onclick="hideAll();return false;">⟵ Zpět</a>
-        <a href="#" class="cbtn" onclick="show('home');return false;">⌂ Home</a>
-        <a href="#" class="cbtn" onclick="show('hardware');return false;">⚙ Hardware</a>
-        <a href="#" class="cbtn" onclick="show('galerie');return false;">🖼 Galerie</a>
-        <a href="#" class="cbtn" onclick="show('chat');return false;">💬 Chat</a>
-        <a href="#" class="cbtn" onclick="show('archiv');return false;">📻 Archive Stream</a>
+        <a href="#" class="cbtn" onclick="hideAll();return false;" data-i18n="back">⟵ Zpět</a>
+        <a href="#" class="cbtn" onclick="show('home');return false;" data-i18n="home_icon">⌂ Home</a>
+        <a href="#" class="cbtn" onclick="show('hardware');return false;" data-i18n="hw_icon">⚙ Hardware</a>
+        <a href="#" class="cbtn" onclick="show('galerie');return false;" data-i18n="gal_icon">🖼 Galerie</a>
+        <a href="#" class="cbtn" onclick="show('chat');return false;" data-i18n="chat_icon">💬 Chat</a>
+        <a href="#" class="cbtn" onclick="show('archiv');return false;" data-i18n="archiv_icon">📻 Archive Stream</a>
       </div>
       <div class="ctrl-right">
         <div class="visitor-box">
-          <div class="vlabel">Online</div>
+          <div class="vlabel" data-i18n="online_label">Online</div>
           <div class="vcount"><span class="dot"></span><span id="vc">0</span></div>
         </div>
 
@@ -2194,14 +2198,14 @@
     <!-- HOME -->
     <div class="section on" id="s-home">
       <div class="content-wrap single">
-        <div class="stitle"><span>TRANSMISSION ACTIVE</span>
-          <button class="edit-btn" onclick="openModal('edit')">✏️ Upravit</button>
+        <div class="stitle"><span data-i18n="transmission">TRANSMISSION ACTIVE</span>
+          <button class="edit-btn" onclick="openModal('edit')" data-i18n="edit_btn">✏️ Upravit</button>
         </div>
 
 
 
         <div class="card">
-          <h3>Broadcasting from the Dark Side of Sound</h3>
+          <h3 data-i18n="intro_title">Broadcasting from the Dark Side of Sound</h3>
           <p id="intro-text">Vítej na KLADYXLANDU LIVE : DETECTED. Pouštím jakoukoliv hudbu a hity uplynulých let, ke kterým máme společné vzpomínky. Každé vysílání je návrat k trackům, které nás provázely v klubech, v rádiu i doma ve sluchátkách.<br><br>
 🔊🎶 <strong>ON AIR:</strong> Stream zapínám, když přijde chuť pustit si něco do uší.<br><br>
 🎛️🎚️ <strong>V SETU:</strong> Hudba běží (rádio) — někdy mix, někdy freestyle chaos. Prostě co mě zrovna napadne.<br><br>
@@ -2216,8 +2220,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           ⚠️ <strong>Disclaimer:</strong> Tento projekt není spojen s žádnou firmou ani značkou. Veškerá technika je zakoupena z vlastních prostředků. Jde čistě o soukromý koníček a záliba k muzice, bez jakékoliv komerční vazby.
         </div>
         <div class="card">
-          <h3>📡 Živé vysílání</h3>
-          <p style="margin-bottom:14px;">Když vysíláme — připoj se přímo na Mixcloud:</p>
+          <h3 data-i18n="live_title">📡 Živé vysílání</h3>
+          <p style="margin-bottom:14px;" data-i18n="live_desc">Když vysíláme — připoj se přímo na Mixcloud:</p>
           <a href="mixcloud-view-modern.html" target="_blank" id="live-watch-btn" style="
             display:inline-flex;align-items:center;gap:8px;
             font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;
@@ -2237,7 +2241,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div class="section" id="s-hardware">
       <div class="content-wrap single">
         <div class="stitle">
-          <span>KLADYXLAND HARDWARE</span>
+          <span data-i18n="hw_title">KLADYXLAND HARDWARE</span>
           <button class="edit-btn" id="hw-edit-btn" onclick="openModal('hw')">✏️ Upravit</button>
         </div>
         <div class="disclaimer col-full">
@@ -2283,34 +2287,34 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div class="section" id="s-galerie">
       <div class="content-wrap single">
         <div class="stitle">
-          <span>GALERIE</span>
-          <button class="edit-btn" id="gal-edit-btn" onclick="openModal('galerie')">📷 Nahrát média</button>
+          <span data-i18n="gal_title">GALERIE</span>
+          <button class="edit-btn" id="gal-edit-btn" onclick="openModal('galerie')" data-i18n="upload_media">📷 Nahrát média</button>
         </div>
         <div class="gallery-upload" id="gallery-upload" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');uploadGalleryFiles(event.dataTransfer.files)">
-          <label class="gallery-upload-btn" for="gal-file-input">📁 Vyber fotky / videa z PC</label>
-          <div style="margin-top:8px;font-size:.7rem;color:rgba(0,245,255,.4);">nebo přetáhni soubory sem</div>
+          <label class="gallery-upload-btn" for="gal-file-input" data-i18n="pick_files">📁 Vyber fotky / videa z PC</label>
+          <div style="margin-top:8px;font-size:.7rem;color:rgba(0,245,255,.4);" data-i18n="drag_files">nebo přetáhni soubory sem</div>
           <input type="file" id="gal-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple onchange="uploadGalleryFiles(this.files)"/>
-          <div style="margin-top:8px;color:rgba(200,220,255,.4);font-size:.75rem;">Fotky, GIF, MP4/WebM (max 50 MB)</div>
+          <div style="margin-top:8px;color:rgba(200,220,255,.4);font-size:.75rem;" data-i18n="file_types">Fotky, GIF, MP4/WebM (max 50 MB)</div>
           <div class="gallery-progress" id="gal-progress">
             <div class="gallery-progress-bar" id="gal-progress-bar"></div>
           </div>
           <div id="gal-upload-status" style="margin-top:8px;font-size:.75rem;color:#00ff99;"></div>
         </div>
         <div id="gallery-grid" class="gallery-grid"></div>
-        <div class="gallery-empty" id="gallery-empty">Zatím žádné fotky ani videa</div>
+        <div class="gallery-empty" id="gallery-empty" data-i18n="no_photos">Zatím žádné fotky ani videa</div>
       </div>
     </div>
 
     <!-- ARCHIV -->
     <div class="section" id="s-archiv">
       <div class="content-wrap single">
-        <div class="stitle"><span>📻 ARCHIVE STREAM</span></div>
-        <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;">⏳ NAČÍTÁM...</div>
+        <div class="stitle"><span data-i18n="archiv_title">📻 ARCHIVE STREAM</span></div>
+        <div id="archiv-loading" style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.7rem;padding:30px;letter-spacing:.1em;" data-i18n="loading">⏳ NAČÍTÁM...</div>
         <div id="archiv-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;justify-content:center;"></div>
         <div id="archiv-list" style="display:none;"></div>
-        <div id="archiv-empty" style="display:none;text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Žádné záznamy nenalezeny.</div>
+        <div id="archiv-empty" style="display:none;text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;" data-i18n="no_records">Žádné záznamy nenalezeny.</div>
         <div id="archiv-more-wrap" style="display:none;text-align:center;margin-top:14px;">
-          <button id="archiv-more-btn" onclick="loadArchiv(true)" style="font-family:'Orbitron',monospace;font-size:.6rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;padding:8px 22px;cursor:pointer;border-radius:3px;letter-spacing:.1em;">⬇ NAČÍST DALŠÍ</button>
+          <button id="archiv-more-btn" onclick="loadArchiv(true)" style="font-family:'Orbitron',monospace;font-size:.6rem;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;padding:8px 22px;cursor:pointer;border-radius:3px;letter-spacing:.1em;" data-i18n="load_more">⬇ NAČÍST DALŠÍ</button>
         </div>
       </div>
     </div>
@@ -2318,16 +2322,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <!-- CHAT -->
     <div class="section" id="s-chat">
       <div class="content-wrap single">
-        <div class="stitle"><span>💬 CHAT</span>
-          <button class="edit-btn" onclick="clearAllChat()" style="display:none;" id="chat-clear-btn">🗑 Smazat vše</button>
+        <div class="stitle"><span data-i18n="chat_title">💬 CHAT</span>
+          <button class="edit-btn" onclick="clearAllChat()" style="display:none;" id="chat-clear-btn" data-i18n="clear_all">🗑 Smazat vše</button>
         </div>
         <div class="chat-input-wrap">
-          <input type="text" id="chat-name" placeholder="Tvoje jméno..." maxlength="30"/>
-          <textarea id="chat-text" placeholder="Napiš zprávu..." maxlength="500"></textarea>
-          <button class="chat-send-btn" onclick="sendChatMsg()">📤 Odeslat</button>
+          <input type="text" id="chat-name" placeholder="Tvoje jméno..." data-i18n-ph="name_ph" maxlength="30"/>
+          <textarea id="chat-text" placeholder="Napiš zprávu..." data-i18n-ph="msg_ph" maxlength="500"></textarea>
+          <button class="chat-send-btn" onclick="sendChatMsg()" data-i18n="send">📤 Odeslat</button>
         </div>
         <div id="chat-messages"></div>
-        <div id="chat-empty" style="text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;">Zatím žádné zprávy. Buď první!</div>
+        <div id="chat-empty" style="text-align:center;color:rgba(0,245,255,.3);font-size:.8rem;padding:20px;" data-i18n="no_msgs">Zatím žádné zprávy. Buď první!</div>
       </div>
     </div>
 
@@ -2692,10 +2696,14 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const s = String(now.getSeconds()).padStart(2,'0');
     document.getElementById('digi-time').innerHTML =
       h+'<span class="digi-colon">:</span>'+m+'<span class="digi-colon">:</span>'+s;
-    const days   = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
-    const months = ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
+    const days_cs = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
+    const months_cs = ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
+    const days_en = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months_en = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var dd = curLang==='en' ? days_en : days_cs;
+    var mm = curLang==='en' ? months_en : months_cs;
     document.getElementById('digi-date').textContent =
-      days[now.getDay()]+' · '+now.getDate()+'. '+months[now.getMonth()]+' '+now.getFullYear();
+      dd[now.getDay()]+' · '+now.getDate()+'. '+mm[now.getMonth()]+' '+now.getFullYear();
   }
   updateClock();
   setInterval(updateClock,1000);
@@ -3341,7 +3349,120 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.7';
+
+  // ═══════════════════════════════════════════════
+  // CZ/EN LANGUAGE SWITCHER
+  // ═══════════════════════════════════════════════
+  var curLang = localStorage.getItem('kladyx_lang') || 'cs';
+
+  var I18N = {
+    cs: {
+      back: '⟵ Zpět', home: 'Home', hardware: 'Hardware', galerie: 'Galerie',
+      chat_nav: 'Chat', archiv_nav: '📻 Archive Stream',
+      home_icon: '⌂ Home', hw_icon: '⚙ Hardware', gal_icon: '🖼 Galerie',
+      chat_icon: '💬 Chat', archiv_icon: '📻 Archive Stream',
+      login: '🔑 Login', logout: 'Odhlásit', site_off: '🔴 Vypnout web',
+      nameday: 'SVÁTEK', live_banner: '🟢 PRÁVĚ VYSÍLÁM ŽIVĚ',
+      transmission: 'TRANSMISSION ACTIVE', edit_btn: '✏️ Upravit',
+      intro_title: 'Broadcasting from the Dark Side of Sound',
+      live_title: '📡 Živé vysílání',
+      live_desc: 'Když vysíláme — připoj se přímo na Mixcloud:',
+      hw_title: 'KLADYXLAND HARDWARE',
+      gal_title: 'GALERIE', upload_media: '📷 Nahrát média',
+      pick_files: '📁 Vyber fotky / videa z PC',
+      drag_files: 'nebo přetáhni soubory sem',
+      file_types: 'Fotky, GIF, MP4/WebM (max 50 MB)',
+      no_photos: 'Zatím žádné fotky ani videa',
+      archiv_title: '📻 ARCHIVE STREAM', loading: '⏳ NAČÍTÁM...',
+      no_records: 'Žádné záznamy nenalezeny.', load_more: '⬇ NAČÍST DALŠÍ',
+      chat_title: '💬 CHAT', clear_all: '🗑 Smazat vše',
+      name_ph: 'Tvoje jméno...', msg_ph: 'Napiš zprávu...',
+      send: '📤 Odeslat', no_msgs: 'Zatím žádné zprávy. Buď první!',
+      modal_title: '🔐 PŘÍSTUP PRO EDITACI',
+      modal_desc: 'Přihlas se svým Google účtem',
+      google_login: 'Přihlásit se přes Google', cancel: '✕ Zrušit',
+      login_err: '❌ Chyba přihlášení',
+      welcome: '🛸 VÍTÁM TĚ NA KLADYXLANDU',
+      live_time: 'LIVE TIME', next_stream: 'NEXT STREAM',
+      online_label: 'Online',
+      on_air: 'ON AIR', offline: 'OFFLINE',
+      start_broadcast: '▶ START BROADCAST', stop_broadcast: '■ STOP BROADCAST',
+      watch_live: '▶ SLEDOVAT ŽIVĚ', watch_offline: '● OFFLINE',
+      obs_connected: '📡 OBS: PŘIPOJEN', obs_wrong_pw: '📡 OBS: ŠPATNÉ HESLO',
+      obs_disconnected: '📡 OBS: ODPOJEN', obs_searching: '📡 OBS: HLEDÁM...',
+      bridge_online: '🟢 ONLINE', bridge_offline: '🔴 OFFLINE',
+      confirm_reload: 'Nová verze webu je dostupná. Obnovit stránku?',
+      ntfy_visitor: '👤 Nový návštěvník na webu KLADYXLAND!'
+    },
+    en: {
+      back: '⟵ Back', home: 'Home', hardware: 'Hardware', galerie: 'Gallery',
+      chat_nav: 'Chat', archiv_nav: '📻 Archive Stream',
+      home_icon: '⌂ Home', hw_icon: '⚙ Hardware', gal_icon: '🖼 Gallery',
+      chat_icon: '💬 Chat', archiv_icon: '📻 Archive Stream',
+      login: '🔑 Login', logout: 'Log out', site_off: '🔴 Disable site',
+      nameday: 'NAME DAY', live_banner: '🟢 NOW BROADCASTING LIVE',
+      transmission: 'TRANSMISSION ACTIVE', edit_btn: '✏️ Edit',
+      intro_title: 'Broadcasting from the Dark Side of Sound',
+      live_title: '📡 Live Broadcast',
+      live_desc: 'When we\'re live — tune in directly on Mixcloud:',
+      hw_title: 'KLADYXLAND HARDWARE',
+      gal_title: 'GALLERY', upload_media: '📷 Upload media',
+      pick_files: '📁 Pick photos / videos from PC',
+      drag_files: 'or drag and drop files here',
+      file_types: 'Photos, GIF, MP4/WebM (max 50 MB)',
+      no_photos: 'No photos or videos yet',
+      archiv_title: '📻 ARCHIVE STREAM', loading: '⏳ LOADING...',
+      no_records: 'No recordings found.', load_more: '⬇ LOAD MORE',
+      chat_title: '💬 CHAT', clear_all: '🗑 Clear all',
+      name_ph: 'Your name...', msg_ph: 'Write a message...',
+      send: '📤 Send', no_msgs: 'No messages yet. Be the first!',
+      modal_title: '🔐 ACCESS FOR EDITING',
+      modal_desc: 'Sign in with your Google account',
+      google_login: 'Sign in with Google', cancel: '✕ Cancel',
+      login_err: '❌ Login error',
+      welcome: '🛸 WELCOME TO KLADYXLAND',
+      live_time: 'LIVE TIME', next_stream: 'NEXT STREAM',
+      online_label: 'Online',
+      on_air: 'ON AIR', offline: 'OFFLINE',
+      start_broadcast: '▶ START BROADCAST', stop_broadcast: '■ STOP BROADCAST',
+      watch_live: '▶ WATCH LIVE', watch_offline: '● OFFLINE',
+      obs_connected: '📡 OBS: CONNECTED', obs_wrong_pw: '📡 OBS: WRONG PASSWORD',
+      obs_disconnected: '📡 OBS: DISCONNECTED', obs_searching: '📡 OBS: SEARCHING...',
+      bridge_online: '🟢 ONLINE', bridge_offline: '🔴 OFFLINE',
+      confirm_reload: 'A new version is available. Reload the page?',
+      ntfy_visitor: '👤 New visitor on KLADYXLAND!'
+    }
+  };
+
+  function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.cs[key]) || key; }
+
+  function setLang(lang) {
+    curLang = lang;
+    localStorage.setItem('kladyx_lang', lang);
+    // Vlaječky active stav
+    var csBtn = document.getElementById('lang-cs');
+    var enBtn = document.getElementById('lang-en');
+    if (csBtn) csBtn.className = lang === 'cs' ? 'active' : '';
+    if (enBtn) enBtn.className = lang === 'en' ? 'active' : '';
+    // Statické texty
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (I18N[lang] && I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+    });
+    // Placeholdery
+    document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n-ph');
+      if (I18N[lang] && I18N[lang][key] !== undefined) el.placeholder = I18N[lang][key];
+    });
+    // Digi hodiny - okamžitá aktualizace
+    updateClock();
+    // Počasí - znovu načíst s novým jazykem
+    if (typeof updateWeather === 'function') updateWeather();
+    // html lang atribut
+    document.documentElement.lang = lang === 'cs' ? 'cs' : 'en';
+  }
+
+  const CURRENT_VERSION = '3.2.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -3370,6 +3491,11 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   });
   const vLabel = document.getElementById('version-label');
   if (vLabel) vLabel.textContent = 'ver.' + CURRENT_VERSION + 'Uc';
+  // Inicializace jazyka z localStorage
+  if (curLang !== 'cs') setLang(curLang); else {
+    var csB = document.getElementById('lang-cs');
+    if (csB) csB.className = 'active';
+  }
 
   // === Kontrola nové verze (jednou při načtení, ~30 B download) ===
   (function(){
@@ -3526,7 +3652,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       if (document.body.classList.contains('edit-mode')) return;
       fetch('https://ntfy.sh/kladyxland-visitors', {
         method: 'POST',
-        body: '👤 Nový návštěvník na webu KLADYXLAND!'
+        body: t('ntfy_visitor')
       }).catch(() => {});
     }, 2000);
   });
@@ -3538,7 +3664,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const WEATHER_API_KEY = '906495444f5c56bf4e39be939d731330';
 
     function fetchWeatherByCoords(lat, lon) {
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=cs&appid=${WEATHER_API_KEY}`;
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=${curLang}&appid=${WEATHER_API_KEY}`;
       fetch(url)
         .then(r => r.json())
         .then(data => {
@@ -3549,7 +3675,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const humidity = data.main.humidity;
           const city = data.name || '';
           document.getElementById('weather-temp').textContent = temp + '°C';
-          document.getElementById('weather-desc').textContent = translateWeather(desc);
+          document.getElementById('weather-desc').textContent = curLang==='cs' ? translateWeather(desc) : desc;
           document.getElementById('weather-meta').textContent = (city ? city + ' · ' : '') + 'Vlhkost: ' + humidity + '%';
           widget.style.display = 'block';
         })
@@ -3557,7 +3683,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }
 
     function fetchWeatherByCity(city, country) {
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&units=metric&lang=cs&appid=${WEATHER_API_KEY}`;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${country}&units=metric&lang=${curLang}&appid=${WEATHER_API_KEY}`;
       fetch(url)
         .then(r => r.json())
         .then(data => {
@@ -3567,7 +3693,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const desc = data.weather[0].description;
           const humidity = data.main.humidity;
           document.getElementById('weather-temp').textContent = temp + '°C';
-          document.getElementById('weather-desc').textContent = translateWeather(desc);
+          document.getElementById('weather-desc').textContent = curLang==='cs' ? translateWeather(desc) : desc;
           document.getElementById('weather-meta').textContent = city + ' · Vlhkost: ' + humidity + '%';
           widget.style.display = 'block';
         })
@@ -3611,7 +3737,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
 <!-- WELCOME BANNER -->
 <div id="welcome-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:99999;background:linear-gradient(90deg,#0a0a2e 0%,#0d1b4b 50%,#0a0a2e 100%);border-top:2px solid #00d4ff;color:#00d4ff;text-align:center;padding:14px 20px;font-family:'Courier New',monospace;font-size:1.1rem;letter-spacing:2px;text-shadow:0 0 10px rgba(0,212,255,0.8);box-shadow:0 -4px 20px rgba(0,212,255,0.3);transition:transform 0.7s cubic-bezier(0.4,0,0.2,1);transform:translateY(0);">
-  🛸 VÍTÁM TĚ NA KLADYXLANDU
+  <span data-i18n="welcome">🛸 VÍTÁM TĚ NA KLADYXLANDU</span>
 </div>
 
 <script>
