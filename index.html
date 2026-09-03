@@ -207,9 +207,9 @@
 
     /* LANGUAGE SWITCHER */
     .lang-switch{display:inline-flex;align-items:center;gap:2px;margin-left:8px;}
-    .lang-switch button{background:none;border:none;font-size:1.1rem;cursor:pointer;opacity:.5;transition:opacity .2s,transform .2s;padding:2px;}
+    .lang-switch button{background:none;border:none;font-size:1.1rem;cursor:pointer;opacity:.45;transition:opacity .2s,transform .2s;padding:2px 3px;}
     .lang-switch button:hover{transform:scale(1.2);}
-    .lang-switch button.active{opacity:1;text-shadow:0 0 8px rgba(255,255,255,.6);}
+    .lang-switch button.active{opacity:1;text-shadow:0 0 8px rgba(255,255,255,.5);}
     .version{font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.08em;color:rgba(0,255,100,.45);border:1px solid rgba(0,255,100,.25);padding:5px 12px;border-radius:4px;margin-left:10px;flex-shrink:0;}
 
     /* ANNOUNCE ADMIN */
@@ -861,12 +861,12 @@
     runTransaction(totalVisRef, (current) => (current || 0) + 1)
       .then((result) => {
         const el = document.getElementById('total-visitors-count');
-        if (el) el.textContent = result.snapshot.val().toLocaleString('cs-CZ');
+        if (el) el.textContent = result.snapshot.val().toLocaleString(curLang==='en'?'en-GB':'cs-CZ');
       })
       .catch(() => {
         get(totalVisRef).then(snap => {
           const el = document.getElementById('total-visitors-count');
-          if (el && snap.exists()) el.textContent = snap.val().toLocaleString('cs-CZ');
+          if (el && snap.exists()) el.textContent = snap.val().toLocaleString(curLang==='en'?'en-GB':'cs-CZ');
         });
       });
 
@@ -939,7 +939,7 @@
         if (videoBox) videoBox.style.display = 'none'; // VIDEO SCHOVANÉ
         if (mixcloudBox) mixcloudBox.style.display = 'block';
         var sbtn6=document.getElementById('speaker-btn6');
-        if(sbtn6){sbtn6.classList.add('live-on');sbtn6.title='Live vysílání běží - klikni pro poslech';}
+        if(sbtn6){sbtn6.classList.add('live-on');sbtn6.title=t('live_audio_on');}
         startLiveTimer();
       } else {
         // OFFLINE – červená
@@ -957,7 +957,7 @@
         if (videoBox) videoBox.style.display = 'block'; // VIDEO VIDITELNÉ
         if (mixcloudBox) mixcloudBox.style.display = 'none';
         var sbtn6off=document.getElementById('speaker-btn6');
-        if(sbtn6off){sbtn6off.classList.remove('live-on');sbtn6off.title='Live vysílání není aktivní';}
+        if(sbtn6off){sbtn6off.classList.remove('live-on');sbtn6off.title=t('live_audio_off');}
         stopLiveTimer();
       }
       // MIXCLOUD indikátor kopíruje ON AIR stav
@@ -1019,10 +1019,10 @@
     };
     window.toggleMixcloudLive = function() {
       const auth = window.firebaseAuth;
-      if (!auth || !auth.currentUser) { alert('Nejsi přihlášen jako admin.'); return; }
+      if (!auth || !auth.currentUser) { alert(t('not_admin')); return; }
       const newState = !window._mcLive;
       set(mcLiveRef, newState).catch(e => {
-        alert('Firebase chyba: ' + (e.code || e.message));
+        alert(t('firebase_err') + (e.code || e.message));
         console.error('MC toggle error:', e);
       });
     };
@@ -1318,7 +1318,7 @@
         set(ref(db, 'config/videoUrl'), '').then(() => {
           document.getElementById('video-url-input').value = '';
           const saved = document.getElementById('video-url-saved');
-          if (saved) { saved.textContent = '✓ Smazáno'; saved.style.color = '#f87171'; saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; saved.textContent = '✓ Uloženo'; saved.style.color = '#60a5fa'; }, 2000); }
+          if (saved) { saved.textContent = t('deleted'); saved.style.color = '#f87171'; saved.style.display = 'inline'; setTimeout(() => { saved.style.display = 'none'; saved.textContent = t('saved'); saved.style.color = '#60a5fa'; }, 2000); }
         }).catch(e => { console.error('Video URL clear error:', e); });
       } catch(e) { console.error('Video URL clear error:', e); }
     };
@@ -1431,7 +1431,7 @@
       const isAdmin = document.body.classList.contains('edit-mode');
       if(off && !isAdmin){ overlay.classList.add('active'); }
       else { overlay.classList.remove('active'); }
-      if(btn){ btn.textContent = off ? '🟢 Zapnout web' : '🔴 Vypnout web'; btn.classList.toggle('on', off); }
+      if(btn){ btn.textContent = off ? t('site_on') : t('site_off'); btn.classList.toggle('on', off); }
     });
     window.toggleSiteOff = function(){
       set(siteOffRef, !window._siteOff).catch(e=>console.error(e));
@@ -1452,11 +1452,11 @@
     // ── POČTY V DB TLAČÍTKÁCH ───────────────────────────────────────────
     get(ref(db, 'hardwareDb')).then(snap => {
       const el = document.getElementById('hw-db-count');
-      if (el) { const n = snap.exists() ? Object.keys(snap.val()).length : 0; el.textContent = n + ' položek'; }
+      if (el) { const n = snap.exists() ? Object.keys(snap.val()).length : 0; el.textContent = n + ' ' + t('polozek'); }
     }).catch(e => console.warn('hardwareDb:', e));
     get(ref(db, 'lpRecordsDb')).then(snap => {
       const el = document.getElementById('lp-db-count');
-      if (el) { const n = snap.exists() ? Object.keys(snap.val()).length : 0; el.textContent = n + ' desek'; }
+      if (el) { const n = snap.exists() ? Object.keys(snap.val()).length : 0; el.textContent = n + ' ' + t('desek'); }
     }).catch(e => console.warn('lpRecordsDb:', e));
     get(ref(db, 'cdRecordsDb')).then(snap => {
       const el = document.getElementById('cd-db-count');
@@ -1487,15 +1487,13 @@
         const nowStr = h + ':' + mm;
         let txt = '';
         if (mode === 'full') {
-          txt = '⬛ ČB+ · vše černobílé';
+          txt = t('gs_full');
         } else if (mode === 'auto') {
-          txt = isNight
-            ? '🌙 ČB+ · auto (vše černobílé, přepne v 06:00)'
-            : '☀ BAR · auto (vše barevné, přepne v 22:00)';
+          txt = isNight ? t('gs_auto_night') : t('gs_auto_day');
         } else if (mode === 'on') {
-          txt = '🌙 ČB · jen střed';
+          txt = t('gs_center');
         } else {
-          txt = '☀ BAR · vše barevné';
+          txt = t('gs_color');
         }
         stEl.textContent = txt;
       }
@@ -1640,7 +1638,7 @@
     function confirmCountdown() {
       const h = parseInt(document.getElementById('countdown-hours').value) || 0;
       const m = parseInt(document.getElementById('countdown-mins').value) || 0;
-      if (h === 0 && m === 0) { alert('Zadej aspoň 1 minutu!'); return; }
+      if (h === 0 && m === 0) { alert(curLang==='en'?'Enter at least 1 minute!':'Zadej aspoň 1 minutu!'); return; }
       const target = Date.now() + (h * 3600000) + (m * 60000);
       countdownTarget = target;
       // Zapsat do Firebase – při chybě zobrazit varování
@@ -1648,7 +1646,7 @@
         console.log('✅ Countdown uložen do Firebase');
       }).catch(e => {
         console.error('❌ Countdown Firebase chyba:', e.code);
-        alert('⚠️ Odpočet funguje jen lokálně – Firebase odmítl zápis (' + e.code + ')\nZkontroluj RTDB pravidla pro "countdown".');
+        alert(curLang==='en'?'⚠️ Countdown works locally only – Firebase rejected write ('+e.code+')':'⚠️ Odpočet funguje jen lokálně – Firebase odmítl zápis ('+e.code+')');
       });
       updateCountdown();
       document.getElementById('countdown-input-wrap').style.display = 'none';
@@ -1711,7 +1709,7 @@
       const title = document.getElementById('ann-title').value.trim();
       const body  = document.getElementById('ann-body').value.trim();
       const type  = document.getElementById('ann-type').value;
-      if (!title && !body) { alert('Zadej alespoň nadpis nebo text!'); return; }
+      if (!title && !body) { alert(t('enter_title')); return; }
       push(annRef, { title, body, type, ts: Date.now() }).then(() => {
         document.getElementById('ann-title').value = '';
         document.getElementById('ann-body').value  = '';
@@ -1719,7 +1717,7 @@
     };
 
     window.deleteAnnouncement = function(key) {
-      if (confirm('Smazat toto oznámení?')) remove(ref(db, 'announcements/' + key));
+      if (confirm(t('confirm_delete_ann'))) remove(ref(db, 'announcements/' + key));
     };
 
 
@@ -1740,7 +1738,7 @@
       snap.forEach(child => { msgs.push({ key: child.key, ...child.val() }); });
       msgs.sort((a, b) => (b.ts || 0) - (a.ts || 0));
       msgs.forEach(msg => {
-        const date = msg.ts ? new Date(msg.ts).toLocaleString('cs-CZ', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        const date = msg.ts ? new Date(msg.ts).toLocaleString(curLang==='en'?'en-GB':'cs-CZ', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
         const isAdmin = msg.admin === true;
         const div = document.createElement('div');
         div.className = 'chat-msg' + (isAdmin ? ' chat-msg-admin' : '');
@@ -1786,7 +1784,7 @@
       if (sec) sec.style.display = chatOn ? 'block' : 'none';
       const btn = document.getElementById('chat-toggle-btn');
       if (btn) {
-        btn.textContent = chatOn ? '💬 Chat ON' : '💬 Chat OFF';
+        btn.textContent = chatOn ? t('chat_on') : t('chat_off');
         btn.style.color = chatOn ? '#2ecc71' : '#e74c3c';
         btn.style.borderColor = chatOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
       }
@@ -1801,7 +1799,7 @@
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
       const text = document.getElementById('chat-text').value.trim();
-      if (!text) { alert('Napiš zprávu!'); return; }
+      if (!text) { alert(t('write_msg')); return; }
       const auth = window.firebaseAuth;
       const isAdmin = auth && auth.currentUser ? true : false;
       push(chatRef, {
@@ -1816,12 +1814,12 @@
     };
 
     window.deleteChatMsg = function(key) {
-      if (confirm('Smazat tuto zprávu?')) remove(ref(db, 'chat/' + key));
+      if (confirm(t('confirm_delete_msg'))) remove(ref(db, 'chat/' + key));
     };
 
     window.clearAllChat = function() {
-      if (confirm('Opravdu smazat VŠECHNY zprávy v chatu?')) {
-        remove(chatRef).then(() => console.log('🗑 Chat vymazán')).catch(e => alert('Chyba: ' + e.message));
+      if (confirm(t('confirm_clear_chat'))) {
+        remove(chatRef).then(() => console.log('🗑 Chat cleared')).catch(e => alert('Chyba: ' + e.message));
       }
     };
 
@@ -1835,8 +1833,8 @@
 
 </head>
 <body>
-  <div id="admin-onair-banner" style="display:none;"><span class="banner-dot"></span>🎙 VYSÍLÁŠ — BUĎ OPATRNÝ — NESAHEJ NA NASTAVENÍ WEBU<span class="banner-dot" style="margin-left:8px;margin-right:0;"></span></div>
-  <div id="site-off-overlay"><div class="off-icon">⛔</div><div class="off-msg">Stránka je dočasně vypnuta</div></div>
+  <div id="admin-onair-banner" style="display:none;"><span class="banner-dot"></span><span data-i18n="admin_onair_warn">🎙 VYSÍLÁŠ — BUĎ OPATRNÝ — NESAHEJ NA NASTAVENÍ WEBU</span><span class="banner-dot" style="margin-left:8px;margin-right:0;"></span></div>
+  <div id="site-off-overlay"><div class="off-icon">⛔</div><div class="off-msg" data-i18n="site_off_msg">Stránka je dočasně vypnuta</div></div>
 
 <!-- HVĚZDIČKY (celá plocha) -->
 <div class="starfield" id="starfield"></div>
@@ -1899,18 +1897,18 @@
 
         <span style="display:inline-flex;align-items:center;gap:4px;">
           <a href="#" class="nbtn" id="admin-login-btn" onclick="openModal('edit');return false;" style="color:#ff8800;border-color:rgba(255,136,0,.4);font-size:.5rem;padding:2px 6px;" data-i18n="login">🔑 Login</a>
-          <span id="admin-status" style="display:none;font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;color:#4ade80;">🔓 ADMIN</span>
+          <span id="admin-status" style="display:none;font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.1em;color:#4ade80;" data-i18n="admin_label">🔓 ADMIN</span>
           <a href="#" class="nbtn" id="admin-logout-btn" onclick="logoutAdmin();return false;" style="display:none;color:#e74c3c;border-color:rgba(231,76,60,.4);font-size:.5rem;padding:2px 6px;" data-i18n="logout">Odhlásit</a>
-          <span id="obs-ws-status" style="display:none;font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.08em;color:#ffcc00;">📡 OBS: HLEDÁM...</span>
+          <span id="obs-ws-status" style="display:none;font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.08em;color:#ffcc00;" data-i18n="obs_searching">📡 OBS: HLEDÁM...</span>
         </span>
 
         <!-- ADMIN: 3-pozicový přepínač černobílá / AUTO / barevná - vedle Vypnout web -->
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
-          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;" data-i18n="site_off">🔴 Vypnout web</button>
+          <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
-              <span style="color:rgba(0,245,255,.5);font-size:.45rem;">Režim:</span>
+              <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="gs_mode">Režim:</span>
               <div class="gs-switch">
                 <button id="gs-btn-on" class="gs-btn" onclick="setGrayscale('on')" title="Jen střed černobílá">ČB</button>
                 <button id="gs-btn-full" class="gs-btn" onclick="setGrayscale('full')" title="Vše černobílá">ČB+</button>
@@ -2082,7 +2080,7 @@
         <button class="speaker-btn speaker-btn-live" id="speaker-btn6" onclick="openLiveAudio()" title="Live vysílání - jen zvuk">🎙️</button>
         <audio id="bg-music-13" src="alec_koff-carnaval-484622.mp3" preload="auto"></audio>
         <div id="nameday-box" style="font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.08em;color:#00f5ff;text-align:center;line-height:1.3;white-space:nowrap;margin-left:auto;">
-          <div style="color:#ff8800;font-size:.42rem;letter-spacing:.12em;" data-i18n="nameday">SVÁTEK</div>
+          <div style="color:#ff8800;font-size:.42rem;letter-spacing:.12em;" data-i18n="nameday_label">SVÁTEK</div>
           <div id="nameday-name">—</div>
         </div>
       </div>
@@ -2127,8 +2125,8 @@
             <div class="timer-label" data-i18n="next_stream">NEXT STREAM</div>
             <div class="timer-display" id="countdown-timer">--:--:--</div>
             <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;justify-content:center;">
-              <button class="timer-edit-btn edit-only" id="countdown-edit-btn" onclick="toggleCountdownInput()" style="display:none;font-size:0.7rem;">✏️ Nastav čas</button>
-              <button class="timer-edit-btn edit-only" id="countdown-stop-btn" onclick="stopCountdown()" style="display:none;font-size:0.7rem;">⏹ Stop</button>
+              <button class="timer-edit-btn edit-only" id="countdown-edit-btn" onclick="toggleCountdownInput()" style="display:none;font-size:0.7rem;" data-i18n="countdown_set">✏️ Nastav čas</button>
+              <button class="timer-edit-btn edit-only" id="countdown-stop-btn" onclick="stopCountdown()" style="display:none;font-size:0.7rem;" data-i18n="countdown_stop">⏹ Stop</button>
             </div>
             <div id="countdown-input-wrap" style="display:none;margin-top:6px;text-align:center;">
               <div style="display:flex;gap:6px;align-items:center;justify-content:center;">
@@ -2242,7 +2240,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       <div class="content-wrap single">
         <div class="stitle">
           <span data-i18n="hw_title">KLADYXLAND HARDWARE</span>
-          <button class="edit-btn" id="hw-edit-btn" onclick="openModal('hw')">✏️ Upravit</button>
+          <button class="edit-btn" id="hw-edit-btn" onclick="openModal('hw')" data-i18n="edit_btn">✏️ Upravit</button>
         </div>
         <div class="disclaimer col-full">
           <span id="hw-disclaimer-text">O zvukovou kvalitu se stará technika těchto značek:<br>
@@ -2270,10 +2268,10 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         <div id="hw-dyn-imgs" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0;width:100%;box-sizing:border-box;"></div>
         <!-- Admin formulář - viditelný jen v edit-mode -->
         <div class="edit-only" style="display:none;margin-top:14px;padding:12px;background:rgba(0,245,255,.06);border-radius:8px;border:1px solid rgba(0,245,255,.15);">
-          <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;">🖼 Přidat obrázek (URL z Firebase Storage)</div>
+          <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;" data-i18n="hw_add_img">🖼 Přidat obrázek (URL z Firebase Storage)</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <input id="hw-img-url" type="url" placeholder="https://firebasestorage.googleapis.com/..." style="flex:1;min-width:200px;padding:8px 10px;background:rgba(0,0,30,.5);border:1px solid rgba(0,245,255,.3);border-radius:6px;color:#e0f4ff;font-size:.8rem;"/>
-            <button onclick="addHwImage()" style="padding:8px 16px;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.4);border-radius:6px;color:#00f5ff;cursor:pointer;font-size:.8rem;">+ Přidat</button>
+            <button onclick="addHwImage()" style="padding:8px 16px;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.4);border-radius:6px;color:#00f5ff;cursor:pointer;font-size:.8rem;" data-i18n="hw_add_btn">+ Přidat</button>
           </div>
           <div id="hw-img-status" style="font-size:.72rem;margin-top:6px;color:rgba(0,245,255,.5);"></div>
         </div>
@@ -2343,15 +2341,15 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <video id="lightbox-video" src="" controls style="display:none;"></video>
     <div id="lightbox-caption-wrap" style="text-align:center;">
       <div class="lightbox-caption" id="lightbox-caption"></div>
-      <button class="lightbox-caption-btn" id="lightbox-caption-btn" onclick="toggleCaptionEdit()">✏️ Popis</button>
-      <input class="lightbox-caption-edit" id="lightbox-caption-input" style="display:none;" placeholder="Přidej popis..." onkeydown="if(event.key==='Enter')saveCaption()"/>
-      <button class="lightbox-caption-btn" id="lightbox-caption-save" style="display:none;" onclick="saveCaption()">✓ Uložit</button>
+      <button class="lightbox-caption-btn" id="lightbox-caption-btn" onclick="toggleCaptionEdit()" data-i18n="lb_caption_btn">✏️ Popis</button>
+      <input class="lightbox-caption-edit" id="lightbox-caption-input" style="display:none;" placeholder="Přidej popis..." data-i18n-ph="lb_caption_ph" onkeydown="if(event.key==='Enter')saveCaption()"/>
+      <button class="lightbox-caption-btn" id="lightbox-caption-save" style="display:none;" onclick="saveCaption()" data-i18n="lb_caption_save">✓ Uložit</button>
     </div>
     <span class="lightbox-nav lightbox-next" onclick="navLightbox(1,event)">&#8250;</span>
   </div>
 
   <div style="text-align:center;padding:18px 0 10px;">
-    <button onclick="copyLink()" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.12em;padding:10px 24px;border-radius:3px;cursor:pointer;transition:all .3s;" onmouseover="this.style.background='rgba(0,245,255,.2)'" onmouseout="this.style.background='rgba(0,245,255,.08)'">📋 KOPÍROVAT ODKAZ</button>
+    <button onclick="copyLink()" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.3);color:#00f5ff;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.12em;padding:10px 24px;border-radius:3px;cursor:pointer;transition:all .3s;" onmouseover="this.style.background='rgba(0,245,255,.2)'" onmouseout="this.style.background='rgba(0,245,255,.08)'" data-i18n="copy_link">📋 KOPÍROVAT ODKAZ</button>
     <div id="copy-msg" style="margin-top:6px;font-size:.6rem;color:#00ff99;opacity:0;transition:opacity .3s;font-family:'Exo 2',sans-serif;"></div>
   </div>
   <div class="total-visitors">
@@ -2362,7 +2360,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 8
   <!-- MOTIVY – jen admin -->
   <div id="theme-wrap" style="display:none;flex-direction:column;align-items:stretch;gap:7px;padding:14px 16px 90px;background:rgba(0,5,20,.7);border-top:1px solid rgba(0,245,255,.15);">
-    <span style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;margin-bottom:4px;">MOTIV POZADÍ</span>
+    <span style="text-align:center;color:rgba(0,245,255,.5);font-family:'Orbitron',monospace;font-size:.45rem;letter-spacing:.12em;margin-bottom:4px;" data-i18n="theme_label">MOTIV POZADÍ</span>
 
     <!-- Pevné motivy -->
     <div class="th-row">
@@ -2374,10 +2372,10 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     <div style="border-top:1px solid rgba(0,245,255,.1);margin:6px 0;"></div>
 
     <!-- Přidat nové pozadí -->
-    <span style="color:rgba(0,245,255,.4);font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.1em;">PŘIDAT POZADÍ</span>
+    <span style="color:rgba(0,245,255,.4);font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.1em;" data-i18n="add_bg">PŘIDAT POZADÍ</span>
     <div class="th-row">
-      <input class="th-url-input" id="th-new-url" type="text" placeholder="Vlož URL obrázku...">
-      <input class="th-url-input" id="th-new-name" type="text" placeholder="Název..." style="max-width:90px;">
+      <input class="th-url-input" id="th-new-url" type="text" placeholder="Vlož URL obrázku..." data-i18n-ph="bg_url_ph">
+      <input class="th-url-input" id="th-new-name" type="text" placeholder="Název..." data-i18n-ph="bg_name_ph" style="max-width:90px;">
       <button class="th-url-save" onclick="addCustomBg()">➕</button>
     </div>
 
@@ -2387,6 +2385,352 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
 
 </div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v3.2.8
+// ═══════════════════════════════════════════════════════════════
+var curLang = localStorage.getItem('kladyx_lang') || 'cs';
+
+var I18N = {
+  cs: {
+    // NAV
+    back:'⟵ Zpět', home:'Home', hardware:'Hardware', galerie:'Galerie',
+    chat_nav:'Chat', archiv_nav:'📻 Archive Stream',
+    home_icon:'⌂ Home', hw_icon:'⚙ Hardware', gal_icon:'🖼 Galerie',
+    chat_icon:'💬 Chat', archiv_icon:'📻 Archive Stream',
+    online_label:'Online',
+    // ADMIN
+    login:'🔑 Login', logout:'Odhlásit', admin_label:'🔓 ADMIN',
+    site_off:'🔴 Vypnout web', site_on:'🟢 Zapnout web',
+    chat_on:'💬 Chat ON', chat_off:'💬 Chat OFF',
+    gs_mode:'Režim:',
+    // ON AIR
+    live_banner:'🟢 PRÁVĚ VYSÍLÁM ŽIVĚ',
+    on_air:'ON AIR', offline:'OFFLINE',
+    start_broadcast:'▶ START BROADCAST', stop_broadcast:'■ STOP BROADCAST',
+    watch_live:'▶ SLEDOVAT ŽIVĚ', watch_offline:'● OFFLINE',
+    admin_onair_warn:'🎙 VYSÍLÁŠ — BUĎ OPATRNÝ — NESAHEJ NA NASTAVENÍ WEBU',
+    site_off_msg:'Stránka je dočasně vypnuta',
+    // OBS
+    obs_connected:'📡 OBS: PŘIPOJEN', obs_wrong_pw:'📡 OBS: ŠPATNÉ HESLO',
+    obs_disconnected:'📡 OBS: ODPOJEN', obs_searching:'📡 OBS: HLEDÁM...',
+    bridge_online:'🟢 ONLINE', bridge_offline:'🔴 OFFLINE',
+    // TIMERS
+    live_time:'LIVE TIME', next_stream:'NEXT STREAM',
+    countdown_set:'✏️ Nastav čas', countdown_stop:'⏹ Stop',
+    hod:'HOD', min:'MIN',
+    // NAMEDAY
+    nameday_label:'SVÁTEK',
+    // HOME
+    transmission:'TRANSMISSION ACTIVE',
+    edit_btn:'✏️ Upravit', edit_end:'🔒 Konec úprav',
+    intro_title:'Broadcasting from the Dark Side of Sound',
+    live_title:'📡 Živé vysílání',
+    live_desc:'Když vysíláme — připoj se přímo na Mixcloud:',
+    // DISCLAIMER
+    disclaimer_label:'⚠️ <strong>Disclaimer:</strong>',
+    disclaimer_text:'Tento projekt není spojen s žádnou firmou ani značkou. Veškerá technika je zakoupena z vlastních prostředků. Jde čistě o soukromý koníček a záliba k muzice, bez jakékoliv komerční vazby.',
+    // HARDWARE
+    hw_title:'KLADYXLAND HARDWARE',
+    hw_add_img:'🖼 Přidat obrázek (URL z Firebase Storage)',
+    hw_add_btn:'+ Přidat',
+    // GALERIE
+    gal_title:'GALERIE', upload_media:'📷 Nahrát média',
+    pick_files:'📁 Vyber fotky / videa z PC',
+    drag_files:'nebo přetáhni soubory sem',
+    file_types:'Fotky, GIF, MP4/WebM (max 50 MB)',
+    no_photos:'Zatím žádné fotky ani videa',
+    // LIGHTBOX
+    lb_caption_btn:'✏️ Popis', lb_caption_ph:'Přidej popis...',
+    lb_caption_save:'✓ Uložit',
+    // ARCHIV
+    archiv_title:'📻 ARCHIVE STREAM',
+    loading:'⏳ NAČÍTÁM...', load_more:'⬇ NAČÍST DALŠÍ',
+    no_records:'Žádné záznamy nenalezeny.',
+    archiv_invalid:'⚠ Neplatná odpověď z Mixcloudu.',
+    archiv_error:'⚠ Nepodařilo se načíst archiv.',
+    play:'▶ PŘEHRÁT', stop_play:'■ ZASTAVIT',
+    on_mixcloud:'🔗 NA MIXCLOUDU',
+    shows:'POŘADŮ',
+    // CHAT
+    chat_title:'💬 CHAT', clear_all:'🗑 Smazat vše',
+    name_ph:'Tvoje jméno...', msg_ph:'Napiš zprávu...',
+    send:'📤 Odeslat', no_msgs:'Zatím žádné zprávy. Buď první!',
+    write_msg:'Napiš zprávu!',
+    // MODAL
+    modal_title:'🔐 PŘÍSTUP PRO EDITACI',
+    modal_desc:'Přihlas se svým Google účtem',
+    google_login:'Přihlásit se přes Google',
+    cancel:'✕ Zrušit', login_err:'❌ Chyba přihlášení',
+    logging_in:'⏳ Přihlašuji...',
+    // WELCOME
+    welcome:'🛸 VÍTÁM TĚ NA KLADYXLANDU',
+    // FOOTER
+    copy_link:'📋 KOPÍROVAT ODKAZ', link_copied:'✅ Odkaz zkopírován!',
+    copy_prompt:'Zkopíruj odkaz:',
+    total_visitors:'👁 TOTAL VISITORS',
+    footer_text:'© KLADYXLAND project. TRANSMISSION UNIT 01 · ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT · Artwork by Michal Kovalčík -Kladyx-2026-27',
+    // WEATHER
+    humidity:'Vlhkost',
+    // DB COUNTS
+    polozek:'položek', desek:'desek',
+    // CONFIRM DIALOGS
+    confirm_reload:'Nová verze webu je dostupná. Obnovit stránku?',
+    confirm_logout:'Opravdu se odhlásit?',
+    confirm_delete_msg:'Smazat tuto zprávu?',
+    confirm_clear_chat:'Opravdu smazat VŠECHNY zprávy v chatu?',
+    confirm_delete_ann:'Smazat toto oznámení?',
+    logged_out:'Odhlášeno ✓',
+    not_admin:'Nejsi přihlášen jako admin.',
+    firebase_err:'Firebase chyba: ',
+    enter_title:'Zadej alespoň nadpis nebo text!',
+    // UPLOAD
+    uploading:'Nahrávám',
+    uploaded:'nahráno',
+    upload_done:'Nahráno',
+    upload_partial:'Nahráno',
+    too_big:'je moc velký (max 50 MB)',
+    attempt:'pokus',
+    files_of:'souborů',
+    check_conn:'zkontroluj připojení',
+    deleted:'✓ Smazáno', saved:'✓ Uloženo',
+    // BACKUP
+    db_empty:'Databáze je prázdná.',
+    import_confirm:'Importovat',
+    import_nodes:'uzlů',
+    import_warn:'Stávající data budou přepsána.',
+    import_done:'Import hotový ✓',
+    import_err:'Chyba importu: ',
+    export_err:'Chyba při exportu: ',
+    invalid_format:'Neplatný formát',
+    no_data:'Soubor neobsahuje žádná data.',
+    // GRAYSCALE
+    gs_full:'⬛ ČB+ · vše černobílé',
+    gs_auto_night:'🌙 ČB+ · auto (vše černobílé, přepne v 06:00)',
+    gs_auto_day:'☀ BAR · auto (vše barevné, přepne v 22:00)',
+    gs_center:'🌙 ČB · jen střed',
+    gs_color:'☀ BAR · vše barevné',
+    // THEME
+    theme_label:'MOTIV POZADÍ',
+    add_bg:'PŘIDAT POZADÍ',
+    bg_url_ph:'Vlož URL obrázku...',
+    bg_name_ph:'Název...',
+    // NTFY
+    ntfy_visitor:'👤 Nový návštěvník na webu KLADYXLAND!',
+    // MARQUEE
+    marquee:'🔊 Vysílá Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo',
+    // LIVE AUDIO TOOLTIP
+    live_audio_on:'Live vysílání běží - klikni pro poslech',
+    live_audio_off:'Live vysílání není aktivní',
+    // VIDEO
+    video_saved:'✓ Uloženo', video_deleted:'✓ Smazáno'
+  },
+  en: {
+    back:'⟵ Back', home:'Home', hardware:'Hardware', galerie:'Gallery',
+    chat_nav:'Chat', archiv_nav:'📻 Archive Stream',
+    home_icon:'⌂ Home', hw_icon:'⚙ Hardware', gal_icon:'🖼 Gallery',
+    chat_icon:'💬 Chat', archiv_icon:'📻 Archive Stream',
+    online_label:'Online',
+    login:'🔑 Login', logout:'Log out', admin_label:'🔓 ADMIN',
+    site_off:'🔴 Disable site', site_on:'🟢 Enable site',
+    chat_on:'💬 Chat ON', chat_off:'💬 Chat OFF',
+    gs_mode:'Mode:',
+    live_banner:'🟢 NOW BROADCASTING LIVE',
+    on_air:'ON AIR', offline:'OFFLINE',
+    start_broadcast:'▶ START BROADCAST', stop_broadcast:'■ STOP BROADCAST',
+    watch_live:'▶ WATCH LIVE', watch_offline:'● OFFLINE',
+    admin_onair_warn:'🎙 BROADCASTING — BE CAREFUL — DON\'T TOUCH SITE SETTINGS',
+    site_off_msg:'This site is temporarily offline',
+    obs_connected:'📡 OBS: CONNECTED', obs_wrong_pw:'📡 OBS: WRONG PASSWORD',
+    obs_disconnected:'📡 OBS: DISCONNECTED', obs_searching:'📡 OBS: SEARCHING...',
+    bridge_online:'🟢 ONLINE', bridge_offline:'🔴 OFFLINE',
+    live_time:'LIVE TIME', next_stream:'NEXT STREAM',
+    countdown_set:'✏️ Set time', countdown_stop:'⏹ Stop',
+    hod:'HRS', min:'MIN',
+    nameday_label:'NAME DAY',
+    transmission:'TRANSMISSION ACTIVE',
+    edit_btn:'✏️ Edit', edit_end:'🔒 End editing',
+    intro_title:'Broadcasting from the Dark Side of Sound',
+    live_title:'📡 Live Broadcast',
+    live_desc:'When we\'re live — tune in directly on Mixcloud:',
+    disclaimer_label:'⚠️ <strong>Disclaimer:</strong>',
+    disclaimer_text:'This project is not affiliated with any company or brand. All equipment is purchased privately. This is purely a personal hobby and passion for music, without any commercial ties.',
+    hw_title:'KLADYXLAND HARDWARE',
+    hw_add_img:'🖼 Add image (URL from Firebase Storage)',
+    hw_add_btn:'+ Add',
+    gal_title:'GALLERY', upload_media:'📷 Upload media',
+    pick_files:'📁 Pick photos / videos from PC',
+    drag_files:'or drag and drop files here',
+    file_types:'Photos, GIF, MP4/WebM (max 50 MB)',
+    no_photos:'No photos or videos yet',
+    lb_caption_btn:'✏️ Caption', lb_caption_ph:'Add caption...',
+    lb_caption_save:'✓ Save',
+    archiv_title:'📻 ARCHIVE STREAM',
+    loading:'⏳ LOADING...', load_more:'⬇ LOAD MORE',
+    no_records:'No recordings found.',
+    archiv_invalid:'⚠ Invalid response from Mixcloud.',
+    archiv_error:'⚠ Failed to load archive.',
+    play:'▶ PLAY', stop_play:'■ STOP',
+    on_mixcloud:'🔗 ON MIXCLOUD',
+    shows:'SHOWS',
+    chat_title:'💬 CHAT', clear_all:'🗑 Clear all',
+    name_ph:'Your name...', msg_ph:'Write a message...',
+    send:'📤 Send', no_msgs:'No messages yet. Be the first!',
+    write_msg:'Write a message!',
+    modal_title:'🔐 ACCESS FOR EDITING',
+    modal_desc:'Sign in with your Google account',
+    google_login:'Sign in with Google',
+    cancel:'✕ Cancel', login_err:'❌ Login error',
+    logging_in:'⏳ Signing in...',
+    welcome:'🛸 WELCOME TO KLADYXLAND',
+    copy_link:'📋 COPY LINK', link_copied:'✅ Link copied!',
+    copy_prompt:'Copy link:',
+    total_visitors:'👁 TOTAL VISITORS',
+    footer_text:'© KLADYXLAND project. TRANSMISSION UNIT 01 · PURELY INDEPENDENT PRIVATE PROJECT · Artwork by Michal Kovalčík -Kladyx-2026-27',
+    humidity:'Humidity',
+    polozek:'items', desek:'records',
+    confirm_reload:'A new version is available. Reload the page?',
+    confirm_logout:'Really log out?',
+    confirm_delete_msg:'Delete this message?',
+    confirm_clear_chat:'Really delete ALL chat messages?',
+    confirm_delete_ann:'Delete this announcement?',
+    logged_out:'Logged out ✓',
+    not_admin:'You are not logged in as admin.',
+    firebase_err:'Firebase error: ',
+    enter_title:'Enter at least a title or text!',
+    uploading:'Uploading',
+    uploaded:'uploaded',
+    upload_done:'Uploaded',
+    upload_partial:'Uploaded',
+    too_big:'is too large (max 50 MB)',
+    attempt:'attempt',
+    files_of:'files',
+    check_conn:'check connection',
+    deleted:'✓ Deleted', saved:'✓ Saved',
+    db_empty:'Database is empty.',
+    import_confirm:'Import',
+    import_nodes:'nodes',
+    import_warn:'Existing data will be overwritten.',
+    import_done:'Import complete ✓',
+    import_err:'Import error: ',
+    export_err:'Export error: ',
+    invalid_format:'Invalid format',
+    no_data:'File contains no data.',
+    gs_full:'⬛ B&W+ · all grayscale',
+    gs_auto_night:'🌙 B&W+ · auto (all grayscale, switches at 06:00)',
+    gs_auto_day:'☀ COLOR · auto (full color, switches at 22:00)',
+    gs_center:'🌙 B&W · center only',
+    gs_color:'☀ COLOR · full color',
+    theme_label:'BACKGROUND THEME',
+    add_bg:'ADD BACKGROUND',
+    bg_url_ph:'Paste image URL...',
+    bg_name_ph:'Name...',
+    ntfy_visitor:'👤 New visitor on KLADYXLAND!',
+    marquee:'🔊 Broadcasting by Michal Kovalčík • Streaming from OBS via ES4 Quantum Presonus 🎵 • RodeCaster Duo',
+    live_audio_on:'Live broadcast active - click to listen',
+    live_audio_off:'Live broadcast is not active',
+    video_saved:'✓ Saved', video_deleted:'✓ Deleted'
+  }
+};
+
+// Překlad dní a měsíců
+var DAYS_CS = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
+var DAYS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MONTHS_CS = ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
+var MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.cs && I18N.cs[key]) || key; }
+
+function setLang(lang) {
+  curLang = lang;
+  localStorage.setItem('kladyx_lang', lang);
+  document.documentElement.lang = lang === 'en' ? 'en' : 'cs';
+  // Vlaječky
+  var csBtn = document.getElementById('lang-cs');
+  var enBtn = document.getElementById('lang-en');
+  if (csBtn) csBtn.className = lang === 'cs' ? 'active' : '';
+  if (enBtn) enBtn.className = lang === 'en' ? 'active' : '';
+  // Statické texty via data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = I18N[lang] && I18N[lang][key];
+    if (val !== undefined) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
+      else if (key === 'disclaimer_label' || key === 'disclaimer_text') el.innerHTML = val;
+      else el.textContent = val;
+    }
+  });
+  // Placeholdery
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-ph');
+    var val = I18N[lang] && I18N[lang][key];
+    if (val !== undefined) el.placeholder = val;
+  });
+  // Hodiny
+  if (typeof updateClock === 'function') updateClock();
+  // Počasí
+  if (typeof window._weatherUpdate === 'function') window._weatherUpdate();
+  // ON AIR / OFFLINE dynamic
+  var onairText = document.getElementById('onair-text');
+  var fixedText = document.getElementById('fixed-onair-text');
+  var liveText = document.getElementById('live-btn-text');
+  var broadcastBtn = document.getElementById('broadcast-btn');
+  if (window._isLive) {
+    if (onairText) onairText.textContent = t('on_air');
+    if (fixedText) fixedText.textContent = t('on_air');
+    if (liveText) liveText.textContent = t('watch_live');
+    if (broadcastBtn && broadcastBtn.classList.contains('live')) broadcastBtn.textContent = t('stop_broadcast');
+  } else {
+    if (onairText) onairText.textContent = t('offline');
+    if (fixedText) fixedText.textContent = t('offline');
+    if (liveText) liveText.textContent = t('watch_offline');
+    if (broadcastBtn && !broadcastBtn.classList.contains('live')) broadcastBtn.textContent = t('start_broadcast');
+  }
+  // Mixcloud status
+  var mcTxt = document.getElementById('mc-status-text');
+  if (mcTxt) mcTxt.textContent = window._isLive ? 'LIVE' : t('offline');
+  // Site off button
+  var siteOffBtn = document.getElementById('site-off-toggle');
+  if (siteOffBtn) siteOffBtn.textContent = window._siteOff ? t('site_on') : t('site_off');
+  // Site off overlay
+  var offMsg = document.querySelector('#site-off-overlay .off-msg');
+  if (offMsg) offMsg.textContent = t('site_off_msg');
+  // Admin banner
+  var adminBanner = document.getElementById('admin-onair-banner');
+  if (adminBanner) { var sp = adminBanner.querySelector('span:not(.banner-dot)'); /* text node */ }
+  // Chat toggle
+  var chatBtn = document.getElementById('chat-toggle-btn');
+  if (chatBtn) chatBtn.textContent = (chatBtn.style.color === 'rgb(46, 204, 113)' || chatBtn.style.color === '#2ecc71') ? t('chat_on') : t('chat_off');
+  // Marquee
+  var mq = document.querySelectorAll('.marquee-text');
+  var mqText = t('marquee');
+  mq.forEach(function(el) { el.textContent = mqText + ' \u00a0\u00a0\u00a0 ' + mqText + ' \u00a0\u00a0\u00a0 ' + mqText + ' \u00a0\u00a0\u00a0 '; });
+  // Footer
+  var footer = document.querySelector('footer');
+  if (footer) footer.textContent = t('footer_text');
+  // Disclaimer
+  var discEl = document.querySelector('.disclaimer.col-full');
+  if (discEl) discEl.innerHTML = t('disclaimer_label') + ' ' + t('disclaimer_text');
+  // Total visitors label
+  var tvLabel = document.querySelector('.total-visitors');
+  if (tvLabel) {
+    var countEl = document.getElementById('total-visitors-count');
+    var countVal = countEl ? countEl.textContent : '···';
+    tvLabel.innerHTML = t('total_visitors') + '<div class="tv-count" id="total-visitors-count">' + countVal + '</div>';
+  }
+}
+
+// Inicializace jazyka po DOM load
+document.addEventListener('DOMContentLoaded', function() {
+  if (curLang !== 'cs') setLang(curLang);
+  var csB = document.getElementById('lang-cs');
+  var enB = document.getElementById('lang-en');
+  if (csB) csB.className = curLang === 'cs' ? 'active' : '';
+  if (enB) enB.className = curLang === 'en' ? 'active' : '';
+});
+</script>
 
 <script>
 
@@ -2432,7 +2776,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   async function adminGoogleLogin(){
     const btn = document.getElementById('google-login-btn');
     btn.disabled = true;
-    btn.textContent = '⏳ Přihlašuji...';
+    btn.textContent = t('logging_in');
     try {
       const _u = await window.googleSignIn();
       if(_u && _u.uid) localStorage.setItem('kladyx_admin_uid', _u.uid);
@@ -2478,7 +2822,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const countdownStopBtn=document.getElementById('countdown-stop-btn');if(countdownStopBtn)countdownStopBtn.style.display='inline-block';
     const themeWrap=document.getElementById('theme-wrap');if(themeWrap)themeWrap.style.display='flex';
     populateTextEdits();
-    if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent='🔒 Konec úprav';btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
+    if(section==='hw'){const btn=document.getElementById('hw-edit-btn');btn.textContent=t('edit_end');btn.classList.add('active');btn.onclick=disableEdit;loadHw();}
     if(section==='edit'){/* jen zapne edit-mode */}
     if(section==='galerie'){show('galerie');}
 
@@ -2511,7 +2855,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const grayscaleWrap=document.getElementById('grayscale-wrap');if(grayscaleWrap)grayscaleWrap.style.display='none';
     const countdownInputWrap=document.getElementById('countdown-input-wrap');if(countdownInputWrap)countdownInputWrap.style.display='none';
     const themeWrap2=document.getElementById('theme-wrap');if(themeWrap2)themeWrap2.style.display='none';
-    const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent='✏️ Upravit';hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();
+    const hwBtn=document.getElementById('hw-edit-btn');hwBtn.textContent=t('edit_btn');hwBtn.classList.remove('active');hwBtn.onclick=()=>openModal('hw');renumber();
   }
 
   // ── EXPORT ZÁLOHY ──────────────────────────────────────────────────
@@ -2523,7 +2867,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         const snap = await window.dbGet(window.dbRef(window.db, n));
         if (snap.exists()) data[n] = snap.val();
       }
-      if (!Object.keys(data).length) { alert('Databáze je prázdná.'); return; }
+      if (!Object.keys(data).length) { alert(t('db_empty')); return; }
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -2535,7 +2879,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Backup error:', e);
-      alert('Chyba při exportu: ' + e.message);
+      alert(t('export_err') + e.message);
     }
   }
 
@@ -2547,16 +2891,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        if (typeof data !== 'object' || Array.isArray(data)) throw new Error('Neplatný formát');
+        if (typeof data !== 'object' || Array.isArray(data)) throw new Error(t('invalid_format'));
         const nodes = Object.keys(data);
-        if (!nodes.length) { alert('Soubor neobsahuje žádná data.'); return; }
-        if (!confirm(`Importovat ${nodes.length} uzlů (${nodes.join(', ')})?\nStávající data budou přepsána.`)) return;
+        if (!nodes.length) { alert(t('no_data')); return; }
+        if (!confirm(t('import_confirm')+' '+nodes.length+' '+t('import_nodes')+' ('+nodes.join(', ')+')? '+t('import_warn'))) return;
         for (const n of nodes) {
           await window.dbSet(window.dbRef(window.db, n), data[n]);
         }
-        alert('Import hotový ✓ (' + nodes.join(', ') + ')');
+        alert(t('import_done') + ' (' + nodes.join(', ') + ')');
       } catch (err) {
-        alert('Chyba importu: ' + err.message);
+        alert(t('import_err') + err.message);
       }
       event.target.value = '';
     };
@@ -2568,16 +2912,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const url = 'https://kladyx.github.io/kladyxland/';
     navigator.clipboard.writeText(url).then(() => {
       const msg = document.getElementById('copy-msg');
-      msg.textContent = '✅ Odkaz zkopírován!';
+      msg.textContent = t('link_copied');
       msg.style.opacity = '1';
       setTimeout(() => { msg.style.opacity = '0'; }, 2000);
     }).catch(() => {
-      prompt('Zkopíruj odkaz:', url);
+      prompt(t('copy_prompt'), url);
     });
   }
 
   function logoutAdmin() {
-    if (!confirm('Opravdu se odhlásit?')) return;
+    if (!confirm(t('confirm_logout'))) return;
     localStorage.removeItem('kladyx_rp');
     sessionStorage.removeItem('kladyx_rp');
     localStorage.removeItem('kladyx_admin_uid');
@@ -2587,7 +2931,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         if(window._siteOff) document.getElementById('site-off-overlay').classList.add('active');
         // Obnovit anonymní session pro návštěvníka
         window.firebaseSignInAnon().catch(()=>{});
-        alert('Odhlášeno ✓');
+        alert(t('logged_out'));
       }).catch(e => alert('Chyba: ' + e.message));
     }
   }
@@ -2644,11 +2988,11 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const st = document.getElementById('hw-img-status');
     const url = (inp ? inp.value : '').trim();
     if (!url || !url.startsWith('http')) { if(st) st.textContent = '⚠ Zadej platnou URL'; return; }
-    if (!window.dbPush || !window.dbRef || !window.db) { if(st) st.textContent = '⚠ Firebase není připojen'; return; }
-    if(st) st.textContent = '⏳ Ukládám...';
+    if (!window.dbPush || !window.dbRef || !window.db) { if(st) st.textContent = curLang==='en'?'⚠ Firebase not connected':'⚠ Firebase není připojen'; return; }
+    if(st) st.textContent = curLang==='en'?'⏳ Saving...':'⏳ Ukládám...';
     window.dbPush(window.dbRef(window.db, 'hardwareDb/images'), url)
       .then(() => {
-        if(st) st.textContent = '✅ Přidáno';
+        if(st) st.textContent = curLang==='en'?'✅ Added':'✅ Přidáno';
         if(inp) inp.value = '';
         // Znovu načíst obrázky
         window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
@@ -2659,7 +3003,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   }
   function delHwImage(key) {
     if (!window.dbRemove || !window.dbRef || !window.db) return;
-    if (!confirm('Smazat tento obrázek?')) return;
+    if (!confirm(curLang==='en'?'Delete this image?':'Smazat tento obrázek?')) return;
     window.dbRemove(window.dbRef(window.db, 'hardwareDb/images/' + key))
       .then(() => {
         window.dbGet(window.dbRef(window.db, 'hardwareDb/images')).then(snap => {
@@ -2676,7 +3020,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     } catch(e){ console.warn('populateTextEdits:', e); }
   }
   loadTexts();
-  function addRow(){const brand=document.getElementById('new-brand').value.trim();const name=document.getElementById('new-name').value.trim();const cat=document.getElementById('new-cat').value.trim();if(!brand||!name){alert('Zadej značku a model!');return;}const tbody=document.getElementById('hw-tbody');const num=tbody.rows.length+1;const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(num).padStart(2,'0')+'</td><td class="hw-brand-col" style="color:#aaddff;">'+brand+'</td><td class="hw-name-col">'+name+'</td><td class="hw-cat">'+cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);document.getElementById('new-brand').value='';document.getElementById('new-name').value='';document.getElementById('new-cat').value='';renumber();saveHw();}
+  function addRow(){const brand=document.getElementById('new-brand').value.trim();const name=document.getElementById('new-name').value.trim();const cat=document.getElementById('new-cat').value.trim();if(!brand||!name){alert(curLang==='en'?'Enter brand and model!':'Zadej značku a model!');return;}const tbody=document.getElementById('hw-tbody');const num=tbody.rows.length+1;const tr=document.createElement('tr');tr.innerHTML='<td class="hw-num">'+String(num).padStart(2,'0')+'</td><td class="hw-brand-col" style="color:#aaddff;">'+brand+'</td><td class="hw-name-col">'+name+'</td><td class="hw-cat">'+cat+'</td><td class="hw-del"><button class="btn-del-row" onclick="delRow(this)">✕</button></td>';tbody.appendChild(tr);document.getElementById('new-brand').value='';document.getElementById('new-name').value='';document.getElementById('new-cat').value='';renumber();saveHw();}
   function delRow(btn){btn.closest('tr').remove();renumber();saveHw();}
   function renumber(){const tbody=document.getElementById('hw-tbody');if(!tbody)return;const rows=tbody.rows;for(let i=0;i<rows.length;i++)rows[i].cells[0].textContent=String(i+1).padStart(2,'0');}
   function saveHw(){const tbody=document.getElementById('hw-tbody');if(!tbody)return;const rows=tbody.rows;const data=[];for(let r of rows)data.push({brand:r.cells[1].textContent,brandStyle:r.cells[1].getAttribute('style')||'',brandClass:r.cells[1].className,name:r.cells[2].textContent,cat:r.cells[3].textContent});
@@ -2696,12 +3040,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     const s = String(now.getSeconds()).padStart(2,'0');
     document.getElementById('digi-time').innerHTML =
       h+'<span class="digi-colon">:</span>'+m+'<span class="digi-colon">:</span>'+s;
-    const days_cs = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
-    const months_cs = ['Ledna','Února','Března','Dubna','Května','Června','Července','Srpna','Září','Října','Listopadu','Prosince'];
-    const days_en = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months_en = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var dd = curLang==='en' ? days_en : days_cs;
-    var mm = curLang==='en' ? months_en : months_cs;
+    var dd = curLang==='en' ? DAYS_EN : DAYS_CS;
+    var mm = curLang==='en' ? MONTHS_EN : MONTHS_CS;
     document.getElementById('digi-date').textContent =
       dd[now.getDay()]+' · '+now.getDate()+'. '+mm[now.getMonth()]+' '+now.getFullYear();
   }
@@ -2785,7 +3125,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   function formatDate(str){
     if(!str) return '';
     const d = new Date(str);
-    return d.toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return d.toLocaleDateString(curLang==='en'?'en-GB':'cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});
   }
 
   function loadArchiv(more){
@@ -2801,7 +3141,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       empty.style.display='none';
       moreWrap.style.display='none';
     } else {
-      moreBtn.textContent='⏳ NAČÍTÁM...';
+      moreBtn.textContent=t('loading');
     }
 
     const url = more && archivNextUrl ? archivNextUrl : 'https://api.mixcloud.com/kladyx/cloudcasts/?limit=10&metadata=1';
@@ -2812,7 +3152,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         loading.style.display='none';
         if(!data || !Array.isArray(data.data)){
           empty.style.display='block';
-          empty.textContent='⚠ Neplatná odpověď z Mixcloudu.';
+          empty.textContent=t('archiv_invalid');
           console.error('Mixcloud API – neplatná odpověď:', data);
           return;
         }
@@ -2827,7 +3167,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           div.className='archiv-item';
           const dur = item.audio_length ? formatDuration(item.audio_length) : '';
           const date = formatDate(item.created_time);
-          const plays = item.play_count ? '▶ '+item.play_count.toLocaleString('cs-CZ') : '';
+          const plays = item.play_count ? '▶ '+item.play_count.toLocaleString(curLang==='en'?'en-GB':'cs-CZ') : '';
           const embedKey = encodeURIComponent(item.key);
           div.innerHTML=`
             <div class="archiv-item-name" style="cursor:pointer;" onclick="toggleEmbed(this,'${embedKey}')">🎙 ${item.name}</div>
@@ -2835,8 +3175,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
               ${date?'<span>📅 '+date+'</span>':''}
               ${dur?'<span>⏱ '+dur+'</span>':''}
               ${plays?'<span class="archiv-item-plays">'+plays+'</span>':''}
-              <span class="archiv-play-btn" onclick="toggleEmbed(this,'${embedKey}')">▶ PŘEHRÁT</span>
-              <a href="https://www.mixcloud.com${item.key}" target="_blank" rel="noopener" style="font-family:'Orbitron',monospace;font-size:.55rem;color:rgba(255,160,50,.8);text-decoration:none;border:1px solid rgba(255,160,50,.3);padding:2px 7px;border-radius:2px;">🔗 NA MIXCLOUDU</a>
+              <span class="archiv-play-btn" onclick="toggleEmbed(this,'${embedKey}')">${t('play')}</span>
+              <a href="https://www.mixcloud.com${item.key}" target="_blank" rel="noopener" style="font-family:'Orbitron',monospace;font-size:.55rem;color:rgba(255,160,50,.8);text-decoration:none;border:1px solid rgba(255,160,50,.3);padding:2px 7px;border-radius:2px;">${t('on_mixcloud')}</a>
             </div>
             <div class="archiv-embed" style="display:none;margin-top:10px;"></div>`;
           list.appendChild(div);
@@ -2844,13 +3184,13 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         archivNextUrl = data.paging && data.paging.next ? data.paging.next : null;
         archivLoaded = true;
         moreWrap.style.display = archivNextUrl ? 'block' : 'none';
-        if(more) moreBtn.textContent='⬇ NAČÍST DALŠÍ';
+        if(more) moreBtn.textContent=t('load_more');
       })
       .catch((e)=>{
         loading.style.display='none';
         empty.style.display='block';
-        empty.textContent='⚠ Nepodařilo se načíst archiv.';
-        if(more) moreBtn.textContent='⬇ NAČÍST DALŠÍ';
+        empty.textContent=t('archiv_error');
+        if(more) moreBtn.textContent=t('load_more');
         console.error('Mixcloud API – chyba načtení:', e);
       });
   }
@@ -2875,18 +3215,18 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
             const it=e.closest('.archiv-item');
             if(it){
               const b=it.querySelector('.archiv-play-btn');
-              if(b){b.textContent='▶ PŘEHRÁT';b.classList.remove('playing');}
+              if(b){b.textContent=t('play');b.classList.remove('playing');}
             }
           }
         });
         const feedKey = encodeURIComponent(decodeURIComponent(key));
         embedDiv.innerHTML='<iframe width="100%" height="120" src="https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&autoplay=1&feed='+feedKey+'" frameborder="0" allow="autoplay" style="border-radius:3px;"></iframe>';
         embedDiv.style.display='block';
-        if(playBtn){playBtn.textContent='■ ZASTAVIT';playBtn.classList.add('playing');}
+        if(playBtn){playBtn.textContent=t('stop_play');playBtn.classList.add('playing');}
       } else {
         embedDiv.style.display='none';
         embedDiv.innerHTML='';
-        if(playBtn){playBtn.textContent='▶ PŘEHRÁT';playBtn.classList.remove('playing');}
+        if(playBtn){playBtn.textContent=t('play');playBtn.classList.remove('playing');}
       }
     } catch(e){
       console.error('toggleEmbed error:',e);
@@ -2909,7 +3249,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         const followers = data.follower_count || 0;
         const following = data.following_count || 0;
         statsBox.innerHTML = [
-          cc       ? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">🎙 ${cc} POŘADŮ</span>` : '',
+          cc       ? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">🎙 ${cc} ${t('shows')}</span>` : '',
           followers? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">👥 ${followers.toLocaleString('cs-CZ')} FOLLOWERS</span>` : '',
           following? `<span style="font-family:'Orbitron',monospace;font-size:.6rem;color:rgba(0,245,255,.7);background:rgba(0,245,255,.08);padding:5px 12px;border-radius:3px;border:1px solid rgba(0,245,255,.2);">➕ ${following} FOLLOWING</span>` : '',
         ].join('');
@@ -3038,7 +3378,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           (snap) => {
             const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
             bar.style.width = pct + '%';
-            status.textContent = 'Nahrávám ' + (done+1) + '/' + total + ': ' + pct + '%' + (attempt > 1 ? ' (pokus '+attempt+')' : '');
+            status.textContent = t('uploading') + ' ' + (done+1) + '/' + total + ': ' + pct + '%' + (attempt > 1 ? ' (pokus '+attempt+')' : '');
           },
           (err) => reject({ err, ts, safeName }),
           async () => {
@@ -3053,19 +3393,19 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
 
     for (const file of files) {
       if (file.size > 50 * 1024 * 1024) {
-        status.textContent = '❌ ' + file.name + ' je moc velký (max 50 MB)';
+        status.textContent = '❌ ' + file.name + ' ' + t('too_big');
         done++; continue;
       }
       let success = false;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          status.textContent = 'Nahrávám ' + (done+1) + '/' + total + ': ' + file.name + (attempt > 1 ? ' (pokus '+attempt+'/3)' : '');
+          status.textContent = t('uploading') + ' ' + (done+1) + '/' + total + ': ' + file.name + (attempt > 1 ? ' (pokus '+attempt+'/3)' : '');
           const { url, ts, safeName } = await uploadOneFile(file, attempt);
           const galRef = window.dbRef(window.db, 'gallery/' + ts);
           await window.dbSet(galRef, { url, name: file.name, path: 'galerie/' + safeName, ts });
           done++;
           bar.style.width = Math.round((done/total)*100) + '%';
-          status.textContent = '✅ ' + file.name + ' nahráno';
+          status.textContent = '✅ ' + file.name + ' ' + t('uploaded');
           success = true;
           break;
         } catch(e) {
@@ -3090,9 +3430,9 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }
     bar.style.width = '100%';
     if (done === total) {
-      status.textContent = '✅ Nahráno ' + done + '/' + total + ' souborů';
+      status.textContent = '✅ ' + t('upload_done') + ' ' + done + '/' + total + ' ' + t('files_of');
     } else {
-      status.textContent = '⚠️ Nahráno ' + done + '/' + total + ' – zkontroluj připojení';
+      status.textContent = '⚠️ ' + t('upload_partial') + ' ' + done + '/' + total + ' – ' + t('check_conn');
     }
     setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; status.textContent = ''; }, 4000);
     document.getElementById('gal-file-input').value = '';
@@ -3349,119 +3689,6 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
     }).catch(() => {});
   }, 5000);
 
-
-  // ═══════════════════════════════════════════════
-  // CZ/EN LANGUAGE SWITCHER
-  // ═══════════════════════════════════════════════
-  var curLang = localStorage.getItem('kladyx_lang') || 'cs';
-
-  var I18N = {
-    cs: {
-      back: '⟵ Zpět', home: 'Home', hardware: 'Hardware', galerie: 'Galerie',
-      chat_nav: 'Chat', archiv_nav: '📻 Archive Stream',
-      home_icon: '⌂ Home', hw_icon: '⚙ Hardware', gal_icon: '🖼 Galerie',
-      chat_icon: '💬 Chat', archiv_icon: '📻 Archive Stream',
-      login: '🔑 Login', logout: 'Odhlásit', site_off: '🔴 Vypnout web',
-      nameday: 'SVÁTEK', live_banner: '🟢 PRÁVĚ VYSÍLÁM ŽIVĚ',
-      transmission: 'TRANSMISSION ACTIVE', edit_btn: '✏️ Upravit',
-      intro_title: 'Broadcasting from the Dark Side of Sound',
-      live_title: '📡 Živé vysílání',
-      live_desc: 'Když vysíláme — připoj se přímo na Mixcloud:',
-      hw_title: 'KLADYXLAND HARDWARE',
-      gal_title: 'GALERIE', upload_media: '📷 Nahrát média',
-      pick_files: '📁 Vyber fotky / videa z PC',
-      drag_files: 'nebo přetáhni soubory sem',
-      file_types: 'Fotky, GIF, MP4/WebM (max 50 MB)',
-      no_photos: 'Zatím žádné fotky ani videa',
-      archiv_title: '📻 ARCHIVE STREAM', loading: '⏳ NAČÍTÁM...',
-      no_records: 'Žádné záznamy nenalezeny.', load_more: '⬇ NAČÍST DALŠÍ',
-      chat_title: '💬 CHAT', clear_all: '🗑 Smazat vše',
-      name_ph: 'Tvoje jméno...', msg_ph: 'Napiš zprávu...',
-      send: '📤 Odeslat', no_msgs: 'Zatím žádné zprávy. Buď první!',
-      modal_title: '🔐 PŘÍSTUP PRO EDITACI',
-      modal_desc: 'Přihlas se svým Google účtem',
-      google_login: 'Přihlásit se přes Google', cancel: '✕ Zrušit',
-      login_err: '❌ Chyba přihlášení',
-      welcome: '🛸 VÍTÁM TĚ NA KLADYXLANDU',
-      live_time: 'LIVE TIME', next_stream: 'NEXT STREAM',
-      online_label: 'Online',
-      on_air: 'ON AIR', offline: 'OFFLINE',
-      start_broadcast: '▶ START BROADCAST', stop_broadcast: '■ STOP BROADCAST',
-      watch_live: '▶ SLEDOVAT ŽIVĚ', watch_offline: '● OFFLINE',
-      obs_connected: '📡 OBS: PŘIPOJEN', obs_wrong_pw: '📡 OBS: ŠPATNÉ HESLO',
-      obs_disconnected: '📡 OBS: ODPOJEN', obs_searching: '📡 OBS: HLEDÁM...',
-      bridge_online: '🟢 ONLINE', bridge_offline: '🔴 OFFLINE',
-      confirm_reload: 'Nová verze webu je dostupná. Obnovit stránku?',
-      ntfy_visitor: '👤 Nový návštěvník na webu KLADYXLAND!'
-    },
-    en: {
-      back: '⟵ Back', home: 'Home', hardware: 'Hardware', galerie: 'Gallery',
-      chat_nav: 'Chat', archiv_nav: '📻 Archive Stream',
-      home_icon: '⌂ Home', hw_icon: '⚙ Hardware', gal_icon: '🖼 Gallery',
-      chat_icon: '💬 Chat', archiv_icon: '📻 Archive Stream',
-      login: '🔑 Login', logout: 'Log out', site_off: '🔴 Disable site',
-      nameday: 'NAME DAY', live_banner: '🟢 NOW BROADCASTING LIVE',
-      transmission: 'TRANSMISSION ACTIVE', edit_btn: '✏️ Edit',
-      intro_title: 'Broadcasting from the Dark Side of Sound',
-      live_title: '📡 Live Broadcast',
-      live_desc: 'When we\'re live — tune in directly on Mixcloud:',
-      hw_title: 'KLADYXLAND HARDWARE',
-      gal_title: 'GALLERY', upload_media: '📷 Upload media',
-      pick_files: '📁 Pick photos / videos from PC',
-      drag_files: 'or drag and drop files here',
-      file_types: 'Photos, GIF, MP4/WebM (max 50 MB)',
-      no_photos: 'No photos or videos yet',
-      archiv_title: '📻 ARCHIVE STREAM', loading: '⏳ LOADING...',
-      no_records: 'No recordings found.', load_more: '⬇ LOAD MORE',
-      chat_title: '💬 CHAT', clear_all: '🗑 Clear all',
-      name_ph: 'Your name...', msg_ph: 'Write a message...',
-      send: '📤 Send', no_msgs: 'No messages yet. Be the first!',
-      modal_title: '🔐 ACCESS FOR EDITING',
-      modal_desc: 'Sign in with your Google account',
-      google_login: 'Sign in with Google', cancel: '✕ Cancel',
-      login_err: '❌ Login error',
-      welcome: '🛸 WELCOME TO KLADYXLAND',
-      live_time: 'LIVE TIME', next_stream: 'NEXT STREAM',
-      online_label: 'Online',
-      on_air: 'ON AIR', offline: 'OFFLINE',
-      start_broadcast: '▶ START BROADCAST', stop_broadcast: '■ STOP BROADCAST',
-      watch_live: '▶ WATCH LIVE', watch_offline: '● OFFLINE',
-      obs_connected: '📡 OBS: CONNECTED', obs_wrong_pw: '📡 OBS: WRONG PASSWORD',
-      obs_disconnected: '📡 OBS: DISCONNECTED', obs_searching: '📡 OBS: SEARCHING...',
-      bridge_online: '🟢 ONLINE', bridge_offline: '🔴 OFFLINE',
-      confirm_reload: 'A new version is available. Reload the page?',
-      ntfy_visitor: '👤 New visitor on KLADYXLAND!'
-    }
-  };
-
-  function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.cs[key]) || key; }
-
-  function setLang(lang) {
-    curLang = lang;
-    localStorage.setItem('kladyx_lang', lang);
-    // Vlaječky active stav
-    var csBtn = document.getElementById('lang-cs');
-    var enBtn = document.getElementById('lang-en');
-    if (csBtn) csBtn.className = lang === 'cs' ? 'active' : '';
-    if (enBtn) enBtn.className = lang === 'en' ? 'active' : '';
-    // Statické texty
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n');
-      if (I18N[lang] && I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
-    });
-    // Placeholdery
-    document.querySelectorAll('[data-i18n-ph]').forEach(function(el) {
-      var key = el.getAttribute('data-i18n-ph');
-      if (I18N[lang] && I18N[lang][key] !== undefined) el.placeholder = I18N[lang][key];
-    });
-    // Digi hodiny - okamžitá aktualizace
-    updateClock();
-    // Počasí - znovu načíst s novým jazykem
-    if (typeof updateWeather === 'function') updateWeather();
-    // html lang atribut
-    document.documentElement.lang = lang === 'cs' ? 'cs' : 'en';
-  }
-
   const CURRENT_VERSION = '3.2.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
@@ -3491,11 +3718,8 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
   });
   const vLabel = document.getElementById('version-label');
   if (vLabel) vLabel.textContent = 'ver.' + CURRENT_VERSION + 'Uc';
-  // Inicializace jazyka z localStorage
-  if (curLang !== 'cs') setLang(curLang); else {
-    var csB = document.getElementById('lang-cs');
-    if (csB) csB.className = 'active';
-  }
+  // Lang init (doplněk k DOMContentLoaded)
+  if (curLang !== 'cs') setLang(curLang);
 
   // === Kontrola nové verze (jednou při načtení, ~30 B download) ===
   (function(){
@@ -3676,7 +3900,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const city = data.name || '';
           document.getElementById('weather-temp').textContent = temp + '°C';
           document.getElementById('weather-desc').textContent = curLang==='cs' ? translateWeather(desc) : desc;
-          document.getElementById('weather-meta').textContent = (city ? city + ' · ' : '') + 'Vlhkost: ' + humidity + '%';
+          document.getElementById('weather-meta').textContent = (city ? city + ' · ' : '') + t('humidity') + ': ' + humidity + '%';
           widget.style.display = 'block';
         })
         .catch(e => console.warn('Weather API error:', e));
@@ -3694,7 +3918,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           const humidity = data.main.humidity;
           document.getElementById('weather-temp').textContent = temp + '°C';
           document.getElementById('weather-desc').textContent = curLang==='cs' ? translateWeather(desc) : desc;
-          document.getElementById('weather-meta').textContent = city + ' · Vlhkost: ' + humidity + '%';
+          document.getElementById('weather-meta').textContent = city + ' · ' + t('humidity') + ': ' + humidity + '%';
           widget.style.display = 'block';
         })
         .catch(e => console.warn('Weather fallback error:', e));
@@ -3717,6 +3941,7 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
       }
     }
 
+    window._weatherUpdate = updateWeather;
     // Inicializace
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', updateWeather);
