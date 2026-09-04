@@ -902,6 +902,7 @@
       var iRef = (lang === 'en') ? window._fbIntroEnRef : window._fbIntroRef;
       var hRef = (lang === 'en') ? window._fbHwdEnRef   : window._fbHwdRef;
       get(iRef).then(function(s) {
+        if (curLang !== lang) return;
         if (s.exists()) {
           var el = document.getElementById('intro-text');
           if (el) el.innerHTML = s.val();
@@ -909,6 +910,7 @@
         }
       }).catch(function(){});
       get(hRef).then(function(s) {
+        if (curLang !== lang) return;
         if (s.exists()) {
           var el = document.getElementById('hw-disclaimer-text');
           if (el) el.innerHTML = s.val();
@@ -3742,7 +3744,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.4';
+  const CURRENT_VERSION = '3.3.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
