@@ -886,12 +886,34 @@
     }).catch(e => console.warn('galleryRef:', e));
 
     // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
-    const introRef = ref(db, 'content/intro');
-    const hwdRef   = ref(db, 'content/hwDisclaimer');
-    get(introRef).then(s => { if (s.exists()) document.getElementById('intro-text').innerHTML = s.val(); }).catch(()=>{});
-    get(hwdRef).then(s => { if (s.exists()) document.getElementById('hw-disclaimer-text').innerHTML = s.val(); }).catch(()=>{});
-    window._fbIntroRef = introRef;
-    window._fbHwdRef   = hwdRef;
+    const introRef   = ref(db, 'content/intro');
+    const introEnRef = ref(db, 'content/introEn');
+    const hwdRef     = ref(db, 'content/hwDisclaimer');
+    const hwdEnRef   = ref(db, 'content/hwDisclaimerEn');
+    window._fbIntroRef   = introRef;
+    window._fbIntroEnRef = introEnRef;
+    window._fbHwdRef     = hwdRef;
+    window._fbHwdEnRef   = hwdEnRef;
+    // Výchozí fallback texty (EN)
+    window._introEnFallback = 'Welcome to KLADYXLAND LIVE: DETECTED. I play all kinds of music and hits from the past years that we share memories of. Every broadcast is a return to tracks that accompanied us in clubs, on the radio and at home through headphones.<br><br>\uD83D\uDD0A\uD83C\uDFB6 <strong>ON AIR:</strong> I start streaming whenever I feel like listening to something.<br><br>\uD83C\uDF9B\uFE0F\uD83C\uDF9A\uFE0F <strong>IN THE SET:</strong> Music is running (radio) — sometimes a mix, sometimes freestyle chaos. Whatever comes to mind.<br><br>\uD83D\uDFE5\u2B1B <strong>NO SCHEDULE:</strong> No deadlines, no obligations.<br><br>\uD83D\uDFEA\u2B1B <strong>NO PRESSURE:</strong> Just pure joy of audio.<br><br>\uD83D\uDFE9\uD83D\uDDA4 <strong>COMMUNITY:</strong> If you are here, you are inside.';
+    window._hwdEnFallback  = '\u2022 <strong>PreSonus / Fender</strong> – studio control and basic processing, Quantum ES4 - UC<br>\u2022 <strong>Pioneer DJ</strong> – reliable standard for DJ mix and playback, DDJ 800, CDJ MK2 800<br>\u2022 <strong>R\u00D8DE</strong> – reliable voice and speech transmission, RodeCaster Duo<br>\u2022 <strong>Reloop</strong> – analog recording and control, Reloop RP 1000<br>\u2022 <strong>Elgato</strong> – streaming control and macro management, Stream Deck Mini<br><br>Signal is routed through cabling from <strong>Adam Hall (series 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker and Lindy</strong> for maximum stability and minimal noise \uD83D\uDEA6\uD83C\uDF87\uD83D\uDD0A\uD83C\uDFA7.';
+    // Načíst texty podle aktuálního jazyka
+    function _loadEditableTexts(lang) {
+      var iRef = (lang === 'en') ? window._fbIntroEnRef : window._fbIntroRef;
+      var hRef = (lang === 'en') ? window._fbHwdEnRef   : window._fbHwdRef;
+      var iFallback = (lang === 'en') ? window._introEnFallback : null;
+      var hFallback = (lang === 'en') ? window._hwdEnFallback   : null;
+      get(iRef).then(function(s) {
+        var el = document.getElementById('intro-text');
+        if (el) el.innerHTML = (s.exists() ? s.val() : (iFallback || el.innerHTML));
+      }).catch(function(){});
+      get(hRef).then(function(s) {
+        var el = document.getElementById('hw-disclaimer-text');
+        if (el) el.innerHTML = (s.exists() ? s.val() : (hFallback || el.innerHTML));
+      }).catch(function(){});
+    }
+    window._loadEditableTexts = _loadEditableTexts;
+    _loadEditableTexts(curLang);
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
     const liveRef = ref(db, 'onair/live');
@@ -2720,6 +2742,8 @@ function setLang(lang) {
     var countVal = countEl ? countEl.textContent : '···';
     tvLabel.innerHTML = t('total_visitors') + '<div class="tv-count" id="total-visitors-count">' + countVal + '</div>';
   }
+  // Editovatelné texty (intro, hw disclaimer) — načíst podle jazyka
+  if (typeof window._loadEditableTexts === 'function') window._loadEditableTexts(lang);
 }
 
 // Inicializace jazyka po DOM load
@@ -2947,12 +2971,14 @@ document.addEventListener('DOMContentLoaded', function() {
   function saveIntro() {
     const val = document.getElementById('intro-edit').value;
     document.getElementById('intro-text').innerHTML = val;
-    if (window._fbIntroRef) window.dbSet(window._fbIntroRef, val).catch(e => console.error('Intro save error:', e));
+    var ref = (curLang === 'en') ? window._fbIntroEnRef : window._fbIntroRef;
+    if (ref) window.dbSet(ref, val).catch(e => console.error('Intro save error:', e));
   }
   function saveHwDisclaimer() {
     const val = document.getElementById('hw-disclaimer-edit').value;
     document.getElementById('hw-disclaimer-text').innerHTML = val;
-    if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
+    var ref = (curLang === 'en') ? window._fbHwdEnRef : window._fbHwdRef;
+    if (ref) window.dbSet(ref, val).catch(e => console.error('HW text save error:', e));
   }
 
   // ── HW OBRÁZKY ─────────────────────────────────────────────────────────
@@ -3690,7 +3716,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.0';
+  const CURRENT_VERSION = '3.3.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
