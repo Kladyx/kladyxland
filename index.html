@@ -3107,6 +3107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector(".sections").scrollIntoView({behavior:"smooth"});
     if(name==='archiv' && !archivLoaded) loadArchiv(false);
     if(name==='archiv') loadArchivStats();
+    setLang(curLang);
   }
 
   // ── ARCHIV MIXCLOUD ─────────────────────────────────────────
@@ -3689,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.2.9';
+  const CURRENT_VERSION = '3.3.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
