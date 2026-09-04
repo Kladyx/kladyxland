@@ -906,11 +906,17 @@
       get(iRef).then(function(s) {
         var el = document.getElementById('intro-text');
         if (el) el.innerHTML = (s.exists() ? s.val() : (iFallback || el.innerHTML));
-      }).catch(function(){});
+      }).catch(function(){
+        var el = document.getElementById('intro-text');
+        if (el && iFallback) el.innerHTML = iFallback;
+      });
       get(hRef).then(function(s) {
         var el = document.getElementById('hw-disclaimer-text');
         if (el) el.innerHTML = (s.exists() ? s.val() : (hFallback || el.innerHTML));
-      }).catch(function(){});
+      }).catch(function(){
+        var el = document.getElementById('hw-disclaimer-text');
+        if (el && hFallback) el.innerHTML = hFallback;
+      });
     }
     window._loadEditableTexts = _loadEditableTexts;
     _loadEditableTexts(curLang);
@@ -3716,7 +3722,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.1';
+  const CURRENT_VERSION = '3.3.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
