@@ -901,22 +901,20 @@
     function _loadEditableTexts(lang) {
       var iRef = (lang === 'en') ? window._fbIntroEnRef : window._fbIntroRef;
       var hRef = (lang === 'en') ? window._fbHwdEnRef   : window._fbHwdRef;
-      var iFallback = (lang === 'en') ? window._introEnFallback : null;
-      var hFallback = (lang === 'en') ? window._hwdEnFallback   : null;
       get(iRef).then(function(s) {
-        var el = document.getElementById('intro-text');
-        if (el) el.innerHTML = (s.exists() ? s.val() : (iFallback || el.innerHTML));
-      }).catch(function(){
-        var el = document.getElementById('intro-text');
-        if (el && iFallback) el.innerHTML = iFallback;
-      });
+        if (s.exists()) {
+          var el = document.getElementById('intro-text');
+          if (el) el.innerHTML = s.val();
+          if (lang === 'en') window._introEnCache = s.val();
+        }
+      }).catch(function(){});
       get(hRef).then(function(s) {
-        var el = document.getElementById('hw-disclaimer-text');
-        if (el) el.innerHTML = (s.exists() ? s.val() : (hFallback || el.innerHTML));
-      }).catch(function(){
-        var el = document.getElementById('hw-disclaimer-text');
-        if (el && hFallback) el.innerHTML = hFallback;
-      });
+        if (s.exists()) {
+          var el = document.getElementById('hw-disclaimer-text');
+          if (el) el.innerHTML = s.val();
+          if (lang === 'en') window._hwdEnCache = s.val();
+        }
+      }).catch(function(){});
     }
     window._loadEditableTexts = _loadEditableTexts;
     _loadEditableTexts(curLang);
@@ -2748,8 +2746,26 @@ function setLang(lang) {
     var countVal = countEl ? countEl.textContent : '···';
     tvLabel.innerHTML = t('total_visitors') + '<div class="tv-count" id="total-visitors-count">' + countVal + '</div>';
   }
-  // Editovatelné texty (intro, hw disclaimer) — načíst podle jazyka
-  if (typeof window._loadEditableTexts === 'function') window._loadEditableTexts(lang);
+  // Editovatelné texty (intro, hw disclaimer) — přepnout podle jazyka
+  (function(){
+    var introEl = document.getElementById('intro-text');
+    var hwdEl   = document.getElementById('hw-disclaimer-text');
+    if (lang === 'en') {
+      // Uložit CS text při prvním přepnutí na EN
+      if (introEl && !window._introCs) window._introCs = introEl.innerHTML;
+      if (hwdEl && !window._hwdCs)     window._hwdCs   = hwdEl.innerHTML;
+      // Ihned nastavit fallback
+      if (introEl) introEl.innerHTML = window._introEnCache || window._introEnFallback || introEl.innerHTML;
+      if (hwdEl)   hwdEl.innerHTML   = window._hwdEnCache   || window._hwdEnFallback   || hwdEl.innerHTML;
+      // Zkusit načíst z Firebase (přepíše fallback pokud existuje)
+      if (typeof window._loadEditableTexts === 'function') window._loadEditableTexts(lang);
+    } else {
+      // CS — obnovit uložený CS text nebo načíst z Firebase
+      if (introEl && window._introCs) introEl.innerHTML = window._introCs;
+      if (hwdEl && window._hwdCs)     hwdEl.innerHTML   = window._hwdCs;
+      if (typeof window._loadEditableTexts === 'function') window._loadEditableTexts(lang);
+    }
+  })();
 }
 
 // Inicializace jazyka po DOM load
@@ -3722,7 +3738,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.2';
+  const CURRENT_VERSION = '3.3.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
