@@ -893,16 +893,10 @@
     // Načíst texty podle aktuálního jazyka
     // Načtení CS editovatelných textů z Firebase (jednorázově)
     get(ref(db, 'content/intro')).then(function(s) {
-      if (s.exists()) {
-        window._introCs = s.val();
-        if (curLang === 'cs') { var el = document.getElementById('intro-text'); if (el) el.innerHTML = s.val(); }
-      }
+      if (s.exists()) { window._introCs = s.val(); }
     }).catch(function(){});
     get(ref(db, 'content/hwDisclaimer')).then(function(s) {
-      if (s.exists()) {
-        window._hwdCs = s.val();
-        if (curLang === 'cs') { var el = document.getElementById('hw-disclaimer-text'); if (el) el.innerHTML = s.val(); }
-      }
+      if (s.exists()) { window._hwdCs = s.val(); }
     }).catch(function(){});
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
@@ -2747,7 +2741,6 @@ function setLang(lang) {
     if (!window._hwdCs) window._hwdCs = hwdEl.innerHTML;
     hwdEl.innerHTML = (lang === 'en') ? _hwdEnFB : window._hwdCs;
   }
-  alert('AFTER: intro=' + document.getElementById('intro-text').innerHTML.substring(0,30));
 }
 
 // Inicializace jazyka po DOM load
@@ -3720,7 +3713,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.7';
+  const CURRENT_VERSION = '3.3.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
