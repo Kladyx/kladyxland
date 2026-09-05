@@ -195,7 +195,9 @@
     .disclaimer strong{color:#ffaa44;}
 
     /* EDIT BUTTON */
-    .edit-btn{font-family:"Orbitron",monospace;font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(0,20,60,.8);border:1px solid rgba(255,165,0,.5);color:#ffaa00;padding:7px 16px;cursor:pointer;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);transition:all .22s;flex-shrink:0;}
+    .edit-btn{display:none;font-family:"Orbitron",monospace;font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(0,20,60,.8);border:1px solid rgba(255,165,0,.5);color:#ffaa00;padding:7px 16px;cursor:pointer;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);transition:all .22s;flex-shrink:0;}
+    body.edit-mode .edit-btn{display:inline-block;}
+    body.edit-mode #chat-clear-btn{display:inline-block;}
     .edit-btn:hover{background:rgba(255,120,0,.2);}
     .edit-btn.active{background:rgba(255,50,50,.15);border-color:rgba(255,80,80,.6);color:#ff7777;}
     .text-edit-area{width:100%;font-family:'Exo 2',sans-serif;font-size:.85rem;background:rgba(0,10,40,.9);border:1px solid rgba(0,245,255,.3);color:#cce5ff;padding:10px;border-radius:3px;outline:none;resize:vertical;box-sizing:border-box;}
@@ -3750,7 +3752,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.3';
+  const CURRENT_VERSION = '3.4.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
