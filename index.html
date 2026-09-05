@@ -210,6 +210,11 @@
     .lang-switch button{background:none;border:none;font-size:1.1rem;cursor:pointer;opacity:.45;transition:opacity .2s,transform .2s;padding:2px 3px;}
     .lang-switch button:hover{transform:scale(1.2);}
     .lang-switch button.active{opacity:1;text-shadow:0 0 8px rgba(255,255,255,.5);}
+    .refresh-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(0,245,255,.07);border:1px solid rgba(0,245,255,.28);color:#00f5ff;font-family:'Orbitron',monospace;font-size:.52rem;font-weight:700;letter-spacing:.11em;padding:5px 11px;border-radius:3px;cursor:pointer;transition:all .28s ease;margin-top:5px;white-space:nowrap;}
+    .refresh-btn:hover,.refresh-btn:active{background:rgba(0,245,255,.18);border-color:rgba(0,245,255,.55);box-shadow:0 0 14px rgba(0,245,255,.35);}
+    .refresh-btn span.rf-ico{display:inline-block;transition:transform .5s ease;font-size:.72rem;}
+    .refresh-btn:hover span.rf-ico{transform:rotate(180deg);}
+    .lang-col{display:inline-flex;flex-direction:column;align-items:center;margin-left:8px;}
     .version{font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.08em;color:rgba(0,255,100,.45);border:1px solid rgba(0,255,100,.25);padding:5px 12px;border-radius:4px;margin-left:10px;flex-shrink:0;}
 
     /* ANNOUNCE ADMIN */
@@ -2068,7 +2073,7 @@
 
       <!-- CENTER: VERZE + TLAMPAČ -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <div class="version-display" id="version-label">ver.—</div><div class="lang-switch" id="lang-switch"><button onclick="setLang('cs')" id="lang-cs" class="active" title="Čeština">🇨🇿</button><button onclick="setLang('en')" id="lang-en" title="English">🇬🇧</button></div>
+        <div class="version-display" id="version-label">ver.—</div><div class="lang-col"><div class="lang-switch" id="lang-switch"><button onclick="setLang('cs')" id="lang-cs" class="active" title="Čeština">🇨🇿</button><button onclick="setLang('en')" id="lang-en" title="English">🇬🇧</button></div><button class="refresh-btn" id="refresh-btn" onclick="hardRefresh()"><span class="rf-ico">🔄</span><span data-i18n="refresh_btn">OBNOVIT</span></button></div>
         <div id="update-dot" title="Kliknutím obnovíš" onclick="if(confirm(t('confirm_reload')))location.reload(true);" style="display:none;width:12px;height:12px;border-radius:50%;background:#ffaa00;box-shadow:0 0 8px #ffaa00,0 0 16px #ffaa00;cursor:pointer;animation:updatePulse 1.2s infinite;"></div>
         <style>@keyframes updatePulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(0.7);}}</style>
         <button class="speaker-btn" id="speaker-btn" onclick="playGreeting()" title="Přehrát uvítání 1">📢</button>
@@ -2464,6 +2469,7 @@ var I18N = {
     welcome:'🛸 VÍTÁM TĚ NA KLADYXLANDU',
     // FOOTER
     copy_link:'📋 KOPÍROVAT ODKAZ', link_copied:'✅ Odkaz zkopírován!',
+    refresh_btn:'OBNOVIT',
     copy_prompt:'Zkopíruj odkaz:',
     total_visitors:'👁 TOTAL VISITORS',
     footer_text:'© KLADYXLAND project. TRANSMISSION UNIT 01 · ČISTĚ NEZÁVISLÝ SOUKROMÝ PROJEKT · Artwork by Michal Kovalčík -Kladyx-2026-27',
@@ -2581,6 +2587,7 @@ var I18N = {
     logging_in:'⏳ Signing in...',
     welcome:'🛸 WELCOME TO KLADYXLAND',
     copy_link:'📋 COPY LINK', link_copied:'✅ Link copied!',
+    refresh_btn:'REFRESH',
     copy_prompt:'Copy link:',
     total_visitors:'👁 TOTAL VISITORS',
     footer_text:'© KLADYXLAND project. TRANSMISSION UNIT 01 · PURELY INDEPENDENT PRIVATE PROJECT · Artwork by Michal Kovalčík -Kladyx-2026-27',
@@ -2641,6 +2648,12 @@ function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.cs && I1
 // EN fallback texty (synchronní, bez Firebase)
 var _introEnFB = 'Welcome to KLADYXLAND LIVE: DETECTED. I play all kinds of music and hits from the past years that we share memories of. Every broadcast is a return to tracks that accompanied us in clubs, on the radio and at home through headphones.<br><br>\uD83D\uDD0A\uD83C\uDFB6 <strong>ON AIR:</strong> I start streaming whenever I feel like listening to something.<br><br>\uD83C\uDF9B\uFE0F\uD83C\uDF9A\uFE0F <strong>IN THE SET:</strong> Music is running (radio) — sometimes a mix, sometimes freestyle chaos. Whatever comes to mind.<br><br>\uD83D\uDFE5\u2B1B <strong>NO SCHEDULE:</strong> No deadlines, no obligations.<br><br>\uD83D\uDFEA\u2B1B <strong>NO PRESSURE:</strong> Just pure joy of audio.<br><br>\uD83D\uDFE9\uD83D\uDDA4 <strong>COMMUNITY:</strong> If you are here, you are inside.';
 var _hwdEnFB = '\u2022 <strong>PreSonus / Fender</strong> – studio control and basic processing, Quantum ES4 - UC<br>\u2022 <strong>Pioneer DJ</strong> – reliable standard for DJ mix and playback, DDJ 800, CDJ MK2 800<br>\u2022 <strong>R\u00D8DE</strong> – reliable voice and speech transmission, RodeCaster Duo<br>\u2022 <strong>Reloop</strong> – analog recording and control, Reloop RP 1000<br>\u2022 <strong>Elgato</strong> – streaming control and macro management, Stream Deck Mini<br><br>Signal is routed through cabling from <strong>Adam Hall (series 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker and Lindy</strong> for maximum stability and minimal noise \uD83D\uDEA6\uD83C\uDF87\uD83D\uDD0A\uD83C\uDFA7.';
+
+// Tvrdý refresh — obejde cache pomocí timestampu v URL
+function hardRefresh() {
+  var base = location.origin + location.pathname;
+  location.replace(base + '?t=' + Date.now());
+}
 
 function setLang(lang) {
   curLang = lang;
@@ -3737,7 +3750,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.1';
+  const CURRENT_VERSION = '3.4.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
