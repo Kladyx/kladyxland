@@ -205,7 +205,9 @@
     .text-edit-area:focus{border-color:var(--cyan);}
     body.edit-mode .text-save-btn{display:block!important;}
     body.edit-mode .text-edit-area{display:block!important;}
-    body.edit-mode #intro-text{display:none;}
+    body.edit-mode #intro-text{display:none!important;}
+    body.edit-mode #intro-text-en{display:none!important;}
+    body.edit-mode #hw-disclaimer-text-en{display:none!important;}
     body.edit-mode #hw-disclaimer-text{display:none;}
 
     /* LANGUAGE SWITCHER */
@@ -901,10 +903,10 @@
     // Načíst texty podle aktuálního jazyka
     // Načtení CS editovatelných textů z Firebase (jednorázově)
     get(ref(db, 'content/intro')).then(function(s) {
-      if (s.exists()) { window._introCs = s.val(); }
+      if (s.exists()) { var el = document.getElementById('intro-text'); if (el) el.innerHTML = s.val(); }
     }).catch(function(){});
     get(ref(db, 'content/hwDisclaimer')).then(function(s) {
-      if (s.exists()) { window._hwdCs = s.val(); }
+      if (s.exists()) { var el = document.getElementById('hw-disclaimer-text'); if (el) el.innerHTML = s.val(); }
     }).catch(function(){});
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
@@ -2227,6 +2229,13 @@
 🟪⬛ <strong>BEZ TLAKU:</strong> Jen čistá radost z audia.<br><br>
 🟩🖤 <strong>KOMUNITA:</strong> Kdo je u toho, ten je uvnitř.<br><br>
 Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI asistent — a proto se omlouvám za chyby v projektu 🚦🎇🔊🎧. .</p>
+          <p id="intro-text-en" style="display:none;">Welcome to KLADYXLAND LIVE: DETECTED. I play all kinds of music and hits from the past years that we share memories of. Every broadcast is a return to tracks that accompanied us in clubs, on the radio and at home through headphones.<br><br>
+🔊🎶 <strong>ON AIR:</strong> I start streaming whenever I feel like listening to something.<br><br>
+🎛️🎚️ <strong>IN THE SET:</strong> Music is running (radio) — sometimes a mix, sometimes freestyle chaos. Whatever comes to mind.<br><br>
+🟥⬛ <strong>NO SCHEDULE:</strong> No deadlines, no obligations.<br><br>
+🟪⬛ <strong>NO PRESSURE:</strong> Just pure joy of audio.<br><br>
+🟩🖤 <strong>COMMUNITY:</strong> If you are here, you are inside.<br><br>
+I designed and wired everything myself without help from another person, just me and an AI assistant — so I apologise for any mistakes in the project 🚦🎇🔊🎧.</p>
           <textarea id="intro-edit" class="text-edit-area" style="display:none;" rows="4"></textarea>
           <button class="btn-add-save text-save-btn" id="intro-save-btn" style="display:none;margin-top:8px;" onclick="saveIntro()">✓ Uložit úvod</button>
         </div>
@@ -2266,6 +2275,13 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
           • <strong>Reloop</strong> – analogový záznam a ovládání . gramo Reloop Rp 1000<br>
           • <strong>Elgato</strong> – streamovací kontrola a makro ovládání, Stream Deck Mini<br><br>
           Signál vedu přes kabeláž značek <strong>Adam Hall (série 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker a Lindy</strong>, aby byl přenos co nejstabilnější a bez zbytečného šumu 🚦🎇🔊🎧.</span>
+          <span id="hw-disclaimer-text-en" style="display:none;">Audio quality is handled by equipment from these brands:<br>
+          • <strong>PreSonus / Fender</strong> – studio control and basic processing, Quantum ES4 - UC<br>
+          • <strong>Pioneer DJ</strong> – reliable standard for DJ mixing and playback, DDJ 800, CDJ MK2 800<br>
+          • <strong>RØDE</strong> – reliable voice and speech transmission, RodeCaster Duo<br>
+          • <strong>Reloop</strong> – analog recording and control, Reloop RP 1000 turntable<br>
+          • <strong>Elgato</strong> – streaming control and macro management, Stream Deck Mini<br><br>
+          The signal runs through cabling from <strong>Adam Hall (series 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker and Lindy</strong> for maximum stability and minimal noise 🚦🎇🔊🎧.</span>
           <textarea id="hw-disclaimer-edit" class="text-edit-area" style="display:none;" rows="6"></textarea>
           <button class="btn-add-save text-save-btn" id="hw-disclaimer-save-btn" style="display:none;margin-top:8px;" onclick="saveHwDisclaimer()">✓ Uložit text</button>
         </div>
@@ -2650,10 +2666,6 @@ var MONTHS_EN = ['January','February','March','April','May','June','July','Augus
 
 function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.cs && I18N.cs[key]) || key; }
 
-// EN fallback texty (synchronní, bez Firebase)
-var _introEnFB = 'Welcome to KLADYXLAND LIVE: DETECTED. I play all kinds of music and hits from the past years that we share memories of. Every broadcast is a return to tracks that accompanied us in clubs, on the radio and at home through headphones.<br><br>\uD83D\uDD0A\uD83C\uDFB6 <strong>ON AIR:</strong> I start streaming whenever I feel like listening to something.<br><br>\uD83C\uDF9B\uFE0F\uD83C\uDF9A\uFE0F <strong>IN THE SET:</strong> Music is running (radio) — sometimes a mix, sometimes freestyle chaos. Whatever comes to mind.<br><br>\uD83D\uDFE5\u2B1B <strong>NO SCHEDULE:</strong> No deadlines, no obligations.<br><br>\uD83D\uDFEA\u2B1B <strong>NO PRESSURE:</strong> Just pure joy of audio.<br><br>\uD83D\uDFE9\uD83D\uDDA4 <strong>COMMUNITY:</strong> If you are here, you are inside.';
-var _hwdEnFB = '\u2022 <strong>PreSonus / Fender</strong> – studio control and basic processing, Quantum ES4 - UC<br>\u2022 <strong>Pioneer DJ</strong> – reliable standard for DJ mix and playback, DDJ 800, CDJ MK2 800<br>\u2022 <strong>R\u00D8DE</strong> – reliable voice and speech transmission, RodeCaster Duo<br>\u2022 <strong>Reloop</strong> – analog recording and control, Reloop RP 1000<br>\u2022 <strong>Elgato</strong> – streaming control and macro management, Stream Deck Mini<br><br>Signal is routed through cabling from <strong>Adam Hall (series 3,4), Klotz, Cordial, Hosa, Proel, Clicktronic, Anker and Lindy</strong> for maximum stability and minimal noise \uD83D\uDEA6\uD83C\uDF87\uD83D\uDD0A\uD83C\uDFA7.';
-
 // Tvrdý refresh — obejde cache pomocí timestampu v URL
 function hardRefresh() {
   var base = location.origin + location.pathname;
@@ -2669,19 +2681,16 @@ function setLang(lang) {
   var enBtn = document.getElementById('lang-en');
   if (csBtn) csBtn.className = lang === 'cs' ? 'active' : '';
   if (enBtn) enBtn.className = lang === 'en' ? 'active' : '';
-  // Editovatelné texty (intro, hw disclaimer) — PRIORITNĚ, hned na začátku
-  try {
-    var introEl = document.getElementById('intro-text');
-    var hwdEl   = document.getElementById('hw-disclaimer-text');
-    if (introEl) {
-      if (!window._introCs) window._introCs = introEl.innerHTML;
-      introEl.innerHTML = (lang === 'en') ? _introEnFB : window._introCs;
-    }
-    if (hwdEl) {
-      if (!window._hwdCs) window._hwdCs = hwdEl.innerHTML;
-      hwdEl.innerHTML = (lang === 'en') ? _hwdEnFB : window._hwdCs;
-    }
-  } catch(e) { console.warn('setLang editable texts:', e); }
+  // Editovatelné texty — jednoduchý přepínač zobrazení dvou elementů
+  var _en = (lang === 'en');
+  var _iCs = document.getElementById('intro-text');
+  var _iEn = document.getElementById('intro-text-en');
+  var _hCs = document.getElementById('hw-disclaimer-text');
+  var _hEn = document.getElementById('hw-disclaimer-text-en');
+  if (_iCs) _iCs.style.display = _en ? 'none' : '';
+  if (_iEn) _iEn.style.display = _en ? '' : 'none';
+  if (_hCs) _hCs.style.display = _en ? 'none' : '';
+  if (_hEn) _hEn.style.display = _en ? '' : 'none';
   // Statické texty via data-i18n
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
     var key = el.getAttribute('data-i18n');
@@ -2990,13 +2999,11 @@ if (document.readyState === 'loading') {
   function saveIntro() {
     const val = document.getElementById('intro-edit').value;
     document.getElementById('intro-text').innerHTML = val;
-    if (curLang === 'cs') window._introCs = val;
     if (window._fbIntroRef) window.dbSet(window._fbIntroRef, val).catch(e => console.error('Intro save error:', e));
   }
   function saveHwDisclaimer() {
     const val = document.getElementById('hw-disclaimer-edit').value;
     document.getElementById('hw-disclaimer-text').innerHTML = val;
-    if (curLang === 'cs') window._hwdCs = val;
     if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
   }
 
@@ -3770,7 +3777,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.8';
+  const CURRENT_VERSION = '3.4.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
