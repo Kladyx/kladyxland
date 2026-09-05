@@ -2262,13 +2262,16 @@ Vše jsem si navrhl, propojil sám bez pomoci dalšího člověka, jen já a AI 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:18px 0 8px;width:100%;box-sizing:border-box;">
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Messenger_creation_0D485D82-A05E-458E-B12A-1073C84E8AE9.jpeg?alt=media&token=7a3859ed-7e98-4365-91b4-526077953d5d"
                alt="PreSonus"
-               style="width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.85;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+               onclick="openHwLightbox(this.src)"
+               style="cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.85;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/62c34c38-8561-4b41-92f7-c8d3c790e880.png?alt=media&token=732b5ad4-a707-4ee8-949f-b17589a934fd"
                alt="Kladyxland Powered by PreSonus Fender"
-               style="width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+               onclick="openHwLightbox(this.src)"
+               style="cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
           <img src="https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260829_081527_Claude.jpg?alt=media&token=8b4d8086-4d39-416b-ab84-f035a17bc6ba"
                alt="PreSonus logo"
-               style="width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
+               onclick="openHwLightbox(this.src)"
+               style="cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));"/>
         </div>
         <!-- Dynamické obrázky z Firebase -->
         <div id="hw-dyn-imgs" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0;width:100%;box-sizing:border-box;"></div>
@@ -2993,7 +2996,8 @@ document.addEventListener('DOMContentLoaded', function() {
       img.src = url;
       img.alt = 'hw';
       img.loading = 'lazy';
-      img.style.cssText = 'width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
+      img.style.cssText = 'cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
+      img.onclick = function() { openHwLightbox(this.src); };
       div.appendChild(img);
       if (isAdmin) {
         const btn = document.createElement('button');
@@ -3118,6 +3122,30 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(animateVU, 180);
   setInterval(animateFreq, 200);
   setInterval(cycleSignal, 4000);
+
+  // HW LIGHTBOX — zvětšení hw obrázku v lightboxu (bez navigace)
+  function openHwLightbox(src) {
+    var lb = document.getElementById('lightbox');
+    var img = document.getElementById('lightbox-img');
+    var vid = document.getElementById('lightbox-video');
+    var cap = document.getElementById('lightbox-caption');
+    var capBtn = document.getElementById('lightbox-caption-btn');
+    var capInput = document.getElementById('lightbox-caption-input');
+    var capSave = document.getElementById('lightbox-caption-save');
+    var prevBtn = document.querySelector('.lightbox-prev');
+    var nextBtn = document.querySelector('.lightbox-next');
+    vid.style.display = 'none'; vid.pause(); vid.src = '';
+    img.style.display = 'block'; img.src = src;
+    cap.textContent = '';
+    if (capBtn) capBtn.style.display = 'none';
+    if (capInput) capInput.style.display = 'none';
+    if (capSave) capSave.style.display = 'none';
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    lb.classList.add('visible');
+    lb.dataset.hwMode = '1';
+    document.body.style.overflow = 'hidden';
+  }
 
   // NAVIGATION
   function hideAll(){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));disableEdit();window.scrollTo({top:0,behavior:"smooth"});}
@@ -3338,9 +3366,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function closeLightbox(e) {
     if (e && e.target && (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.closest('#lightbox-caption-wrap'))) return;
-    document.getElementById('lightbox').classList.remove('visible');
+    var lb = document.getElementById('lightbox');
+    lb.classList.remove('visible');
     const vid = document.getElementById('lightbox-video'); vid.pause(); vid.src = '';
     document.body.style.overflow = '';
+    if (lb.dataset.hwMode === '1') {
+      var prevBtn = document.querySelector('.lightbox-prev');
+      var nextBtn = document.querySelector('.lightbox-next');
+      var capBtn = document.getElementById('lightbox-caption-btn');
+      if (prevBtn) prevBtn.style.display = '';
+      if (nextBtn) nextBtn.style.display = '';
+      if (capBtn) capBtn.style.display = '';
+      lb.dataset.hwMode = '';
+    }
   }
   function navLightbox(dir, e) {
     if (e) { e.stopPropagation(); }
@@ -3713,7 +3751,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.8';
+  const CURRENT_VERSION = '3.3.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
