@@ -894,14 +894,14 @@
     // Načtení CS editovatelných textů z Firebase (jednorázově)
     get(ref(db, 'content/intro')).then(function(s) {
       if (s.exists()) {
-        var el = document.getElementById('intro-text');
-        if (el) { el.innerHTML = s.val(); window._introCs = s.val(); }
+        window._introCs = s.val();
+        if (curLang === 'cs') { var el = document.getElementById('intro-text'); if (el) el.innerHTML = s.val(); }
       }
     }).catch(function(){});
     get(ref(db, 'content/hwDisclaimer')).then(function(s) {
       if (s.exists()) {
-        var el = document.getElementById('hw-disclaimer-text');
-        if (el) { el.innerHTML = s.val(); window._hwdCs = s.val(); }
+        window._hwdCs = s.val();
+        if (curLang === 'cs') { var el = document.getElementById('hw-disclaimer-text'); if (el) el.innerHTML = s.val(); }
       }
     }).catch(function(){});
 
@@ -3719,7 +3719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.3.6';
+  const CURRENT_VERSION = '3.3.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
