@@ -2669,6 +2669,19 @@ function setLang(lang) {
   var enBtn = document.getElementById('lang-en');
   if (csBtn) csBtn.className = lang === 'cs' ? 'active' : '';
   if (enBtn) enBtn.className = lang === 'en' ? 'active' : '';
+  // Editovatelné texty (intro, hw disclaimer) — PRIORITNĚ, hned na začátku
+  try {
+    var introEl = document.getElementById('intro-text');
+    var hwdEl   = document.getElementById('hw-disclaimer-text');
+    if (introEl) {
+      if (!window._introCs) window._introCs = introEl.innerHTML;
+      introEl.innerHTML = (lang === 'en') ? _introEnFB : window._introCs;
+    }
+    if (hwdEl) {
+      if (!window._hwdCs) window._hwdCs = hwdEl.innerHTML;
+      hwdEl.innerHTML = (lang === 'en') ? _hwdEnFB : window._hwdCs;
+    }
+  } catch(e) { console.warn('setLang editable texts:', e); }
   // Statické texty via data-i18n
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
     var key = el.getAttribute('data-i18n');
@@ -2736,17 +2749,6 @@ function setLang(lang) {
     var countEl = document.getElementById('total-visitors-count');
     var countVal = countEl ? countEl.textContent : '···';
     tvLabel.innerHTML = t('total_visitors') + '<div class="tv-count" id="total-visitors-count">' + countVal + '</div>';
-  }
-  // Editovatelné texty (intro, hw disclaimer) — čistě synchronní přepínání
-  var introEl = document.getElementById('intro-text');
-  var hwdEl   = document.getElementById('hw-disclaimer-text');
-  if (introEl) {
-    if (!window._introCs) window._introCs = introEl.innerHTML;
-    introEl.innerHTML = (lang === 'en') ? _introEnFB : window._introCs;
-  }
-  if (hwdEl) {
-    if (!window._hwdCs) window._hwdCs = hwdEl.innerHTML;
-    hwdEl.innerHTML = (lang === 'en') ? _hwdEnFB : window._hwdCs;
   }
 }
 
@@ -3768,7 +3770,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.7';
+  const CURRENT_VERSION = '3.4.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
