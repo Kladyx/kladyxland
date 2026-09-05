@@ -2739,7 +2739,6 @@ function setLang(lang) {
   // Editovatelné texty (intro, hw disclaimer) — čistě synchronní přepínání
   var introEl = document.getElementById('intro-text');
   var hwdEl   = document.getElementById('hw-disclaimer-text');
-  alert('DEBUG setLang: lang=' + lang + ' introEl=' + !!introEl + ' hwdEl=' + !!hwdEl + ' enFB=' + (typeof _introEnFB) + ' cs=' + (typeof window._introCs));
   if (introEl) {
     if (!window._introCs) window._introCs = introEl.innerHTML;
     introEl.innerHTML = (lang === 'en') ? _introEnFB : window._introCs;
@@ -2748,6 +2747,7 @@ function setLang(lang) {
     if (!window._hwdCs) window._hwdCs = hwdEl.innerHTML;
     hwdEl.innerHTML = (lang === 'en') ? _hwdEnFB : window._hwdCs;
   }
+  alert('AFTER: intro=' + document.getElementById('intro-text').innerHTML.substring(0,30));
 }
 
 // Inicializace jazyka po DOM load
