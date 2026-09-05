@@ -2972,19 +2972,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const wrap = document.getElementById('hw-dyn-imgs');
     if (!wrap) return;
     wrap.innerHTML = '';
-    // Statické hw obrázky (vždy na začátku)
-    var HW_STATIC = [
-      {url:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Messenger_creation_0D485D82-A05E-458E-B12A-1073C84E8AE9.jpeg?alt=media&token=7a3859ed-7e98-4365-91b4-526077953d5d',alt:'PreSonus'},
-      {url:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/62c34c38-8561-4b41-92f7-c8d3c790e880.png?alt=media&token=732b5ad4-a707-4ee8-949f-b17589a934fd',alt:'Kladyxland Powered by PreSonus Fender'},
-      {url:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260829_081527_Claude.jpg?alt=media&token=8b4d8086-4d39-416b-ab84-f035a17bc6ba',alt:'PreSonus logo'}
-    ];
-    HW_STATIC.forEach(function(s) {
-      var img = document.createElement('img');
-      img.src = s.url; img.alt = s.alt; img.loading = 'lazy';
-      img.style.cssText = 'cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
-      img.onclick = function() { openHwLightbox(this.src); };
-      wrap.appendChild(img);
-    });
     if (!data) return;
     const isAdmin = document.body.classList.contains('edit-mode');
     Object.keys(data).forEach(key => {
@@ -3750,7 +3737,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.0';
+  const CURRENT_VERSION = '3.4.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
