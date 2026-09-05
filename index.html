@@ -205,10 +205,8 @@
     .text-edit-area:focus{border-color:var(--cyan);}
     body.edit-mode .text-save-btn{display:block!important;}
     body.edit-mode .text-edit-area{display:block!important;}
-    body.edit-mode #intro-text{display:none!important;}
-    body.edit-mode #intro-text-en{display:none!important;}
-    body.edit-mode #hw-disclaimer-text-en{display:none!important;}
-    body.edit-mode #hw-disclaimer-text{display:none;}
+    body.edit-mode #intro-text,body.edit-mode #intro-text-en{display:none!important;}
+    body.edit-mode #hw-disclaimer-text,body.edit-mode #hw-disclaimer-text-en{display:none!important;}
 
     /* LANGUAGE SWITCHER */
     .lang-switch{display:inline-flex;align-items:center;gap:2px;margin-left:8px;}
@@ -3777,7 +3775,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.4.9';
+  const CURRENT_VERSION = '3.5.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
