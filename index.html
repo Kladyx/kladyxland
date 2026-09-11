@@ -502,11 +502,11 @@
     /* Grayscale 3-pozicový přepínač */
     .lever-wrap{display:none;margin-top:10px;align-items:center;justify-content:center;gap:14px;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;}
     /* Témata */
-    body.theme-summer{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-summer{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-summer .control-bar{background:linear-gradient(135deg,rgba(255,180,0,.15),rgba(255,150,0,.1)) !important;border-top-color:rgba(255,180,0,.6) !important;border-bottom-color:rgba(255,180,0,.3) !important;}
-    body.theme-relax{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-relax{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-relax .control-bar{background:linear-gradient(135deg,rgba(0,200,100,.15),rgba(0,150,80,.1)) !important;border-top-color:rgba(0,200,100,.6) !important;border-bottom-color:rgba(0,200,100,.3) !important;}
-    body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-christmas{background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-christmas .control-bar{background:linear-gradient(135deg,rgba(220,30,30,.15),rgba(180,0,0,.1)) !important;border-top-color:rgba(220,30,30,.6) !important;border-bottom-color:rgba(220,30,30,.3) !important;}
     body.theme-studio{background-image:url('https://kladyx.github.io/kladyxland/bg/TimePhoto_20260129_160706.jpg') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-studio .control-bar{background:linear-gradient(135deg,rgba(170,68,255,.15),rgba(140,0,255,.1)) !important;border-top-color:rgba(170,68,255,.6) !important;border-bottom-color:rgba(170,68,255,.3) !important;}
@@ -1029,9 +1029,9 @@
     // ── THEME BACKGROUND URLs (Firebase) ──────────────────────────────────
     const THEMES = ['summer','relax','christmas','studio'];
     const DEFAULT_BG = {
-      summer:   'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53',
-      relax:    'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57',
-      christmas:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb',
+      summer:   '',
+      relax:    '',
+      christmas:'',
       studio:   'https://kladyx.github.io/kladyxland/bg/TimePhoto_20260129_160706.jpg'
     };
     // Dynamický style element pro přepsání URL
@@ -3820,7 +3820,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.6.0';
+  const CURRENT_VERSION = '3.7.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
