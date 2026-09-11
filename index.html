@@ -1096,7 +1096,7 @@
           <span class="th-dot" style="background:#00f5ff;box-shadow:0 0 6px #00f5ff;animation:th-dot-blink 1.2s ease-in-out infinite;"></span>
           <button class="th-btn" onclick="applyCustomBg('${d.url}')" title="${d.name||''}">🖼️ ${d.name||'BG'}</button>
           <span style="font-family:'Exo 2',sans-serif;font-size:.5rem;color:rgba(0,245,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${d.url}</span>
-          <button class="th-url-del" onclick="deleteCustomBg('${key}')">🗑️</button>`;
+          <button class="th-url-del" onclick="deleteCustomBg('${key}', this)">🗑️</button>`;
         list.appendChild(row);
       });
     }).catch(()=>{});
@@ -1132,7 +1132,9 @@
         document.body.style.backgroundAttachment = 'fixed';
       }
     }).catch(()=>{});
-    window.deleteCustomBg = async function(key) {
+    window.deleteCustomBg = async function(key, btn) {
+      // Okamžitě odstraň řádek z DOM
+      if (btn) { const row = btn.closest('.th-row'); if (row) row.remove(); }
       try { const a = window.firebaseAuth; if (a && !a.currentUser) await window.firebaseSignInAnon(); } catch(e) {}
       set(ref(db, `themes/custom/${key}`), null).catch(e => console.error('Custom BG del error:', e));
     };
@@ -3820,7 +3822,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.7.0';
+  const CURRENT_VERSION = '3.8.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
