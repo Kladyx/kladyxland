@@ -508,7 +508,7 @@
     body.theme-relax .control-bar{background:linear-gradient(135deg,rgba(0,200,100,.15),rgba(0,150,80,.1)) !important;border-top-color:rgba(0,200,100,.6) !important;border-bottom-color:rgba(0,200,100,.3) !important;}
     body.theme-christmas{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-christmas .control-bar{background:linear-gradient(135deg,rgba(220,30,30,.15),rgba(180,0,0,.1)) !important;border-top-color:rgba(220,30,30,.6) !important;border-bottom-color:rgba(220,30,30,.3) !important;}
-    body.theme-studio{background-image:url('https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
+    body.theme-studio{background-image:url('https://kladyx.github.io/kladyxland/bg/TimePhoto_20260129_160706.jpg') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}
     body.theme-studio .control-bar{background:linear-gradient(135deg,rgba(170,68,255,.15),rgba(140,0,255,.1)) !important;border-top-color:rgba(170,68,255,.6) !important;border-bottom-color:rgba(170,68,255,.3) !important;}
     /* THEME DOTS */
     .th-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:th-dot-blink 1.2s ease-in-out infinite;}
@@ -545,7 +545,7 @@
   <!-- Firebase: ON AIR + počítadlo návštěvníků + oznámení -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, set, onValue, push, remove, onDisconnect, serverTimestamp, runTransaction, get, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    import { getDatabase, ref, set, onValue, onChildAdded, onChildRemoved, push, remove, onDisconnect, serverTimestamp, runTransaction, get, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, listAll } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
@@ -822,25 +822,8 @@
       });
     });
 
-    // Cleanup starých presence záznamů (starší než 10 minut)
-    const PRESENCE_TIMEOUT = 10 * 60 * 1000;
-    let serverTimeOffset = 0;
-    onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
-      serverTimeOffset = snap.val() || 0;
-    });
-    setInterval(() => {
-      get(presenceRef).then((snap) => {
-        if (!snap.exists()) return;
-        const serverNow = Date.now() + serverTimeOffset;
-        snap.forEach((child) => {
-          const ts = child.val().ts;
-          if (ts && (serverNow - ts) > PRESENCE_TIMEOUT) {
-            remove(ref(db, 'presence/' + child.key));
-            console.log('🧹 Starý presence záznam smazán:', child.key);
-          }
-        });
-      });
-    }, 10 * 60 * 1000);
+    // Úspora Firebase downloadu: úklid starých presence záznamů neběží u každého návštěvníka.
+    // Běžné odpojení řeší onDisconnect(myPresenceRef).remove(). Případný centrální úklid dělej serverově.
 
     // Obnovit vlastní timestamp každých 5 minut
     setInterval(() => {
@@ -860,8 +843,12 @@
         if (el2) el2.textContent = count;
       });
     }
+    // Úspora Firebase downloadu: počet online načti při startu a pak nejvýše jednou za 15 minut.
+    // Pokud je karta na pozadí, další čtení se přeskočí.
     refreshPresenceCount();
-    setInterval(refreshPresenceCount, 5 * 60 * 1000);
+    setInterval(() => {
+      if (!document.hidden) refreshPresenceCount();
+    }, 15 * 60 * 1000);
     // ── TOTAL VISITORS COUNTER (přičítá +1 při každém načtení) ──────────
     const totalVisRef = ref(db, 'totalVisitors');
     runTransaction(totalVisRef, (current) => (current || 0) + 1)
@@ -1045,7 +1032,7 @@
       summer:   'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/FB_IMG_1615363734963.jpg?alt=media&token=5eaadedd-7fb4-4977-879b-d7c0c7b85a53',
       relax:    'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_171834_Photos.jpg?alt=media&token=1d9944b9-462f-4bfa-9ae4-5f84bb905a57',
       christmas:'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/Screenshot_20260521_182238_Photos.jpg?alt=media&token=95aa5fcc-1c9a-4875-a611-d4f56c8777cb',
-      studio:   'https://firebasestorage.googleapis.com/v0/b/kladyxland.firebasestorage.app/o/TimePhoto_20260129_160706.jpg?alt=media&token=b405ffb4-c95b-4fb5-ad47-28922c2a21a4'
+      studio:   'https://kladyx.github.io/kladyxland/bg/TimePhoto_20260129_160706.jpg'
     };
     // Dynamický style element pro přepsání URL
     const themeBgStyle = document.createElement('style');
@@ -1758,25 +1745,63 @@
     let chatUnsub = null;
 
     function attachChatListener() {
-      chatUnsub = onValue(query(chatRef, limitToLast(50)), (snap) => {
-      const newCount = snap.exists() ? Object.keys(snap.val()).length : 0;
-      if (chatCount >= 0 && newCount > chatCount && document.body.classList.contains('edit-mode')) {
-        // Pípnutí při nové zprávě (jen admin)
-        try {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 880;
-          gain.gain.value = 0.15;
-          osc.start();
-          osc.stop(ctx.currentTime + 0.15);
-        } catch(e) {}
-      }
-      chatCount = newCount;
-      renderChat(snap);
+      // Úspora Firebase downloadu: historii načti jednou, potom poslouchej pouze jednotlivé změny.
+      const chatQuery = query(chatRef, limitToLast(50));
+      let initialLoad = true;
+      const messages = new Map();
+
+      const renderCachedChat = () => {
+        const ordered = Array.from(messages.entries())
+          .map(([key, value]) => ({ key, ...value }))
+          .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+        const wrap = document.getElementById('chat-messages');
+        const empty = document.getElementById('chat-empty');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        if (!ordered.length) {
+          if (empty) empty.style.display = 'block';
+          return;
+        }
+        if (empty) empty.style.display = 'none';
+        ordered.forEach(msg => {
+          const date = msg.ts ? new Date(msg.ts).toLocaleString(curLang==='en'?'en-GB':'cs-CZ', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+          const isAdmin = msg.admin === true;
+          const div = document.createElement('div');
+          div.className = 'chat-msg' + (isAdmin ? ' chat-msg-admin' : '');
+          div.innerHTML = `<span class="chat-msg-name">${isAdmin ? '🎙 ' : ''}${String(msg.name || 'Anonym').replace(/</g,'&lt;')}</span><span class="chat-msg-time">${date}</span><div class="chat-msg-text">${String(msg.text || '').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div><button class="chat-msg-del" onclick="window.deleteChatMsg('${msg.key}')">Smazat</button>`;
+          wrap.appendChild(div);
+        });
+        if (document.body.classList.contains('edit-mode')) document.querySelectorAll('.chat-msg-del').forEach(b => b.style.display = 'block');
+      };
+
+      get(chatQuery).then(snap => {
+        messages.clear();
+        snap.forEach(child => messages.set(child.key, child.val()));
+        chatCount = messages.size;
+        renderCachedChat();
+        initialLoad = false;
+      }).catch(e => console.warn('chat initial load:', e));
+
+      const unsubscribeAdded = onChildAdded(chatQuery, child => {
+        const alreadyKnown = messages.has(child.key);
+        messages.set(child.key, child.val());
+        if (!initialLoad && !alreadyKnown && document.body.classList.contains('edit-mode')) {
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = 880; gain.gain.value = 0.15;
+            osc.start(); osc.stop(ctx.currentTime + 0.15);
+          } catch(e) {}
+        }
+        if (!initialLoad) { chatCount = messages.size; renderCachedChat(); }
       });
+      const unsubscribeRemoved = onChildRemoved(chatQuery, child => {
+        messages.delete(child.key);
+        if (!initialLoad) { chatCount = messages.size; renderCachedChat(); }
+      });
+      chatUnsub = () => { unsubscribeAdded(); unsubscribeRemoved(); };
     }
     // chatEnabled — řídí viditelnost chatu pro všechny návštěvníky
     onValue(chatOnRef, snap => {
@@ -3795,7 +3820,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.5.9';
+  const CURRENT_VERSION = '3.6.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
