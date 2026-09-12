@@ -1700,7 +1700,7 @@
       if (document.body.classList.contains('edit-mode'))
         document.querySelectorAll('.ann-del').forEach(b => b.style.display='block');
     }
-    get(annRef).then(snap => renderAnnouncements(snap)).catch(()=>{});
+    get(query(annRef, limitToLast(10))).then(snap => renderAnnouncements(snap)).catch(()=>{});
 
     window.publishAnnouncement = function() {
       const title = document.getElementById('ann-title').value.trim();
@@ -3852,7 +3852,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.3';
+  const CURRENT_VERSION = '3.9.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
