@@ -867,20 +867,7 @@
         });
       });
 
-    // ── GALERIE – načítání z Firebase RTDB ──────────────────────────────
-    const galleryRef = ref(db, 'gallery');
-    get(galleryRef).then(snap => {
-      const items = [];
-      if (snap.exists()) {
-        snap.forEach(child => {
-          const val = child.val();
-          items.push({ key: child.key, url: val.url, name: val.name || '', path: val.path || '', ts: val.ts || 0, caption: val.caption || '' });
-        });
-      }
-      items.sort((a,b) => b.ts - a.ts);
-      if (typeof renderGallery === 'function') renderGallery(items);
-      else window.addEventListener('DOMContentLoaded', () => renderGallery(items));
-    }).catch(e => console.warn('galleryRef:', e));
+    // ── GALERIE – načítání lazy (až při show('galerie')) ──────────────────
 
     // ── EDITOVATELNÉ TEXTY z Firebase RTDB ─────────────────────────────
     const introRef = ref(db, 'content/intro');
@@ -3253,12 +3240,31 @@ if (document.readyState === 'loading') {
     document.querySelector(".sections").scrollIntoView({behavior:"smooth"});
     if(name==='archiv' && !archivLoaded) loadArchiv(false);
     if(name==='archiv') loadArchivStats();
+    if(name==='galerie' && !galleryLoaded) loadGalleryLazy();
     setLang(curLang);
   }
 
   // ── ARCHIV MIXCLOUD ─────────────────────────────────────────
   let archivLoaded = false;
   let archivNextUrl = null;
+  let galleryLoaded = false;
+
+  function loadGalleryLazy() {
+    galleryLoaded = true;
+    const grid = document.getElementById('gallery-grid');
+    if (grid) grid.innerHTML = '<div class="gallery-empty">Načítám…</div>';
+    get(ref(db, 'gallery')).then(snap => {
+      const items = [];
+      if (snap.exists()) {
+        snap.forEach(child => {
+          const val = child.val();
+          items.push({ key: child.key, url: val.url, name: val.name || '', path: val.path || '', ts: val.ts || 0, caption: val.caption || '' });
+        });
+      }
+      items.sort((a,b) => b.ts - a.ts);
+      if (typeof renderGallery === 'function') renderGallery(items);
+    }).catch(e => { console.warn('galleryRef:', e); galleryLoaded = false; });
+  }
 
   function formatDuration(sec){
     if(!sec) return '';
@@ -3846,7 +3852,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.2';
+  const CURRENT_VERSION = '3.9.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
