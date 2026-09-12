@@ -524,7 +524,11 @@
     .th-url-save:hover{background:rgba(0,150,80,.5);}
     .th-url-del{font-family:'Orbitron',monospace;font-size:.48rem;padding:4px 8px;background:rgba(100,0,0,.4);border:1px solid rgba(255,50,50,.35);color:#ff6666;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
     .th-url-del:hover{background:rgba(160,0,0,.5);}
-    .th-row{display:flex;align-items:center;gap:7px;width:100%;}
+    .th-thumb-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+    .th-thumb-img{width:54px;height:36px;object-fit:cover;border-radius:3px;border:1px solid rgba(0,245,255,.2);flex-shrink:0;background:rgba(0,10,40,.5);}
+    .th-thumb-label{font-family:'Orbitron',monospace;font-size:.42rem;color:rgba(0,245,255,.7);letter-spacing:.08em;flex-shrink:0;width:60px;}
+    .th-thumb-url{font-size:.5rem;color:rgba(200,230,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+    .th-thumb-empty{font-size:.5rem;color:rgba(255,100,100,.4);font-style:italic;}
     .th-btn{padding:5px 10px;font-family:'Orbitron',monospace;font-size:.44rem;letter-spacing:.1em;cursor:pointer;border:1px solid rgba(0,245,255,.3);background:none;color:#556;transition:all .2s;border-radius:2px;}
     .th-btn.active{background:rgba(0,245,255,.18);color:#00f5ff;text-shadow:0 0 8px rgba(0,245,255,.8);border-color:rgba(0,245,255,.7);}
     .th-btn.active-summer{background:rgba(255,180,0,.18);color:#ffb400;text-shadow:0 0 8px rgba(255,180,0,.8);border-color:rgba(255,180,0,.7);}
@@ -1044,6 +1048,21 @@
       const rules = themeBgStyle.innerHTML.replace(new RegExp(`body\\.theme-${theme}\\{[^}]*\\}`, 'g'), '');
       themeBgStyle.innerHTML = rules + `body.theme-${theme}{background-image:url('${u}') !important;background-size:cover !important;background-position:center !important;background-attachment:fixed !important;}`;
     }
+    function renderThemeThumb(t, url) {
+      var list = document.getElementById('th-themes-list');
+      if (!list) return;
+      var id = 'th-thumb-row-' + t;
+      var existing = document.getElementById(id);
+      var label = {summer:'🌞 SUMMER', relax:'🌿 RELAX', christmas:'🎄 XMAS', studio:'🎛 STUDIO'}[t] || t.toUpperCase();
+      var urlShort = url ? url.replace('https://kladyx.github.io/kladyxland/bg/', '') : '';
+      var html = '<div class="th-thumb-row" id="' + id + '">'
+        + (url ? '<img class="th-thumb-img" src="' + url + '" onerror="this.style.display=\'none\'">' : '<div class="th-thumb-img"></div>')
+        + '<span class="th-thumb-label">' + label + '</span>'
+        + (url ? '<span class="th-thumb-url">' + urlShort + '</span>' : '<span class="th-thumb-empty">bez fotky</span>')
+        + '</div>';
+      if (existing) { existing.outerHTML = html; } else { list.insertAdjacentHTML('beforeend', html); }
+    }
+
     // Načti URL z Firebase při startu — pokud není uložena, ulož default
     THEMES.forEach(t => {
       get(ref(db, `themes/${t}/bgUrl`)).then(snap => {
@@ -1053,6 +1072,7 @@
         }
         const finalUrl = url || DEFAULT_BG[t];
         applyThemeBgUrl(t, finalUrl);
+        renderThemeThumb(t, finalUrl);
         const inp = document.getElementById('th-url-' + t);
         if (inp) inp.value = finalUrl || '';
       }).catch(()=>{});
@@ -2401,6 +2421,10 @@ I designed and wired everything myself without help from another person, just me
       <span class="th-dot th-dot-dark"></span>
       <button id="th-btn-dark" class="th-btn active" onclick="setTheme('dark')" title="Change">🌑 CHANGE</button>
     </div>
+
+    <!-- Motivy webu se náhledy -->
+    <span style="color:rgba(0,245,255,.4);font-family:'Orbitron',monospace;font-size:.42rem;letter-spacing:.1em;">MOTIVY WEBU</span>
+    <div id="th-themes-list" style="display:flex;flex-direction:column;gap:3px;"></div>
 
     <!-- Oddělovač -->
     <div style="border-top:1px solid rgba(0,245,255,.1);margin:6px 0;"></div>
@@ -3822,7 +3846,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.1';
+  const CURRENT_VERSION = '3.9.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
