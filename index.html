@@ -3257,7 +3257,7 @@ if (document.readyState === 'loading') {
           .filter(f => f.type === 'file' && /\.(jpe?g|png|gif|webp|mp4|webm)$/i.test(f.name))
           .map(f => {
             var nameNoExt = f.name.replace(/\.(jpe?g|png|gif|webp|mp4|webm)$/i, '');
-            var caption = nameNoExt.replace(/_/g, ' ').trim();
+            var caption = nameNoExt.includes('__') ? nameNoExt.split('__')[0].replace(/_/g, ' ').trim() : nameNoExt.replace(/_/g, ' ').trim();
             return { key: f.sha, url: f.download_url, name: f.name, path: f.path, ts: 0, caption: caption };
           }) : [];
         if (typeof renderGallery === 'function') renderGallery(items);
@@ -3851,7 +3851,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.0';
+  const CURRENT_VERSION = '4.0.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
