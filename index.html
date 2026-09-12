@@ -1363,9 +1363,6 @@
       }
       
       localStorage.setItem('kladyx_obs_pw', pw);
-      try {
-        set(ref(db, 'tapoDb/obsPassword'), pw).catch(()=>{});
-      } catch(e) {}
       if (_obsWs) { _obsWs.onclose = null; _obsWs.close(); _obsWs = null; }
       if (_obsReconnTimer) clearTimeout(_obsReconnTimer);
       obsConnect();
@@ -1381,20 +1378,9 @@
     // Načíst OBS heslo z Firebase — pouze pro přihlášeného admina
     try {
       if (window.firebaseAuth && window.firebaseAuth.currentUser) {
-        get(ref(db, 'tapoDb/obsPassword')).then(snap => {
-          if (snap.exists() && snap.val()) {
-            const pw = snap.val();
-            localStorage.setItem('kladyx_obs_pw', pw);
-            const inp = document.getElementById('obs-pw-input');
-            if (inp) inp.value = pw;
-            // Automaticky aktivovat SYNC pulz pri startu
-            const btn = document.getElementById('obs-save-btn');
-            if (btn && !btn.classList.contains('obs-sync-pulse')) {
-              btn.classList.add('obs-sync-pulse');
-              btn.textContent = 'SYNC';
-            }
-          }
-        }).catch(()=>{});
+        // OBS heslo jen z localStorage (bezpečnost — neukládáme do Firebase)
+        const inp = document.getElementById('obs-pw-input');
+        if (inp) inp.value = localStorage.getItem('kladyx_obs_pw') || '';
       }
     } catch(e) {}
     obsConnect();
@@ -3854,7 +3840,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.5';
+  const CURRENT_VERSION = '3.9.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
