@@ -668,7 +668,7 @@
           var v = document.getElementById('main-video');
           if (!v) return;
           v.src = url;
-          v.preload = 'auto';
+          v.preload = 'metadata';
           v.load();
           v.oncanplay = function() { v.play().catch(function(){}); };
           v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
@@ -1378,22 +1378,24 @@
       document.getElementById('obs-pw-saved').style.display = 'inline';
       setTimeout(() => { const el = document.getElementById('obs-pw-saved'); if(el) el.style.display='none'; }, 2000);
     };
-    // Načíst OBS heslo z Firebase při startu
+    // Načíst OBS heslo z Firebase — pouze pro přihlášeného admina
     try {
-      get(ref(db, 'tapoDb/obsPassword')).then(snap => {
-        if (snap.exists() && snap.val()) {
-          const pw = snap.val();
-          localStorage.setItem('kladyx_obs_pw', pw);
-          const inp = document.getElementById('obs-pw-input');
-          if (inp) inp.value = pw;
-          // Automaticky aktivovat SYNC pulz pri startu
-          const btn = document.getElementById('obs-save-btn');
-          if (btn && !btn.classList.contains('obs-sync-pulse')) {
-            btn.classList.add('obs-sync-pulse');
-            btn.textContent = 'SYNC';
+      if (window.firebaseAuth && window.firebaseAuth.currentUser) {
+        get(ref(db, 'tapoDb/obsPassword')).then(snap => {
+          if (snap.exists() && snap.val()) {
+            const pw = snap.val();
+            localStorage.setItem('kladyx_obs_pw', pw);
+            const inp = document.getElementById('obs-pw-input');
+            if (inp) inp.value = pw;
+            // Automaticky aktivovat SYNC pulz pri startu
+            const btn = document.getElementById('obs-save-btn');
+            if (btn && !btn.classList.contains('obs-sync-pulse')) {
+              btn.classList.add('obs-sync-pulse');
+              btn.textContent = 'SYNC';
+            }
           }
-        }
-      }).catch(()=>{});
+        }).catch(()=>{});
+      }
     } catch(e) {}
     obsConnect();
 
@@ -2072,7 +2074,7 @@
 
       <!-- VIDEO PŘEHRÁVAČ - v červeném rámečku -->
       <div id="video-embed-box" style="width:100%;margin:6px 0;border-radius:6px;overflow:hidden;background:rgba(255,30,0,.05);border:2px solid rgba(255,60,0,.4);">
-        <video id="main-video" width="100%" height="auto" autoplay muted playsinline loop webkit-playsinline preload="auto" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
+        <video id="main-video" width="100%" height="auto" autoplay muted playsinline loop webkit-playsinline preload="metadata" style="display:block;width:100%;height:auto;background:#000;border-radius:4px;max-height:400px;"></video>
         <div style="padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="font-size:0.7rem;color:#00ff66;font-family:'Orbitron',monospace;letter-spacing:0.08em;">&#x1F3AC; KLADYXLAND BROADCAST</div>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -3852,7 +3854,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.4';
+  const CURRENT_VERSION = '3.9.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
