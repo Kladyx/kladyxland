@@ -3039,6 +3039,7 @@ if (document.readyState === 'loading') {
       wrap.appendChild(div);
     });
   }
+  // LEGACY – nepoužívá se, upload hw obrázků řeší transfer.html → GitHub Pages (hw/)
   function uploadHwImage(files) {
     if (!files || files.length === 0) return;
     const file = files[0];
@@ -3084,6 +3085,7 @@ if (document.readyState === 'loading') {
       }
     );
   }
+  // LEGACY – mazání hw obrázků z Firebase Storage, nepoužívá se
   function delHwImage(key, path) {
     if (!window.dbRemove || !window.dbRef || !window.db) return;
     if (!confirm(curLang==='en'?'Delete this image?':'Smazat tento obrázek?')) return;
@@ -3845,7 +3847,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '3.9.8';
+  const CURRENT_VERSION = '3.9.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
