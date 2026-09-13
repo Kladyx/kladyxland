@@ -640,8 +640,8 @@
           var mp4items = await resp.json();
           console.log('KladyxVideo: nalezeno MP4:', mp4items.length);
           _videoList = mp4items.slice();
-          _videoIndex = 0;
-          playVideoAt(0);
+          _videoIndex = Math.floor(Math.random() * _videoList.length);
+          playVideoAt(_videoIndex);
 
           // Persistence: zkontroluj uložený čas příští změny
           var saved = null;
@@ -3876,7 +3876,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.3';
+  const CURRENT_VERSION = '4.0.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
