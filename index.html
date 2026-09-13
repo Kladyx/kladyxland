@@ -467,6 +467,10 @@
     .edit-mode .gallery-item .gal-del{display:block;}
     #hw-dyn-imgs .hw-del{display:none;position:absolute;top:4px;right:4px;background:rgba(255,40,40,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
     .edit-mode #hw-dyn-imgs .hw-del{display:block;}
+    #hw-dyn-imgs .hw-order-btn{display:none;background:rgba(0,120,255,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
+    .edit-mode #hw-dyn-imgs .hw-order-btn{display:block;}
+    .hw-order-save{display:none;width:100%;margin:10px 0;padding:10px;background:rgba(0,180,80,.7);color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:700;cursor:pointer;}
+    .edit-mode .hw-order-save{display:block;}
     .gallery-upload{display:none;margin-top:16px;padding:18px;border:2px dashed rgba(0,245,255,.25);border-radius:6px;text-align:center;transition:all .3s;}
     .edit-mode .gallery-upload{display:block;}
     .gallery-upload.drag-over{border-color:#00ff99;background:rgba(0,255,153,.06);}
@@ -3026,13 +3030,14 @@ if (document.readyState === 'loading') {
     if (!data || (Array.isArray(data) && data.length === 0)) return;
     const items = Array.isArray(data) ? data : Object.keys(data).map(k => {
       const e = data[k];
-      return { key: k, url: (typeof e === 'object' && e !== null) ? e.url : e, path: (typeof e === 'object') ? e.path : null };
+      return { key: k, url: (typeof e === 'object' && e !== null) ? e.url : e, path: (typeof e === 'object') ? e.path : null, name: (typeof e === 'object') ? e.name : k };
     });
-    items.forEach(entry => {
+    items.forEach(function(entry, idx) {
       const url = entry.url;
-      const key = entry.key;
       const div = document.createElement('div');
       div.style.cssText = 'position:relative;';
+      div.setAttribute('data-hw-idx', idx);
+      div.setAttribute('data-hw-name', entry.name || '');
       const img = document.createElement('img');
       img.src = url;
       img.alt = 'hw';
@@ -3047,7 +3052,53 @@ if (document.readyState === 'loading') {
       delBtn.setAttribute('data-path', entry.path || '');
       delBtn.onclick = function(ev) { deleteHwImage(this.getAttribute('data-sha'), this.getAttribute('data-path'), ev); };
       div.appendChild(delBtn);
+      // ▲▼ tlačítka (viditelná jen v edit-mode přes CSS)
+      var upBtn = document.createElement('button');
+      upBtn.className = 'hw-order-btn';
+      upBtn.textContent = '▲';
+      upBtn.style.cssText = 'position:absolute;bottom:30px;left:4px;';
+      upBtn.onclick = function(ev) { ev.stopPropagation(); moveHwImage(div, -1); };
+      div.appendChild(upBtn);
+      var downBtn = document.createElement('button');
+      downBtn.className = 'hw-order-btn';
+      downBtn.textContent = '▼';
+      downBtn.style.cssText = 'position:absolute;bottom:4px;left:4px;';
+      downBtn.onclick = function(ev) { ev.stopPropagation(); moveHwImage(div, 1); };
+      div.appendChild(downBtn);
       wrap.appendChild(div);
+    });
+    // Tlačítko ULOŽIT POŘADÍ (jen v edit-mode)
+    var existing = document.getElementById('hw-save-order-btn');
+    if (existing) existing.remove();
+    var saveBtn = document.createElement('button');
+    saveBtn.id = 'hw-save-order-btn';
+    saveBtn.className = 'hw-order-save';
+    saveBtn.textContent = '💾 ULOŽIT POŘADÍ';
+    saveBtn.onclick = saveHwOrder;
+    wrap.parentNode.insertBefore(saveBtn, wrap.nextSibling);
+  }
+
+  function moveHwImage(div, direction) {
+    var wrap = div.parentNode;
+    var children = Array.from(wrap.children);
+    var idx = children.indexOf(div);
+    if (direction === -1 && idx > 0) {
+      wrap.insertBefore(div, children[idx - 1]);
+    } else if (direction === 1 && idx < children.length - 1) {
+      wrap.insertBefore(children[idx + 1], div);
+    }
+  }
+
+  function saveHwOrder() {
+    var wrap = document.getElementById('hw-dyn-imgs');
+    if (!wrap) return;
+    var order = Array.from(wrap.children).map(function(div) {
+      return div.getAttribute('data-hw-name') || '';
+    }).filter(function(n) { return n; });
+    window.dbSet(window.dbRef(window.db, 'hwImageOrder'), order).then(function() {
+      alert('Pořadí uloženo!');
+    }).catch(function(err) {
+      alert('Chyba ukládání: ' + err.message);
     });
   }
   async function deleteHwImage(sha, path, e) {
@@ -3268,7 +3319,24 @@ if (document.readyState === 'loading') {
         const items = Array.isArray(files) ? files
           .filter(f => f.type === 'file' && /\.(jpe?g|png|gif|webp)$/i.test(f.name))
           .map(f => ({ key: f.sha, url: f.download_url, name: f.name, path: f.path })) : [];
-        if (typeof renderHwImages === 'function') renderHwImages(items);
+        // Načti uložené pořadí z Firebase (jednorázový get)
+        window.dbGet(window.dbRef(window.db, 'hwImageOrder')).then(function(snap) {
+          var order = snap.exists() ? snap.val() : null;
+          if (Array.isArray(order) && order.length > 0) {
+            items.sort(function(a, b) {
+              var ia = order.indexOf(a.name);
+              var ib = order.indexOf(b.name);
+              if (ia === -1) ia = 9999;
+              if (ib === -1) ib = 9999;
+              return ia - ib;
+            });
+          }
+          window._hwItems = items;
+          if (typeof renderHwImages === 'function') renderHwImages(items);
+        }).catch(function() {
+          window._hwItems = items;
+          if (typeof renderHwImages === 'function') renderHwImages(items);
+        });
       })
       .catch(e => { console.warn('hwGitHub:', e); hwLoaded = false; if(wrap) wrap.innerHTML = ''; });
   }
@@ -3878,7 +3946,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.5';
+  const CURRENT_VERSION = '4.0.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
