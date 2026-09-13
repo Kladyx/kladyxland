@@ -465,6 +465,8 @@
     .gallery-item .gal-caption{position:absolute;bottom:0;left:0;right:0;padding:5px 7px;font-size:.65rem;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75));pointer-events:none;line-height:1.3;}
     .gallery-item .gal-del{display:none;position:absolute;top:4px;right:4px;background:rgba(255,40,40,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
     .edit-mode .gallery-item .gal-del{display:block;}
+    #hw-dyn-imgs .hw-del{display:none;position:absolute;top:4px;right:4px;background:rgba(255,40,40,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
+    .edit-mode #hw-dyn-imgs .hw-del{display:block;}
     .gallery-upload{display:none;margin-top:16px;padding:18px;border:2px dashed rgba(0,245,255,.25);border-radius:6px;text-align:center;transition:all .3s;}
     .edit-mode .gallery-upload{display:block;}
     .gallery-upload.drag-over{border-color:#00ff99;background:rgba(0,255,153,.06);}
@@ -3036,9 +3038,32 @@ if (document.readyState === 'loading') {
       img.style.cssText = 'cursor:pointer;width:100%;aspect-ratio:4/3;object-fit:contain;opacity:0.90;border-radius:8px;filter:drop-shadow(0 0 10px rgba(0,180,255,0.35));display:block;';
       img.onclick = function() { openHwLightbox(this.src); };
       div.appendChild(img);
+      var delBtn = document.createElement('button');
+      delBtn.className = 'hw-del';
+      delBtn.textContent = '✕';
+      delBtn.setAttribute('data-sha', entry.key);
+      delBtn.setAttribute('data-path', entry.path || '');
+      delBtn.onclick = function(ev) { deleteHwImage(this.getAttribute('data-sha'), this.getAttribute('data-path'), ev); };
+      div.appendChild(delBtn);
       wrap.appendChild(div);
     });
   }
+  async function deleteHwImage(sha, path, e) {
+    if (e) e.stopPropagation();
+    if (!confirm('Smazat tento HW obrázek?')) return;
+    var token = localStorage.getItem('gh_pat');
+    if (!token) { alert('Chybí GitHub Token (nastav v KladyxTransfer)'); return; }
+    try {
+      var resp = await fetch('https://api.github.com/repos/Kladyx/kladyxland/contents/' + path, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Delete hw: ' + path, sha: sha })
+      });
+      if (!resp.ok) throw new Error('GitHub API: ' + resp.status);
+      if (e && e.target) { var item = e.target.closest('div'); if (item) item.remove(); }
+    } catch(err) { alert('Chyba mazání: ' + err.message); }
+  }
+
   // LEGACY – nepoužívá se, upload hw obrázků řeší transfer.html → GitHub Pages (hw/)
   function uploadHwImage(files) {
     if (!files || files.length === 0) return;
@@ -3851,7 +3876,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.1';
+  const CURRENT_VERSION = '4.0.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
