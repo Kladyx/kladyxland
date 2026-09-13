@@ -1593,7 +1593,9 @@
       if (diff === 0) {
         countdownTarget = null;
         el.textContent = '--:--:--';
-        set(countdownRef, null).catch(() => {});
+        if (document.body.classList.contains('edit-mode')) {
+          set(countdownRef, null).catch(() => {});
+        }
         return;
       }
       const h = Math.floor(diff / 3600000);
@@ -3876,7 +3878,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.4';
+  const CURRENT_VERSION = '4.0.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
