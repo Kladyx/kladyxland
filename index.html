@@ -3806,7 +3806,7 @@ if (document.readyState === 'loading') {
     } else {
       document.getElementById('dev-connection').textContent='📶 Online';
     }
-    // Speedtest - měření reálné rychlosti
+    // Speedtest - měření reálné rychlosti (pouze ruční spuštění)
     async function speedtest(){
       try{
         const el=document.getElementById('dev-downlink');
@@ -3818,10 +3818,9 @@ if (document.readyState === 'loading') {
         const secs=(t1-t0)/1000;
         const mbps=((buf.byteLength*8)/(secs*1000000)).toFixed(1);
         if(el)el.textContent='⬇ '+mbps+' Mbps';
-        setTimeout(speedtest,30000);
       }catch(e){}
     }
-    speedtest();
+    // speedtest(); — VYPNUTO: stahoval 30 MB každých 30s
   })();
 
   // Web Audio Context pro podkres
@@ -3992,7 +3991,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.0';
+  const CURRENT_VERSION = '4.1.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
