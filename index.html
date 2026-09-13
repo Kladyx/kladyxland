@@ -2313,7 +2313,6 @@ I designed and wired everything myself without help from another person, just me
       <div class="content-wrap single">
         <div class="stitle">
           <span data-i18n="gal_title">GALERIE</span>
-          <button class="edit-btn" id="gal-edit-btn" onclick="openModal('galerie')" data-i18n="upload_media">📷 Nahrát média</button>
         </div>
         <!-- Upload galerií řeší transfer.html -->
         <div id="gallery-grid" class="gallery-grid"></div>
@@ -3993,7 +3992,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.8';
+  const CURRENT_VERSION = '4.0.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
