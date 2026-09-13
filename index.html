@@ -681,8 +681,8 @@
           v.preload = 'metadata';
           v.load();
           v.oncanplay = function() { v.play().catch(function(){}); };
-          v.onended = function() { nextVideo(); };
-          v.loop = false;
+          v.onended = function() { v.currentTime = 0; v.play().catch(function(){}); };
+          v.loop = true;
           console.log('KladyxVideo: přehrávám', item);
         } catch(e) {
           console.error('KladyxVideo: nelze přehrát', item && item.name, e && e.code, e && e.message);
@@ -3992,7 +3992,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.9';
+  const CURRENT_VERSION = '4.1.0';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
