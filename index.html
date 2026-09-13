@@ -2301,16 +2301,7 @@ I designed and wired everything myself without help from another person, just me
         </div>
         <!-- Všechny hw obrázky (statické + dynamické) v jednom gridu -->
         <div id="hw-dyn-imgs" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:18px 0 8px;width:100%;box-sizing:border-box;"></div>
-        <!-- Admin formulář - viditelný jen v edit-mode -->
-        <div class="edit-only" style="display:none;margin-top:14px;padding:12px;background:rgba(0,245,255,.06);border-radius:8px;border:1px solid rgba(0,245,255,.15);">
-          <div style="font-size:.75rem;color:rgba(0,245,255,.7);margin-bottom:8px;">🖼 Přidat obrázek hardwaru</div>
-          <label style="display:inline-block;padding:8px 16px;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.4);border-radius:6px;color:#00f5ff;cursor:pointer;font-size:.8rem;">
-            📁 Vyber obrázek
-            <input type="file" id="hw-img-file" accept="image/*" style="display:none;" onchange="uploadHwImage(this.files)"/>
-          </label>
-          <div id="hw-img-progress" style="margin-top:8px;height:4px;background:rgba(0,245,255,.1);border-radius:2px;overflow:hidden;display:none;"><div id="hw-img-bar" style="height:100%;background:#00f5ff;width:0%;transition:width .3s;"></div></div>
-          <div id="hw-img-status" style="font-size:.72rem;margin-top:6px;color:rgba(0,245,255,.5);"></div>
-        </div>
+        <!-- Upload hw obrázků řeší transfer.html -->
 
       </div>
     </div>
@@ -2324,16 +2315,7 @@ I designed and wired everything myself without help from another person, just me
           <span data-i18n="gal_title">GALERIE</span>
           <button class="edit-btn" id="gal-edit-btn" onclick="openModal('galerie')" data-i18n="upload_media">📷 Nahrát média</button>
         </div>
-        <div class="gallery-upload" id="gallery-upload" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="event.preventDefault();this.classList.remove('drag-over');uploadGalleryFiles(event.dataTransfer.files)">
-          <label class="gallery-upload-btn" for="gal-file-input" data-i18n="pick_files">📁 Vyber fotky / videa z PC</label>
-          <div style="margin-top:8px;font-size:.7rem;color:rgba(0,245,255,.4);" data-i18n="drag_files">nebo přetáhni soubory sem</div>
-          <input type="file" id="gal-file-input" accept="image/*,video/mp4,video/webm,.gif" multiple onchange="uploadGalleryFiles(this.files)"/>
-          <div style="margin-top:8px;color:rgba(200,220,255,.4);font-size:.75rem;" data-i18n="file_types">Fotky, GIF, MP4/WebM (max 50 MB)</div>
-          <div class="gallery-progress" id="gal-progress">
-            <div class="gallery-progress-bar" id="gal-progress-bar"></div>
-          </div>
-          <div id="gal-upload-status" style="margin-top:8px;font-size:.75rem;color:#00ff99;"></div>
-        </div>
+        <!-- Upload galerií řeší transfer.html -->
         <div id="gallery-grid" class="gallery-grid"></div>
         <div class="gallery-empty" id="gallery-empty" data-i18n="no_photos">Zatím žádné fotky ani videa</div>
       </div>
@@ -4011,7 +3993,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.0.7';
+  const CURRENT_VERSION = '4.0.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
