@@ -3839,28 +3839,18 @@ if (document.readyState === 'loading') {
     } else {
       document.getElementById('dev-connection').textContent='📶 Online';
     }
-    // Speedtest - reálné měření z Cloudflare CDN (0 bytů Firebase)
-    function measureSpeed(){
+    // Speedtest - zobrazení rychlosti z navigator.connection (0 bytů downloadu)
+    function updateDownlink(){
       var el=document.getElementById('dev-downlink');
       if(!el) return;
-      var BYTES=2097152; // 2 MB – přesné měření, overhead ~15%
-      var url='https://speed.cloudflare.com/__down?bytes='+BYTES+'&t='+Date.now();
-      var t0=performance.now();
-      fetch(url,{cache:'no-store'})
-        .then(function(r){return r.arrayBuffer();})
-        .then(function(){
-          var secs=(performance.now()-t0)/1000;
-          var mbps=((BYTES*8)/secs/1000000).toFixed(1);
-          el.textContent='⬇ '+mbps+' Mb/s';
-        })
-        .catch(function(){
-          var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-          if(c&&c.downlink) el.textContent='⬇ '+c.downlink.toFixed(1)+' Mb/s';
-          else el.textContent='⬇ N/A';
-        });
+      if(navigator.connection && navigator.connection.downlink){
+        el.textContent='⬇ '+navigator.connection.downlink.toFixed(1)+' Mb/s';
+      } else {
+        el.textContent='⬇ N/A';
+      }
     }
-    measureSpeed();
-    setInterval(measureSpeed,120000);
+    updateDownlink();
+    setInterval(updateDownlink, 30000);
   })();
 
   // Web Audio Context pro podkres
@@ -4031,7 +4021,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.4';
+  const CURRENT_VERSION = '4.1.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
