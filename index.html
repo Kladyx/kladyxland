@@ -1997,9 +1997,7 @@
   <div id="device-info" style="display:flex;flex-direction:row;justify-content:flex-end;align-items:center;gap:18px;padding:5px 20px 5px 14px;font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;background:rgba(0,5,20,.92);border-bottom:1px solid rgba(0,245,255,.3);backdrop-filter:blur(4px);position:relative;z-index:150;">
     <span id="dev-battery" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">🔋 —</span>
     <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-connection" style="color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.8);">📶 —</span>
-    <span style="color:rgba(0,245,255,.2);">|</span>
-    <span id="dev-downlink" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">⬇ —</span>
+    <span id="dev-connection" style="color:#00ff00;text-shadow:0 0 8px rgba(0,255,0,.8);">● ONLINE</span>
   </div>
 
 
@@ -3832,25 +3830,25 @@ if (document.readyState === 'loading') {
         else if(t==='4g'&&dl>20){netType='5G';}
         else if(t){netType=t.toUpperCase();}
         else{netType='NET';}
-        document.getElementById('dev-connection').textContent='📶 '+netType;
-        if(dl>0) document.getElementById('dev-downlink').textContent='⬇ '+dl+' Mbps';
+        document.getElementById('dev-connection').textContent='● ONLINE';
+        //if(dl>0) document.getElementById('dev-downlink').textContent='⬇ '+dl+' Mbps';
       };
       upd();conn.addEventListener('change',upd);
     } else {
-      document.getElementById('dev-connection').textContent='📶 Online';
+      document.getElementById('dev-connection').textContent='● ONLINE';
     }
-    // Speedtest - zobrazení rychlosti z navigator.connection (0 bytů downloadu)
-    function updateDownlink(){
-      var el=document.getElementById('dev-downlink');
-      if(!el) return;
-      if(navigator.connection && navigator.connection.downlink){
-        el.textContent='⬇ '+navigator.connection.downlink.toFixed(1)+' Mb/s';
-      } else {
-        el.textContent='⬇ N/A';
-      }
-    }
-    updateDownlink();
-    setInterval(updateDownlink, 30000);
+    // Speedtest - ZAKÁZÁNO v4.1.4 (zobrazení rychlosti z navigator.connection)
+    //function updateDownlink(){
+    //  var el=document.getElementById('dev-downlink');
+    //  if(!el) return;
+    //  if(navigator.connection && navigator.connection.downlink){
+    //    el.textContent='⬇ '+navigator.connection.downlink.toFixed(1)+' Mb/s';
+    //  } else {
+    //    el.textContent='⬇ N/A';
+    //  }
+    //}
+    //updateDownlink();
+    //setInterval(updateDownlink, 30000);
   })();
 
   // Web Audio Context pro podkres
@@ -4021,7 +4019,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.3';
+  const CURRENT_VERSION = '4.1.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
