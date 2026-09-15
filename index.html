@@ -961,6 +961,20 @@
       if (mcDot) mcDot.classList.toggle('mc-live', state);
       if (mcTxt) { mcTxt.textContent = state ? 'LIVE' : 'OFFLINE'; mcTxt.classList.toggle('mc-live', state); }
 
+      // Aktualizace dev-onair v top statusbaru
+      const devOnair = document.getElementById('dev-onair');
+      if (devOnair) {
+        if (state) {
+          devOnair.textContent = '🟢 ON AIR';
+          devOnair.style.color = '#44ff44';
+          devOnair.style.textShadow = '0 0 8px rgba(68,255,68,.8)';
+        } else {
+          devOnair.textContent = '⊘ OFF AIR';
+          devOnair.style.color = '#ff4444';
+          devOnair.style.textShadow = '0 0 8px rgba(255,68,68,.8)';
+        }
+      }
+
       // WEB PUSH – odeslat notifikaci při změně ON AIR stavu (pouze admin spouští)
       if (document.body.classList.contains('edit-mode')) {
         fetch('/.netlify/functions/send-push', {
@@ -1998,6 +2012,8 @@
     <span id="dev-battery" style="color:#facc15;text-shadow:0 0 8px rgba(250,204,21,.8);">🔋 —</span>
     <span style="color:rgba(0,245,255,.2);">|</span>
     <span id="dev-connection" style="color:#00ff00;text-shadow:0 0 8px rgba(0,255,0,.8);">● ONLINE</span>
+    <span style="color:rgba(0,245,255,.2);">|</span>
+    <span id="dev-onair" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,.8);">⊘ OFF AIR</span>
   </div>
 
 
@@ -4018,7 +4034,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.6';
+  const CURRENT_VERSION = '4.1.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
