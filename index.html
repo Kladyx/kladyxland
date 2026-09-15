@@ -3837,18 +3837,6 @@ if (document.readyState === 'loading') {
     } else {
       document.getElementById('dev-connection').textContent='● ONLINE';
     }
-    // Speedtest - ZAKÁZÁNO v4.1.4 (zobrazení rychlosti z navigator.connection)
-    //function updateDownlink(){
-    //  var el=document.getElementById('dev-downlink');
-    //  if(!el) return;
-    //  if(navigator.connection && navigator.connection.downlink){
-    //    el.textContent='⬇ '+navigator.connection.downlink.toFixed(1)+' Mb/s';
-    //  } else {
-    //    el.textContent='⬇ N/A';
-    //  }
-    //}
-    //updateDownlink();
-    //setInterval(updateDownlink, 30000);
   })();
 
   // Web Audio Context pro podkres
@@ -4019,7 +4007,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.4';
+  const CURRENT_VERSION = '4.1.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
