@@ -3819,23 +3819,34 @@ if (document.readyState === 'loading') {
         upd();batt.addEventListener('levelchange',upd);batt.addEventListener('chargingchange',upd);
       }catch(e){}
     }
-    // Connection - zobraz okamžitě z Network API
-    const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-    if(conn){
-      const upd=()=>{
-        const t=conn.effectiveType||'';
-        const dl=conn.downlink||0;
-        let netType='';
-        if(conn.type==='wifi'||conn.type==='ethernet'){netType='WiFi';}
-        else if(t==='4g'&&dl>20){netType='5G';}
-        else if(t){netType=t.toUpperCase();}
-        else{netType='NET';}
-        document.getElementById('dev-connection').textContent='● ONLINE';
-        //if(dl>0) document.getElementById('dev-downlink').textContent='⬇ '+dl+' Mbps';
-      };
-      upd();conn.addEventListener('change',upd);
-    } else {
-      document.getElementById('dev-connection').textContent='● ONLINE';
+    // Connection - ONLINE/OFFLINE status + síťová stabilita, event-driven
+    const updateConnectionStatus = () => {
+      const el = document.getElementById('dev-connection');
+      if (!el) return;
+      
+      const isOnline = navigator.onLine;
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      const type = conn?.effectiveType || 'unknown';
+      
+      let status = isOnline ? '● ONLINE' : '⊘ OFFLINE';
+      let stability = '';
+      
+      if (isOnline) {
+        if (type === '4g') stability = ' ⚡4G';
+        else if (type === '3g') stability = ' ⚠3G';
+        else if (type === '2g') stability = ' ❌2G';
+        else if (conn?.type === 'wifi' || conn?.type === 'ethernet') stability = ' ⚡WiFi';
+      }
+      
+      el.textContent = status + stability;
+    };
+    
+    updateConnectionStatus();
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    
+    if (navigator.connection) {
+      navigator.connection.addEventListener('change', updateConnectionStatus);
     }
   })();
 
@@ -4007,7 +4018,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.5';
+  const CURRENT_VERSION = '4.1.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
