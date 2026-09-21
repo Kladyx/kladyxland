@@ -885,10 +885,7 @@
       if (s.exists()) { var el = document.getElementById('intro-text'); if (el) el.innerHTML = s.val(); }
     }).catch(function(){});
     get(ref(db, 'content/hwDisclaimer')).then(function(s) {
-      if (s.exists()) {
-        var el = document.getElementById('hw-disclaimer-text'); if (el) el.innerHTML = s.val();
-        var elEn = document.getElementById('hw-disclaimer-text-en'); if (elEn) elEn.innerHTML = s.val();
-      }
+      if (s.exists()) { var el = document.getElementById('hw-disclaimer-text'); if (el) el.innerHTML = s.val(); }
     }).catch(function(){});
 
     // ── ON AIR stav ───────────────────────────────────────────────────────
@@ -3054,7 +3051,6 @@ if (document.readyState === 'loading') {
   function saveHwDisclaimer() {
     const val = document.getElementById('hw-disclaimer-edit').value;
     document.getElementById('hw-disclaimer-text').innerHTML = val;
-    var _hwEn = document.getElementById('hw-disclaimer-text-en'); if (_hwEn) _hwEn.innerHTML = val;
     if (window._fbHwdRef) window.dbSet(window._fbHwdRef, val).catch(e => console.error('HW text save error:', e));
   }
 
@@ -4038,7 +4034,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.1.8';
+  const CURRENT_VERSION = '4.1.9';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
