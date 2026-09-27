@@ -812,16 +812,13 @@
     // Registrace presence – přímo, bez závislosti na Auth
     onValue(connectedRef, (snap) => {
       if (snap.val() !== true) return;
-      // Přeskočit pokud je admin přihlášen (edit-mode nebo uložený token)
-      if (document.body.classList.contains('edit-mode')) return;
-      if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
       if (myPresenceRef) return; // už registrováno
       myPresenceRef = push(presenceRef);
       onDisconnect(myPresenceRef).remove().then(() => {
         return set(myPresenceRef, { ts: serverTimestamp() });
       }).then(() => {
         console.log('✅ Presence zaregistrována');
-        // Ntfy – odeslat pouze pokud není admin
+        // Ntfy – odeslat
         fetch('https://ntfy.sh/kladyx_dark_side_notify', {
           method: 'POST',
           body: t('ntfy_visitor')
@@ -841,13 +838,13 @@
       }
     }, 5 * 60 * 1000);
 
-    // Počet návštěvníků: get() každých 5 min místo onValue – žádný trvalý listener
-    // OPRAVA: Počítá jen online (poslední 15 minut), ignoruje mrtvé záznamy
+    // Počet návštěvníků: get() každých 30 min místo onValue – žádný trvalý listener
+    // OPRAVA: Počítá jen online (poslední 30 minut), ignoruje mrtvé záznamy
     function refreshPresenceCount() {
       get(presenceRef).then((snap) => {
         let count = 0;
         const now = Date.now();
-        const maxAge = 15 * 60 * 1000; // 15 minut
+        const maxAge = 30 * 60 * 1000; // 30 minut
         if (snap.exists()) {
           snap.forEach((child) => {
             const data = child.val();
@@ -863,12 +860,12 @@
         if (el2) el2.textContent = count;
       });
     }
-    // Úspora Firebase downloadu: počet online načti při startu a pak nejvýše jednou za 15 minut.
+    // Úspora Firebase downloadu: počet online načti při startu a pak nejvýše jednou za 30 minut.
     // Pokud je karta na pozadí, další čtení se přeskočí.
     refreshPresenceCount();
     setInterval(() => {
       if (!document.hidden) refreshPresenceCount();
-    }, 15 * 60 * 1000);
+    }, 30 * 60 * 1000);
     // ── TOTAL VISITORS COUNTER (přičítá +1 při každém načtení) ──────────
     const totalVisRef = ref(db, 'totalVisitors');
     runTransaction(totalVisRef, (current) => (current || 0) + 1)
@@ -2468,7 +2465,7 @@ I designed and wired everything myself without help from another person, just me
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.0
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.1
 // ═══════════════════════════════════════════════════════════════
 var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 
@@ -4045,7 +4042,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.0';
+  const CURRENT_VERSION = '4.2.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
