@@ -812,6 +812,8 @@
     // Registrace presence – přímo, bez závislosti na Auth
     onValue(connectedRef, (snap) => {
       if (snap.val() !== true) return;
+      // Přeskočit pokud je admin přihlášen
+      if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
       if (myPresenceRef) return; // už registrováno
       myPresenceRef = push(presenceRef);
       set(myPresenceRef, { ts: serverTimestamp() })
@@ -2465,7 +2467,7 @@ I designed and wired everything myself without help from another person, just me
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.2
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.3
 // ═══════════════════════════════════════════════════════════════
 var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 
@@ -4042,7 +4044,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.2';
+  const CURRENT_VERSION = '4.2.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
