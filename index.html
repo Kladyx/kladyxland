@@ -814,18 +814,18 @@
       if (snap.val() !== true) return;
       if (myPresenceRef) return; // už registrováno
       myPresenceRef = push(presenceRef);
-      onDisconnect(myPresenceRef).remove().then(() => {
-        return set(myPresenceRef, { ts: serverTimestamp() });
-      }).then(() => {
-        console.log('✅ Presence zaregistrována');
-        // Ntfy – odeslat
-        fetch('https://ntfy.sh/kladyx_dark_side_notify', {
-          method: 'POST',
-          body: t('ntfy_visitor')
-        }).catch(() => {});
-      }).catch((err) => {
-        console.error('❌ Presence chyba:', err.message);
-      });
+      set(myPresenceRef, { ts: serverTimestamp() })
+        .then(() => {
+          onDisconnect(myPresenceRef).remove();
+          console.log('✅ Presence zaregistrována');
+          fetch('https://ntfy.sh/kladyx_dark_side_notify', {
+            method: 'POST',
+            body: t('ntfy_visitor')
+          }).catch(() => {});
+        })
+        .catch((err) => {
+          console.error('❌ Presence chyba:', err.message);
+        });
     });
 
     // Úspora Firebase downloadu: úklid starých presence záznamů neběží u každého návštěvníka.
@@ -2465,7 +2465,7 @@ I designed and wired everything myself without help from another person, just me
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.1
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.2
 // ═══════════════════════════════════════════════════════════════
 var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 
@@ -4042,7 +4042,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.1';
+  const CURRENT_VERSION = '4.2.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
