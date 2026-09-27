@@ -841,12 +841,12 @@
     }, 5 * 60 * 1000);
 
     // Počet návštěvníků: get() každých 30 min místo onValue – žádný trvalý listener
-    // OPRAVA: Počítá jen online (poslední 30 minut), ignoruje mrtvé záznamy
+    // Počítá jen online (poslední 15 minut), ignoruje mrtvé záznamy
     function refreshPresenceCount() {
       get(presenceRef).then((snap) => {
         let count = 0;
         const now = Date.now();
-        const maxAge = 30 * 60 * 1000; // 30 minut
+        const maxAge = 15 * 60 * 1000; // 15 minut
         if (snap.exists()) {
           snap.forEach((child) => {
             const data = child.val();
@@ -2467,7 +2467,7 @@ I designed and wired everything myself without help from another person, just me
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.3
+// CZ/EN LANGUAGE SWITCHER ENGINE — KLADYXLAND v4.2.5
 // ═══════════════════════════════════════════════════════════════
 var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 
@@ -4044,7 +4044,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.3';
+  const CURRENT_VERSION = '4.2.5';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
