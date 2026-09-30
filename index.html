@@ -850,6 +850,7 @@
     function _setCounterVisible(vis) {
       var n = document.getElementById('nav-online'); if (n) n.style.display = vis ? '' : 'none';
       var v = document.getElementById('vc'); if (v) { var w = v.closest('.vcount'); if (w) w.style.display = vis ? '' : 'none'; }
+      var tv = document.querySelector('.total-visitors'); if (tv) tv.style.display = vis ? '' : 'none';
     }
     function refreshPresenceCount() {
       if (_presenceLive) return; // během vysílání nečíst
@@ -911,6 +912,12 @@
     // ── ON AIR stav ───────────────────────────────────────────────────────
     const liveRef = ref(db, 'onair/live');
     function applyLiveState(state) {
+      // v4.2.8: pauza presence + skrytí počítadel — řízeno tady, takže platí pro
+      // ruční onair/live i automatické ON AIR z OBS (status/obs/state).
+      const _wasLive = _presenceLive;
+      _presenceLive = state;
+      _setCounterVisible(!state);
+      if (!state && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
       document.body.classList.toggle('live-on', state);
       // Admin ON AIR banner
       const banner = document.getElementById('admin-onair-banner');
@@ -1007,15 +1014,7 @@
         }).catch(e => console.warn('send-push error:', e));
       }
     }
-    onValue(liveRef, snap => {
-      const _live = snap.val() === true;
-      const _wasLive = _presenceLive;
-      _presenceLive = _live;
-      applyLiveState(_live);
-      _setCounterVisible(!_live); // při ON AIR skrýt počítadla
-      // Presence počítat jen mimo vysílání: na startu (mimo live) a po skončení vysílání.
-      if (!_live && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
-    });
+    onValue(liveRef, snap => applyLiveState(snap.val() === true));
     
     // ── AUTO DETECT OBS STREAM (status/obs/state) ────────────────────────────
     // Když v OBS klikneš "Vysílat", bridge to detekuje a zapíše state: "online"
@@ -4062,7 +4061,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.7';
+  const CURRENT_VERSION = '4.2.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
