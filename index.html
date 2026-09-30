@@ -842,7 +842,12 @@
 
     // Počet návštěvníků: get() každých 30 min místo onValue – žádný trvalý listener
     // Počítá jen online (poslední 15 minut), ignoruje mrtvé záznamy
+    // v4.2.6: počítání presence běží jen MIMO vysílání. Při ON AIR se přeskočí,
+    // aby stovky klientů nečetly celý uzel presence. Řídí _presenceLive z onair/live.
+    let _presenceLive = false;
+    let _presenceCountDone = false;
     function refreshPresenceCount() {
+      if (_presenceLive) return; // během vysílání nečíst
       get(presenceRef).then((snap) => {
         let count = 0;
         const now = Date.now();
@@ -864,9 +869,9 @@
     }
     // Úspora Firebase downloadu: počet online načti při startu a pak nejvýše jednou za 30 minut.
     // Pokud je karta na pozadí, další čtení se přeskočí.
-    refreshPresenceCount();
+    // Počáteční načtení řídí onair/live listener (spustí se, až zná stav vysílání).
     setInterval(() => {
-      if (!document.hidden) refreshPresenceCount();
+      if (!document.hidden && !_presenceLive) refreshPresenceCount();
     }, 30 * 60 * 1000);
     // ── TOTAL VISITORS COUNTER (přičítá +1 při každém načtení) ──────────
     const totalVisRef = ref(db, 'totalVisitors');
@@ -997,7 +1002,14 @@
         }).catch(e => console.warn('send-push error:', e));
       }
     }
-    onValue(liveRef, snap => applyLiveState(snap.val() === true));
+    onValue(liveRef, snap => {
+      const _live = snap.val() === true;
+      const _wasLive = _presenceLive;
+      _presenceLive = _live;
+      applyLiveState(_live);
+      // Presence počítat jen mimo vysílání: na startu (mimo live) a po skončení vysílání.
+      if (!_live && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
+    });
     
     // ── AUTO DETECT OBS STREAM (status/obs/state) ────────────────────────────
     // Když v OBS klikneš "Vysílat", bridge to detekuje a zapíše state: "online"
@@ -4044,7 +4056,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.5';
+  const CURRENT_VERSION = '4.2.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
