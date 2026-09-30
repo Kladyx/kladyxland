@@ -846,6 +846,11 @@
     // aby stovky klientů nečetly celý uzel presence. Řídí _presenceLive z onair/live.
     let _presenceLive = false;
     let _presenceCountDone = false;
+    // v4.2.7: při ON AIR skrýt počítadla (vizuální signál, že se nepočítá).
+    function _setCounterVisible(vis) {
+      var n = document.getElementById('nav-online'); if (n) n.style.display = vis ? '' : 'none';
+      var v = document.getElementById('vc'); if (v) { var w = v.closest('.vcount'); if (w) w.style.display = vis ? '' : 'none'; }
+    }
     function refreshPresenceCount() {
       if (_presenceLive) return; // během vysílání nečíst
       get(presenceRef).then((snap) => {
@@ -1007,6 +1012,7 @@
       const _wasLive = _presenceLive;
       _presenceLive = _live;
       applyLiveState(_live);
+      _setCounterVisible(!_live); // při ON AIR skrýt počítadla
       // Presence počítat jen mimo vysílání: na startu (mimo live) a po skončení vysílání.
       if (!_live && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
     });
@@ -4056,7 +4062,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.2.6';
+  const CURRENT_VERSION = '4.2.7';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
