@@ -2197,7 +2197,7 @@
       <div class="live-left">
         <!-- Nové jednoduché broadcast tlačítko – jen admin, jen zapne/vypne Firebase stav -->
         <button class="broadcast-toggle edit-only" id="broadcast-btn"
-          onclick="window._toggleLive()"
+          onclick="window._broadcastGuard()"
           style="display:none;">▶ START BROADCAST</button>
 
         <!-- OBS heslo panel (jen admin) -->
@@ -4058,7 +4058,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.0';
+  const CURRENT_VERSION = '4.3.1';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
@@ -4374,5 +4374,27 @@ if (document.readyState === 'loading') {
   <span>🎵</span><span>🎶</span><span>♪</span><span>🎵</span><span>♫</span><span>🎧</span><span>🎧</span><span>🔈</span><span>🎤</span>
 </div>
 
+<script>
+/* Ochrana START BROADCAST na mobilu: 3 klepnutí do 4 s. PC = beze změny. STOP = beze změny. Bez síťových requestů. */
+(function(){
+  var taps=0,timer=null,NEED=3,WIN=4000;
+  function isMobile(){return window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;}
+  function reset(btn){
+    taps=0;clearTimeout(timer);timer=null;
+    if(btn){btn.style.background='';btn.style.borderColor='';btn.style.color='';
+      if(!btn.classList.contains('live')){btn.textContent=(typeof t==='function')?t('start_broadcast'):'\u25B6 START BROADCAST';}}
+  }
+  window._broadcastGuard=function(){
+    var btn=document.getElementById('broadcast-btn');
+    if(window._isLive||!isMobile()){reset(btn);window._toggleLive();return;}
+    taps++;
+    clearTimeout(timer);
+    if(taps>=NEED){reset(btn);window._toggleLive();return;}
+    if(btn){btn.textContent='\u26A0 VYS\u00CDL\u00C1N\u00CD! KLEPNI JE\u0160T\u011A '+(NEED-taps)+'\u00D7';
+      btn.style.background='rgba(255,200,0,.2)';btn.style.borderColor='rgba(255,200,0,.8)';btn.style.color='#ffc800';}
+    timer=setTimeout(function(){reset(btn);},WIN);
+  };
+})();
+</script>
 </body>
 </html>
