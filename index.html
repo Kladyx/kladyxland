@@ -37,6 +37,10 @@
     .speaker-btn:hover{background:rgba(0,245,255,.15);box-shadow:0 0 12px rgba(0,245,255,.5);}
     .speaker-btn.playing{border-color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,.5);animation:pulse 1s ease-in-out infinite;}
     .speaker-row{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;max-width:112px;}
+    .vol-box{display:flex;align-items:center;gap:4px;max-width:112px;margin-top:4px;font-size:11px;}
+    .vol-box input[type=range]{width:78px;height:14px;accent-color:#00f5ff;}
+    .vol-admin{display:none;}
+    body.edit-mode .vol-admin{display:flex;}
     .speaker-btn-live{border-color:rgba(255,80,80,.5);color:rgba(255,150,150,.6);opacity:.45;cursor:not-allowed;}
     .speaker-btn-live.live-on{border-color:#00ff66;color:#00ff66;opacity:1;cursor:pointer;background:rgba(0,255,102,.15);box-shadow:0 0 14px rgba(0,255,102,.6);animation:liveBtnBlink 1.1s ease-in-out infinite;}
     .speaker-btn-live.live-on:hover{background:rgba(0,255,102,.3);box-shadow:0 0 22px rgba(0,255,102,.9);}
@@ -2176,6 +2180,8 @@
           <button class="speaker-btn" id="speaker-btn5" onclick="playDanceRadio()" title="Dance Radio CZ">📻</button>
           <button class="speaker-btn speaker-btn-live" id="speaker-btn6" onclick="openLiveAudio()" title="Live vysílání - jen zvuk">🎙️</button>
         </div>
+        <div class="vol-box vol-admin" id="horn-vol-box" title="Hlasitost hlášek 📢 (jen admin, platí pro všechny)"><span>📢</span><input type="range" id="horn-vol" min="0" max="100" step="5" value="50" oninput="onHornVol(this.value)" onchange="saveHornVol(this.value)"></div>
+        <div class="vol-box" id="radio-vol-box" title="Hlasitost rádia"><span>📻</span><input type="range" id="radio-vol" min="0" max="100" step="5" value="100" oninput="onRadioVol(this.value)"></div>
         <audio id="greeting-audio" src="1.mp3" preload="auto"></audio>
         <audio id="greeting-audio2" src="2.mp3" preload="auto"></audio>
         <audio id="greeting-audio3" src="3.mp3" preload="auto"></audio>
@@ -4067,6 +4073,52 @@ if (document.readyState === 'loading') {
     if(bgSource){ try{ bgSource.stop(); }catch(e){} bgSource = null; }
   }
 
+  // ── HLASITOST: 📢 hlášky (admin nastaví → Firebase config/hornVolume, platí pro všechny), 📻 rádio (každý sám, localStorage) ──
+  var HORN_AUDIO_IDS = ['greeting-audio','greeting-audio2','greeting-audio3','greeting-audio4','kladyx-gates-audio'];
+  function applyHornVol(v){
+    v = Math.max(0, Math.min(1, v));
+    HORN_AUDIO_IDS.forEach(function(id){ var a = document.getElementById(id); if(a) a.volume = v; });
+    var sl = document.getElementById('horn-vol'); if(sl) sl.value = Math.round(v * 100);
+  }
+  function onHornVol(val){ applyHornVol(parseInt(val, 10) / 100); }
+  function saveHornVol(val){
+    var v = Math.max(0, Math.min(100, parseInt(val, 10) || 0)) / 100;
+    window.dbSet(window.dbRef(window.db, 'config/hornVolume'), v).catch(function(e){ alert('Chyba ukládání hlasitosti: ' + e.message); });
+  }
+  function applyRadioVol(v){
+    v = Math.max(0, Math.min(1, v));
+    var a = document.getElementById('dance-radio-audio'); if(a) a.volume = v;
+    var sl = document.getElementById('radio-vol'); if(sl) sl.value = Math.round(v * 100);
+  }
+  function onRadioVol(val){
+    applyRadioVol(parseInt(val, 10) / 100);
+    try { localStorage.setItem('kladyx_radio_vol', String(val)); } catch(e) {}
+  }
+  (function initVolumes(){
+    applyHornVol(0.5); // výchozí do načtení hodnoty z Firebase
+    try {
+      var rv = localStorage.getItem('kladyx_radio_vol');
+      if (rv !== null && !isNaN(parseInt(rv, 10))) applyRadioVol(parseInt(rv, 10) / 100);
+    } catch(e) {}
+    function readHorn(){
+      window.dbGet(window.dbRef(window.db, 'config/hornVolume')).then(function(snap){
+        if (snap.exists() && typeof snap.val() === 'number') applyHornVol(snap.val());
+      }).catch(function(){});
+    }
+    var tries = 0;
+    function waitReady(){
+      if (window.firebaseAuth && window.db && window.dbGet && window.dbRef) {
+        if (window.firebaseAuth.currentUser) { readHorn(); }
+        else {
+          var unsub = window.firebaseAuth.onAuthStateChanged(function(u){ if (u) { if (unsub) unsub(); readHorn(); } });
+        }
+      } else if (tries++ < 40) {
+        setTimeout(waitReady, 300);
+      }
+    }
+    waitReady();
+  })();
+
   // Uvítací hláška
   function playGreeting(){
     const audio = document.getElementById('greeting-audio');
@@ -4192,7 +4244,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.3';
+  const CURRENT_VERSION = '4.3.4';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
