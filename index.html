@@ -3454,7 +3454,7 @@ if (document.readyState === 'loading') {
     return m+'m '+String(s).padStart(2,'0')+'s';
   }
 
-  // ── WALL OF HONOR – GitHub složka honor/ (lazy, 1 dotaz, žádný Firebase download) ──
+  // ── WALL OF HONOR – GitHub složka honor/ (lazy, žádný Firebase download navíc kromě malého pole pořadí) ──
   let honorLoaded = false;
   function loadHonorLazy() {
     honorLoaded = true;
@@ -3469,30 +3469,108 @@ if (document.readyState === 'loading') {
           .map(f => {
             var nameNoExt = f.name.replace(/\.(jpe?g|png|gif|webp)$/i, '');
             var caption = nameNoExt.includes('__') ? nameNoExt.split('__')[0].replace(/_/g, ' ').trim() : nameNoExt.replace(/_/g, ' ').trim();
-            return { url: f.download_url, name: f.name, caption: caption };
+            return { key: f.sha, url: f.download_url, name: f.name, path: f.path, caption: caption };
           }) : [];
-        grid.innerHTML = '';
-        if (items.length === 0) { empty.style.display = 'block'; return; }
-        empty.style.display = 'none';
-        items.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'gallery-item';
-          const img = document.createElement('img');
-          img.src = item.url;
-          img.alt = item.name;
-          img.loading = 'lazy';
-          img.onclick = function() { openHwLightbox(item.url); };
-          div.appendChild(img);
-          if (item.caption) {
-            const cap = document.createElement('span');
-            cap.className = 'gal-caption';
-            cap.textContent = item.caption;
-            div.appendChild(cap);
+        window.dbGet(window.dbRef(window.db, 'honorImageOrder')).then(function(snap) {
+          var order = snap.exists() ? snap.val() : null;
+          if (Array.isArray(order) && order.length > 0) {
+            items.sort(function(a, b) {
+              var ia = order.indexOf(a.name);
+              var ib = order.indexOf(b.name);
+              if (ia === -1) ia = 9999;
+              if (ib === -1) ib = 9999;
+              return ia - ib;
+            });
           }
-          grid.appendChild(div);
-        });
+          renderHonor(items);
+        }).catch(function() { renderHonor(items); });
       })
       .catch(e => { console.warn('honorGitHub:', e); honorLoaded = false; if (grid) grid.innerHTML = ''; });
+  }
+
+  function renderHonor(items) {
+    const grid = document.getElementById('honor-grid');
+    const empty = document.getElementById('honor-empty');
+    grid.innerHTML = '';
+    var oldSave = document.getElementById('honor-save-order-btn');
+    if (oldSave) oldSave.remove();
+    if (items.length === 0) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'gallery-item';
+      div.setAttribute('data-honor-name', item.name || '');
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = item.name;
+      img.loading = 'lazy';
+      img.onclick = function() { openHwLightbox(item.url); };
+      div.appendChild(img);
+      if (item.caption) {
+        const cap = document.createElement('span');
+        cap.className = 'gal-caption';
+        cap.textContent = item.caption;
+        div.appendChild(cap);
+      }
+      // ✕ smazat (jen edit-mode přes CSS)
+      var delBtn = document.createElement('button');
+      delBtn.className = 'gal-del';
+      delBtn.textContent = '✕';
+      delBtn.onclick = function(ev) { deleteHonorImage(item.key, item.path, ev); };
+      div.appendChild(delBtn);
+      // ▲▼ pořadí (jen edit-mode přes CSS)
+      var upBtn = document.createElement('button');
+      upBtn.className = 'gal-order-btn';
+      upBtn.textContent = '▲';
+      upBtn.style.cssText = 'position:absolute;bottom:30px;left:4px;';
+      upBtn.onclick = function(ev) { ev.stopPropagation(); moveGalleryImage(div, -1); };
+      div.appendChild(upBtn);
+      var downBtn = document.createElement('button');
+      downBtn.className = 'gal-order-btn';
+      downBtn.textContent = '▼';
+      downBtn.style.cssText = 'position:absolute;bottom:4px;left:4px;';
+      downBtn.onclick = function(ev) { ev.stopPropagation(); moveGalleryImage(div, 1); };
+      div.appendChild(downBtn);
+      grid.appendChild(div);
+    });
+    var saveBtn = document.createElement('button');
+    saveBtn.id = 'honor-save-order-btn';
+    saveBtn.className = 'gal-order-save';
+    saveBtn.textContent = '💾 ULOŽIT POŘADÍ';
+    saveBtn.onclick = saveHonorOrder;
+    grid.parentNode.insertBefore(saveBtn, grid.nextSibling);
+  }
+
+  function saveHonorOrder() {
+    var grid = document.getElementById('honor-grid');
+    if (!grid) return;
+    var order = Array.from(grid.children).map(function(div) {
+      return div.getAttribute('data-honor-name') || '';
+    }).filter(function(n) { return n; });
+    window.dbSet(window.dbRef(window.db, 'honorImageOrder'), order).then(function() {
+      alert('Pořadí uloženo!');
+    }).catch(function(err) {
+      alert('Chyba ukládání: ' + err.message);
+    });
+  }
+
+  async function deleteHonorImage(sha, path, e) {
+    if (e) e.stopPropagation();
+    if (!confirm('Smazat tento obrázek z Wall of Honor?')) return;
+    var token = localStorage.getItem('gh_pat');
+    if (!token) { alert('Chybí GitHub Token (nastav v KladyxTransfer)'); return; }
+    try {
+      var resp = await fetch('https://api.github.com/repos/Kladyx/kladyxland/contents/' + path, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Delete honor: ' + path, sha: sha })
+      });
+      if (!resp.ok) throw new Error('GitHub API: ' + resp.status);
+      if (e && e.target) { var item = e.target.closest('.gallery-item'); if (item) item.remove(); }
+      var grid = document.getElementById('honor-grid');
+      var empty = document.getElementById('honor-empty');
+      if (grid && empty && grid.children.length === 0) empty.style.display = 'block';
+    } catch(err) { alert('Chyba mazání: ' + err.message); }
   }
 
   function formatDate(str){
@@ -4114,7 +4192,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.2';
+  const CURRENT_VERSION = '4.3.3';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
