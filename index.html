@@ -2029,6 +2029,7 @@
       <a href="#" class="nbtn on" id="nb-home" onclick="show('home');return false;" data-i18n="home">Home</a>
       <a href="#" class="nbtn" id="nb-hardware" onclick="show('hardware');return false;" data-i18n="hardware">Hardware</a>
       <a href="#" class="nbtn" id="nb-galerie" onclick="show('galerie');return false;" data-i18n="galerie">Galerie</a>
+      <a href="#" class="nbtn" id="nb-honor" onclick="show('honor');return false;" data-i18n="honor">Wall of Honor</a>
       <a href="#" class="nbtn" id="nb-chat" onclick="show('chat');return false;" data-i18n="chat_nav">Chat</a>
       <a href="#" class="nbtn" id="nb-archiv" onclick="show('archiv');return false;" data-i18n="archiv_nav">📻 Archive Stream</a>
     </div>
@@ -2281,6 +2282,7 @@
         <a href="#" class="cbtn" onclick="show('home');return false;" data-i18n="home_icon">⌂ Home</a>
         <a href="#" class="cbtn" onclick="show('hardware');return false;" data-i18n="hw_icon">⚙ Hardware</a>
         <a href="#" class="cbtn" onclick="show('galerie');return false;" data-i18n="gal_icon">🖼 Galerie</a>
+        <a href="#" class="cbtn" onclick="show('honor');return false;" data-i18n="honor_icon">🏆 Wall of Honor</a>
         <a href="#" class="cbtn" onclick="show('chat');return false;" data-i18n="chat_icon">💬 Chat</a>
         <a href="#" class="cbtn" onclick="show('archiv');return false;" data-i18n="archiv_icon">📻 Archive Stream</a>
       </div>
@@ -2389,6 +2391,18 @@ I designed and wired everything myself without help from another person, just me
       </div>
     </div>
 
+    <!-- WALL OF HONOR -->
+    <div class="section" id="s-honor">
+      <div class="content-wrap single">
+        <div class="stitle">
+          <span data-i18n="honor_title">WALL OF HONOR</span>
+        </div>
+        <!-- Fotky: GitHub složka honor/ (nahrávání přes transfer.html nebo přímo na GitHub) -->
+        <div id="honor-grid" class="gallery-grid"></div>
+        <div class="gallery-empty" id="honor-empty" data-i18n="honor_empty">Zatím žádné fotky</div>
+      </div>
+    </div>
+
     <!-- ARCHIV -->
     <div class="section" id="s-archiv">
       <div class="content-wrap single">
@@ -2488,7 +2502,7 @@ var curLang = localStorage.getItem('kladyx_lang') || 'cs';
 var I18N = {
   cs: {
     // NAV
-    back:'⟵ Zpět', home:'Home', hardware:'Hardware', galerie:'Galerie',
+    back:'⟵ Zpět', home:'Home', hardware:'Hardware', galerie:'Galerie', honor:'Wall of Honor', honor_icon:'🏆 Wall of Honor', honor_title:'WALL OF HONOR', honor_empty:'Zatím žádné fotky',
     chat_nav:'Chat', archiv_nav:'📻 Archive Stream',
     home_icon:'⌂ Home', hw_icon:'⚙ Hardware', gal_icon:'🖼 Galerie',
     chat_icon:'💬 Chat', archiv_icon:'📻 Archive Stream',
@@ -2621,7 +2635,7 @@ var I18N = {
     video_saved:'✓ Uloženo', video_deleted:'✓ Smazáno'
   },
   en: {
-    back:'⟵ Back', home:'Home', hardware:'Hardware', galerie:'Gallery',
+    back:'⟵ Back', home:'Home', hardware:'Hardware', galerie:'Gallery', honor:'Wall of Honor', honor_icon:'🏆 Wall of Honor', honor_title:'WALL OF HONOR', honor_empty:'No photos yet',
     chat_nav:'Chat', archiv_nav:'📻 Archive Stream',
     home_icon:'⌂ Home', hw_icon:'⚙ Hardware', gal_icon:'🖼 Gallery',
     chat_icon:'💬 Chat', archiv_icon:'📻 Archive Stream',
@@ -3356,6 +3370,7 @@ if (document.readyState === 'loading') {
     if(name==='archiv') loadArchivStats();
     if(name==='galerie' && !galleryLoaded) loadGalleryLazy();
     if(name==='hardware' && !hwLoaded) loadHwLazy();
+    if(name==='honor' && !honorLoaded) loadHonorLazy();
     setLang(curLang);
   }
 
@@ -3437,6 +3452,47 @@ if (document.readyState === 'loading') {
     const s = sec%60;
     if(h>0) return h+'h '+m+'m';
     return m+'m '+String(s).padStart(2,'0')+'s';
+  }
+
+  // ── WALL OF HONOR – GitHub složka honor/ (lazy, 1 dotaz, žádný Firebase download) ──
+  let honorLoaded = false;
+  function loadHonorLazy() {
+    honorLoaded = true;
+    const grid = document.getElementById('honor-grid');
+    const empty = document.getElementById('honor-empty');
+    if (grid) grid.innerHTML = '<div class="gallery-empty">Načítám…</div>';
+    fetch('https://api.github.com/repos/Kladyx/kladyxland/contents/honor')
+      .then(r => { if (!r.ok) throw new Error('GitHub API: ' + r.status); return r.json(); })
+      .then(files => {
+        const items = Array.isArray(files) ? files
+          .filter(f => f.type === 'file' && /\.(jpe?g|png|gif|webp)$/i.test(f.name))
+          .map(f => {
+            var nameNoExt = f.name.replace(/\.(jpe?g|png|gif|webp)$/i, '');
+            var caption = nameNoExt.includes('__') ? nameNoExt.split('__')[0].replace(/_/g, ' ').trim() : nameNoExt.replace(/_/g, ' ').trim();
+            return { url: f.download_url, name: f.name, caption: caption };
+          }) : [];
+        grid.innerHTML = '';
+        if (items.length === 0) { empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+        items.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'gallery-item';
+          const img = document.createElement('img');
+          img.src = item.url;
+          img.alt = item.name;
+          img.loading = 'lazy';
+          img.onclick = function() { openHwLightbox(item.url); };
+          div.appendChild(img);
+          if (item.caption) {
+            const cap = document.createElement('span');
+            cap.className = 'gal-caption';
+            cap.textContent = item.caption;
+            div.appendChild(cap);
+          }
+          grid.appendChild(div);
+        });
+      })
+      .catch(e => { console.warn('honorGitHub:', e); honorLoaded = false; if (grid) grid.innerHTML = ''; });
   }
 
   function formatDate(str){
@@ -4058,7 +4114,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.1';
+  const CURRENT_VERSION = '4.3.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
