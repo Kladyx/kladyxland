@@ -42,6 +42,8 @@
     .vol-box input[type=range]{flex:1;min-width:0;width:auto;height:18px;margin:0;accent-color:#00f5ff;}
     .vol-admin{display:none;}
     body.edit-mode .vol-admin{display:flex;}
+    body.hw-off:not(.edit-mode) a[onclick*="show('hardware')"]{display:none!important;}
+    body.hw-off:not(.edit-mode) #s-hardware{display:none!important;}
     .speaker-btn-live{border-color:rgba(255,80,80,.5);color:rgba(255,150,150,.6);opacity:.45;cursor:not-allowed;}
     .speaker-btn-live.live-on{border-color:#00ff66;color:#00ff66;opacity:1;cursor:pointer;background:rgba(0,255,102,.15);box-shadow:0 0 14px rgba(0,255,102,.6);animation:liveBtnBlink 1.1s ease-in-out infinite;}
     .speaker-btn-live.live-on:hover{background:rgba(0,255,102,.3);box-shadow:0 0 22px rgba(0,255,102,.9);}
@@ -1902,6 +1904,23 @@
       set(chatOnRef, !chatOn).catch(e => console.error(e));
     };
 
+    // hardwareEnabled — řídí viditelnost sekce Hardware pro návštěvníky (admin ji vidí vždy)
+    const hwOnRef = ref(db, 'hardwareEnabled');
+    let hwOn = true;
+    onValue(hwOnRef, snap => {
+      hwOn = snap.val() !== false;
+      document.body.classList.toggle('hw-off', !hwOn);
+      const hb = document.getElementById('hw-toggle-btn');
+      if (hb) {
+        hb.textContent = hwOn ? t('hw_on') : t('hw_off');
+        hb.style.color = hwOn ? '#2ecc71' : '#e74c3c';
+        hb.style.borderColor = hwOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
+      }
+    });
+    window.toggleHardware = function() {
+      set(hwOnRef, !hwOn).catch(e => console.error(e));
+    };
+
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
       const text = document.getElementById('chat-text').value.trim();
@@ -2012,6 +2031,7 @@
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
           <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
+          <button id="hw-toggle-btn" class="nbtn" onclick="toggleHardware()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">⚙ Hardware ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
               <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="gs_mode">Režim:</span>
@@ -2520,6 +2540,7 @@ var I18N = {
     login:'🔑 Login', logout:'Odhlásit', admin_label:'🔓 ADMIN',
     site_off:'🔴 Vypnout web', site_on:'🟢 Zapnout web',
     chat_on:'💬 Chat ON', chat_off:'💬 Chat OFF',
+    hw_on:'⚙ Hardware ON', hw_off:'⚙ Hardware OFF',
     gs_mode:'Režim:',
     // ON AIR
     live_banner:'🟢 PRÁVĚ VYSÍLÁM ŽIVĚ',
@@ -2652,6 +2673,7 @@ var I18N = {
     login:'🔑 Login', logout:'Log out', admin_label:'🔓 ADMIN',
     site_off:'🔴 Disable site', site_on:'🟢 Enable site',
     chat_on:'💬 Chat ON', chat_off:'💬 Chat OFF',
+    hw_on:'⚙ Hardware ON', hw_off:'⚙ Hardware OFF',
     gs_mode:'Mode:',
     live_banner:'🟢 NOW BROADCASTING LIVE',
     on_air:'ON AIR', offline:'OFFLINE',
@@ -2836,6 +2858,9 @@ function setLang(lang) {
   // Chat toggle
   var chatBtn = document.getElementById('chat-toggle-btn');
   if (chatBtn) chatBtn.textContent = (chatBtn.style.color === 'rgb(46, 204, 113)' || chatBtn.style.color === '#2ecc71') ? t('chat_on') : t('chat_off');
+  // Hardware toggle
+  var hwBtn = document.getElementById('hw-toggle-btn');
+  if (hwBtn) hwBtn.textContent = (hwBtn.style.color === 'rgb(46, 204, 113)' || hwBtn.style.color === '#2ecc71') ? t('hw_on') : t('hw_off');
   // Marquee
   var mq = document.querySelectorAll('.marquee-text');
   var mqText = t('marquee');
@@ -3369,6 +3394,7 @@ if (document.readyState === 'loading') {
   // NAVIGATION
   function hideAll(){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));disableEdit();window.scrollTo({top:0,behavior:"smooth"});}
   function show(name){
+    if(name==='hardware' && document.body.classList.contains('hw-off') && !document.body.classList.contains('edit-mode')) return;
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
     document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));
     document.getElementById("s-"+name).classList.add("on");
@@ -4247,7 +4273,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.5';
+  const CURRENT_VERSION = '4.3.6';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
