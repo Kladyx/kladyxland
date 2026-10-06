@@ -1922,6 +1922,27 @@
       set(hwOnRef, !hwOn).catch(e => console.error(e));
     };
 
+    // galleryEnabled — admin přepínač Galerie ON/OFF (skryje záložku Galerie všem návštěvníkům)
+    const galOnRef = ref(db, 'galleryEnabled');
+    let galOn = true;
+    onValue(galOnRef, snap => {
+      galOn = snap.val() !== false;
+      const nb = document.getElementById('nb-galerie');
+      if (nb) nb.style.display = galOn ? '' : 'none';
+      document.querySelectorAll('a.cbtn[onclick*="galerie"]').forEach(a => { a.style.display = galOn ? '' : 'none'; });
+      const sec = document.getElementById('s-galerie');
+      if (sec && !galOn) { sec.classList.remove('on'); if (nb) nb.classList.remove('on'); }
+      const btn = document.getElementById('gal-toggle-btn');
+      if (btn) {
+        btn.textContent = galOn ? '🖼 Galerie ON' : '🖼 Galerie OFF';
+        btn.style.color = galOn ? '#2ecc71' : '#e74c3c';
+        btn.style.borderColor = galOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
+      }
+    });
+    window.toggleGallery = function() {
+      set(galOnRef, !galOn).catch(e => console.error(e));
+    };
+
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
       const text = document.getElementById('chat-text').value.trim();
@@ -2033,6 +2054,7 @@
           <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <button id="hw-toggle-btn" class="nbtn" onclick="toggleHardware()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">⚙ Hardware ON</button>
+          <button id="gal-toggle-btn" class="nbtn" onclick="toggleGallery()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">🖼 Galerie ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
               <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="gs_mode">Režim:</span>
@@ -4274,7 +4296,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.7';
+  const CURRENT_VERSION = '4.3.8';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
