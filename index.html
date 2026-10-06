@@ -1900,6 +1900,28 @@
       set(chatOnRef, !chatOn).catch(e => console.error(e));
     };
 
+    // hardwareEnabled — admin přepínač Hardware ON/OFF (skryje záložku Hardware všem návštěvníkům)
+    const hwOnRef = ref(db, 'hardwareEnabled');
+    let hwOn = true;
+    onValue(hwOnRef, snap => {
+      hwOn = snap.val() !== false;
+      const isAdmin = document.body.classList.contains('edit-mode');
+      const nb = document.getElementById('nb-hardware');
+      if (nb) nb.style.display = hwOn ? '' : 'none';
+      document.querySelectorAll('a.cbtn[onclick*="hardware"]').forEach(a => { a.style.display = hwOn ? '' : 'none'; });
+      const sec = document.getElementById('s-hardware');
+      if (sec && !hwOn) { sec.classList.remove('on'); if (nb) nb.classList.remove('on'); }
+      const btn = document.getElementById('hw-toggle-btn');
+      if (btn) {
+        btn.textContent = hwOn ? '⚙ Hardware ON' : '⚙ Hardware OFF';
+        btn.style.color = hwOn ? '#2ecc71' : '#e74c3c';
+        btn.style.borderColor = hwOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
+      }
+    });
+    window.toggleHardware = function() {
+      set(hwOnRef, !hwOn).catch(e => console.error(e));
+    };
+
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
       const text = document.getElementById('chat-text').value.trim();
@@ -2010,6 +2032,7 @@
         <span id="vypnout-grayscale-row" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
           <button id="site-off-toggle" class="nbtn" onclick="toggleSiteOff()" style="font-size:.5rem;padding:3px 8px;">🔴 Vypnout web</button>
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
+          <button id="hw-toggle-btn" class="nbtn" onclick="toggleHardware()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">⚙ Hardware ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
               <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="gs_mode">Režim:</span>
