@@ -1955,6 +1955,27 @@
       set(galOnRef, !galOn).catch(e => console.error(e));
     };
 
+    // honorEnabled — admin přepínač Wall of Honor ON/OFF (skryje záložku všem návštěvníkům)
+    const honorOnRef = ref(db, 'honorEnabled');
+    let honorOn = true;
+    onValue(honorOnRef, snap => {
+      honorOn = snap.val() !== false;
+      const nb = document.getElementById('nb-honor');
+      if (nb) nb.style.display = honorOn ? '' : 'none';
+      document.querySelectorAll('a.cbtn[onclick*="honor"]').forEach(a => { a.style.display = honorOn ? '' : 'none'; });
+      const sec = document.getElementById('s-honor');
+      if (sec && !honorOn) { sec.classList.remove('on'); if (nb) nb.classList.remove('on'); }
+      const btn = document.getElementById('honor-toggle-btn');
+      if (btn) {
+        btn.textContent = honorOn ? '🏆 Honor ON' : '🏆 Honor OFF';
+        btn.style.color = honorOn ? '#2ecc71' : '#e74c3c';
+        btn.style.borderColor = honorOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
+      }
+    });
+    window.toggleHonor = function() {
+      set(honorOnRef, !honorOn).catch(e => console.error(e));
+    };
+
     window.sendChatMsg = function() {
       const name = document.getElementById('chat-name').value.trim();
       const text = document.getElementById('chat-text').value.trim();
@@ -2089,6 +2110,7 @@
           <button id="chat-toggle-btn" class="nbtn" onclick="toggleChat()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">💬 Chat ON</button>
           <button id="hw-toggle-btn" class="nbtn" onclick="toggleHardware()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">⚙ Hardware ON</button>
           <button id="gal-toggle-btn" class="nbtn" onclick="toggleGallery()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">🖼 Galerie ON</button>
+          <button id="honor-toggle-btn" class="nbtn" onclick="toggleHonor()" style="font-size:.5rem;padding:3px 8px;color:#2ecc71;border-color:rgba(46,204,113,.4);">🏆 Honor ON</button>
           <div id="grayscale-wrap" class="lever-wrap" style="display:inline-flex;align-items:center;gap:4px;">
             <div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;">
               <span style="color:rgba(0,245,255,.5);font-size:.45rem;" data-i18n="gs_mode">Režim:</span>
@@ -4333,7 +4355,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.6';
+  const CURRENT_VERSION = '4.4.7';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
