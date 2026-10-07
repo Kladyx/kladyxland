@@ -3152,8 +3152,8 @@ if (document.readyState === 'loading') {
       window.firebaseAuth.signOut().then(() => {
         disableEdit();
         if(window._siteOff) document.getElementById('site-off-overlay').classList.add('active');
-        // Obnovit anonymní session pro návštěvníka
-        window.firebaseSignInAnon().catch(()=>{});
+        // Anonymní session se neobnovuje hned – kolidovala by s dalším Google popup loginem.
+        // Pro návštěvníka ji zajistí onAuthStateChanged guard při příštím načtení stránky.
         alert(t('logged_out'));
       }).catch(e => alert('Chyba: ' + e.message));
     }
@@ -4330,7 +4330,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.4';
+  const CURRENT_VERSION = '4.4.5';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
