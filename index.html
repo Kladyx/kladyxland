@@ -1964,8 +1964,26 @@
       }).then(() => {
         document.getElementById('chat-text').value = '';
         if (name) localStorage.setItem('kladyx_chat_name', name);
-      }).catch(e => alert('Chyba: ' + e.message));
+        _chatDiag('✓ Zpráva uložena na server', true);
+      }).catch(e => {
+        _chatDiag('✗ Zpráva NEULOŽENA: ' + (e.code || '') + ' ' + (e.message || e) + ' | ' + (isAdmin ? 'admin' : 'návštěvník') + ' | uid ' + auth.currentUser.uid.slice(0, 6), false);
+        alert('Chyba: ' + e.message);
+      });
     };
+    function _chatDiag(msg, ok) {
+      let el = document.getElementById('chat-diag');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'chat-diag';
+        el.style.cssText = 'margin:8px 0;padding:8px 10px;border-radius:6px;font-size:.7rem;word-break:break-word;';
+        const btn = document.querySelector('.chat-send-btn');
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(el, btn.nextSibling); else document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.background = ok ? 'rgba(46,204,113,.15)' : 'rgba(231,76,60,.2)';
+      el.style.color = ok ? '#2ecc71' : '#ff8a80';
+      el.style.border = '1px solid ' + (ok ? 'rgba(46,204,113,.5)' : 'rgba(231,76,60,.6)');
+    }
 
     onAuthStateChanged(auth, () => { if (window._chatRerender) window._chatRerender(); });
 
@@ -4305,7 +4323,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.3.9';
+  const CURRENT_VERSION = '4.3.10';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
