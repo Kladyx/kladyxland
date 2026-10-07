@@ -2998,11 +2998,14 @@ if (document.readyState === 'loading') {
 
   async function adminGoogleLogin(){
     const btn = document.getElementById('google-login-btn');
+    const _origBtnHTML = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = t('logging_in');
     try {
       const _u = await window.googleSignIn();
       if(_u && _u.uid) localStorage.setItem('kladyx_admin_uid', _u.uid);
+      btn.disabled = false;
+      btn.innerHTML = _origBtnHTML;
       closeModal();
       enableEdit(pendingSection || 'edit');
     } catch(e) {
@@ -4330,7 +4333,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.5';
+  const CURRENT_VERSION = '4.4.6';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
