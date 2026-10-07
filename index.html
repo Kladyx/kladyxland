@@ -564,7 +564,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getDatabase, ref, set, onValue, onChildAdded, onChildRemoved, push, remove, onDisconnect, serverTimestamp, runTransaction, get, query, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
     import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, listAll } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyDmAf2CZILbYKR72XYd3iCj3pQgnqFYTp8",
@@ -591,18 +591,13 @@
     const googleProvider = new GoogleAuthProvider();
     window.googleSignIn = async function() {
       try {
-        // Mobil: redirect je spolehlivější než popup (session přežije reload)
-        await signInWithRedirect(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+        return result.user;
       } catch(e) {
         console.warn('⚠️ Google Sign-In failed:', e);
         throw e;
       }
     };
-
-    // Dokonči Google redirect přihlášení (mobil: redirect místo popup)
-    getRedirectResult(auth).then((result) => {
-      if (result && result.user) localStorage.setItem('kladyx_admin_uid', result.user.uid);
-    }).catch(e => console.warn('⚠️ Google redirect:', e));
 
     // Auto anonymous sign-in – pro všechny návštěvníky (nutné pro čtení Firebase RTDB)
     // Anonymní přihlášení jen pokud po obnovení session nikdo přihlášen není (neprepisuje Google admin session)
@@ -4335,7 +4330,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.3';
+  const CURRENT_VERSION = '4.4.4';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
