@@ -600,7 +600,11 @@
     };
 
     // Auto anonymous sign-in – pro všechny návštěvníky (nutné pro čtení Firebase RTDB)
-    signInAnonymously(auth).catch(e => console.warn('⚠️ Anon auth:', e));
+    // Anonymní přihlášení jen pokud po obnovení session nikdo přihlášen není (neprepisuje Google admin session)
+    const _anonUnsub = onAuthStateChanged(auth, (u) => {
+      try { _anonUnsub(); } catch (e) {}
+      if (!u) signInAnonymously(auth).catch(e => console.warn('⚠️ Anon auth:', e));
+    });
 
     // Firebase Auth – automatické obnovení admin session po reloadu
     onAuthStateChanged(auth, (user) => {
@@ -4323,7 +4327,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.1';
+  const CURRENT_VERSION = '4.4.2';
 
   // Auto-login při načtení stránky – zkontroluj localStorage
   window.addEventListener('load', async function() {
