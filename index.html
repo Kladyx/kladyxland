@@ -580,60 +580,16 @@
     const db  = getDatabase(app);
     const storage = getStorage(app);
     const auth = getAuth(app);
-    // v4.4.9 DIAGNOSTIKA přihlášení – jen když je v adrese ?diag=1, jinak nedělá nic. Žádné síťové requesty (jen localStorage).
-    (function(){
-      var ON = /[?&]diag=1/.test(location.search);
-      var KEY = 'kladyx_diag';
-      function read(){ try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; } }
-      function render(){
-        if (!ON) return;
-        var box = document.getElementById('kladyx-diag-box');
-        if (!box) {
-          if (!document.body) return;
-          box = document.createElement('div');
-          box.id = 'kladyx-diag-box';
-          box.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;z-index:2147483647;background:rgba(0,0,0,.92);color:#0f0;font:11px/1.35 monospace;padding:6px 8px;border-top:1px solid #0f0;white-space:pre-wrap;';
-          document.body.appendChild(box);
-        }
-        var a = read();
-        box.textContent = 'DIAG v4.4.9 (' + a.length + ')  [klepni zde = smazat]\n' + a.join('\n');
-        box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
-        box.scrollTop = box.scrollHeight;
-      }
-      window._diag = function(msg){
-        if (!ON) return;
-        try {
-          var a = read(); var d = new Date();
-          a.push(d.toTimeString().slice(0,8) + ' ' + msg);
-          if (a.length > 60) a = a.slice(-60);
-          localStorage.setItem(KEY, JSON.stringify(a));
-        } catch(e){}
-        render();
-      };
-      if (ON) {
-        var nav = ''; try { nav = (performance.getEntriesByType('navigation')[0] || {}).type || ''; } catch(e){}
-        window._diag('LOAD nav=' + nav);
-        document.addEventListener('visibilitychange', function(){ window._diag('visibility ' + document.visibilityState); });
-        window.addEventListener('pageshow', function(e){ window._diag('pageshow persisted=' + e.persisted); });
-        window.addEventListener('pagehide', function(){ window._diag('pagehide'); });
-        window.addEventListener('online', function(){ window._diag('online'); });
-        window.addEventListener('offline', function(){ window._diag('offline'); });
-        document.addEventListener('DOMContentLoaded', render);
-        window.addEventListener('load', render);
-      }
-    })();
     // Firebase v prohlížeči používá localStorage jako default - není třeba nastavovat
     // v4.4.8: před anonymním přihlášením počkat na obnovení uložené session (jinak by přepsalo Google admina)
     window.firebaseSignIn = async () => {
       try { await auth.authStateReady(); } catch (e) {}
       if (auth.currentUser) return { user: auth.currentUser };
-      window._diag('signInAnonymously volano (firebaseSignIn)');
       return signInAnonymously(auth);
     };
     window.firebaseSignInAnon = async () => {
       try { await auth.authStateReady(); } catch (e) {}
       if (auth.currentUser) return { user: auth.currentUser };
-      window._diag('signInAnonymously volano (firebaseSignInAnon)');
       return signInAnonymously(auth);
     };
     window.firebaseAuth = auth;
@@ -654,12 +610,11 @@
     // Anonymní přihlášení jen pokud po obnovení session nikdo přihlášen není (neprepisuje Google admin session)
     const _anonUnsub = onAuthStateChanged(auth, (u) => {
       try { _anonUnsub(); } catch (e) {}
-      if (!u) { window._diag('signInAnonymously volano (start, nikdo prihlasen)'); signInAnonymously(auth).catch(e => console.warn('⚠️ Anon auth:', e)); }
+      if (!u) signInAnonymously(auth).catch(e => console.warn('⚠️ Anon auth:', e));
     });
 
     // Admin režim podle SKUTEČNÉHO stavu přihlášení (ne jen localStorage příznaku)
     onAuthStateChanged(auth, (user) => {
-      try { window._diag('auth stav: ' + (!user ? 'NIKDO' : (user.isAnonymous ? 'anonymni' : ((user.providerData[0] && user.providerData[0].providerId) || 'jiny')))); } catch(e){}
       const isGoogleAdmin = user && user.providerData && user.providerData.length > 0 &&
           user.providerData[0].providerId === 'google.com';
       if (isGoogleAdmin) {
@@ -668,7 +623,7 @@
       } else {
         // Žádné živé Google přihlášení → nefingovat admina, smazat starý příznak
         localStorage.removeItem('kladyx_admin_uid');
-        if (document.body.classList.contains('edit-mode')) { window._diag('admin vypnut: onAuthStateChanged (neni Google)'); try { disableEdit(); } catch(e){} }
+        if (document.body.classList.contains('edit-mode')) { try { disableEdit(); } catch(e){} }
       }
     });
     window.db = db; // Aby bylo dostupné v galerii funkcích
@@ -3222,7 +3177,6 @@ if (document.readyState === 'loading') {
 
   function logoutAdmin() {
     if (!confirm(t('confirm_logout'))) return;
-    if (window._diag) window._diag('logoutAdmin (tlacitko Odhlasit)');
     localStorage.removeItem('kladyx_rp');
     sessionStorage.removeItem('kladyx_rp');
     localStorage.removeItem('kladyx_admin_uid');
@@ -3522,7 +3476,18 @@ if (document.readyState === 'loading') {
   }
 
   // NAVIGATION
-  function hideAll(){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));if(window._diag)window._diag('hideAll (logo nebo Zpet) -> disableEdit');disableEdit();window.scrollTo({top:0,behavior:"smooth"});}
+  // v4.5.0: přihlášený Google admin zůstává adminem i po klepnutí na logo / Zpět / HOME (dřív se admin režim vypnul a bylo třeba se přihlásit znovu)
+  function hideAllAdminKeep(){
+    var u = window.firebaseAuth && window.firebaseAuth.currentUser;
+    var isGoogleAdmin = !!(u && u.providerData && u.providerData[0] && u.providerData[0].providerId === 'google.com');
+    if (isGoogleAdmin && document.body.classList.contains('edit-mode')) {
+      var hwBtn = document.getElementById('hw-edit-btn');
+      if (hwBtn) { hwBtn.textContent = t('edit_btn'); hwBtn.classList.remove('active'); hwBtn.onclick = function(){ openModal('hw'); }; }
+      return;
+    }
+    disableEdit();
+  }
+  function hideAll(){document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));hideAllAdminKeep();window.scrollTo({top:0,behavior:"smooth"});}
   function show(name){
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("on"));
     document.querySelectorAll(".nbtn").forEach(b=>b.classList.remove("on"));
@@ -4408,7 +4373,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.9';
+  const CURRENT_VERSION = '4.5.0';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
