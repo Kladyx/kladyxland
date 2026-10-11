@@ -4082,19 +4082,19 @@ if (document.readyState === 'loading') {
     setTimeout(() => t.remove(), 2200);
   }
 
-  async function deleteGalleryItem(key, path, e) {
+  async function deleteGalleryItem(sha, path, e) {
     if (e) e.stopPropagation();
     if (!confirm('Smazat tento soubor?')) return;
+    var token = localStorage.getItem('gh_pat');
+    if (!token) { alert('Chybí GitHub Token (nastav v KladyxTransfer)'); return; }
     try {
-      // Smazat z Firebase Storage
-      const sRef = window.storageRef(window.storage, path);
-      await window.deleteObject(sRef);
-    } catch(err) { console.warn('Storage delete failed:', err); }
-    try {
-      // Smazat z RTDB
-      const galRef = window.dbRef(window.db, 'gallery/' + key);
-      await window.dbRemove(galRef);
-    } catch(err) { console.error('RTDB delete failed:', err); return; }
+      var resp = await fetch('https://api.github.com/repos/Kladyx/kladyxland/contents/' + path, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Delete gallery: ' + path, sha: sha })
+      });
+      if (!resp.ok) throw new Error('GitHub API: ' + resp.status);
+    } catch(err) { alert('Chyba mazání: ' + err.message); return; }
     // Okamžité odebrání z DOM
     if (e && e.target) {
       const item = e.target.closest('.gallery-item');
@@ -4373,7 +4373,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.0';
+  const CURRENT_VERSION = '4.5.1';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
