@@ -576,7 +576,9 @@
       appId: "1:178078059030:web:8d8a0271b23a7aca2b4337"
     };
 
-    const app = initializeApp(firebaseConfig);
+    // v4.5.3: vlastní pojmenovaná Firebase aplikace – přihlášení se ukládá pod jiným klíčem než výchozí aplikace,
+    // takže ho panel (firebase.auth().signInAnonymously() na výchozí aplikaci) už nepřepíše anonymním uživatelem.
+    const app = initializeApp(firebaseConfig, 'kladyx-main');
     const db  = getDatabase(app);
     const storage = getStorage(app);
     const auth = getAuth(app);
@@ -596,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.2 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.3 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -4419,7 +4421,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.2';
+  const CURRENT_VERSION = '4.5.3';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
