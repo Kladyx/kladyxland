@@ -581,10 +581,17 @@
     const storage = getStorage(app);
     const auth = getAuth(app);
     // Firebase v prohlížeči používá localStorage jako default - není třeba nastavovat
+    // v4.4.8: před anonymním přihlášením počkat na obnovení uložené session (jinak by přepsalo Google admina)
     window.firebaseSignIn = async () => {
+      try { await auth.authStateReady(); } catch (e) {}
+      if (auth.currentUser) return { user: auth.currentUser };
       return signInAnonymously(auth);
     };
-    window.firebaseSignInAnon = () => signInAnonymously(auth);
+    window.firebaseSignInAnon = async () => {
+      try { await auth.authStateReady(); } catch (e) {}
+      if (auth.currentUser) return { user: auth.currentUser };
+      return signInAnonymously(auth);
+    };
     window.firebaseAuth = auth;
 
     // Google provider pro admin login
@@ -4355,7 +4362,7 @@ if (document.readyState === 'loading') {
     }).catch(() => {});
   }, 5000);
 
-  const CURRENT_VERSION = '4.4.7';
+  const CURRENT_VERSION = '4.4.8';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
