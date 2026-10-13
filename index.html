@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.3 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.4 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -672,6 +672,19 @@
         if (document.body.classList.contains('edit-mode')) { window._diag('admin vypnut: onAuthStateChanged (neni Google)'); try { disableEdit(); } catch(e){} }
       }
     });
+    // v4.5.4: admin se nepočítá jako návštěvník (presence ani ntfy). Čeká se na první přihlášeného uživatele (max 4 s).
+    window._authReady = new Promise((res) => {
+      let _un = null;
+      _un = onAuthStateChanged(auth, (u) => { if (u) { try { _un && _un(); } catch (e) {} res(u); } });
+      setTimeout(() => res(null), 4000);
+    });
+    window._isAdminNow = function(u) {
+      try {
+        if (document.body.classList.contains('edit-mode')) return true;
+        if (u && !u.isAnonymous && u.providerData && u.providerData[0] && u.providerData[0].providerId === 'google.com') return true;
+        return !!localStorage.getItem('kladyx_admin_uid');
+      } catch (e) { return false; }
+    };
     window.db = db; // Aby bylo dostupné v galerii funkcích
     window.storage = storage; // Pro nahrávání fotek
     window.storageRef = storageRef; // Pro vytváření referencí
@@ -875,22 +888,27 @@
     // Registrace presence – přímo, bez závislosti na Auth
     onValue(connectedRef, (snap) => {
       if (snap.val() !== true) return;
-      // Přeskočit pokud je admin přihlášen
-      if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
-      if (myPresenceRef) return; // už registrováno
-      myPresenceRef = push(presenceRef);
-      set(myPresenceRef, { ts: serverTimestamp() })
-        .then(() => {
-          onDisconnect(myPresenceRef).remove();
-          console.log('✅ Presence zaregistrována');
-          fetch('https://ntfy.sh/kladyx_dark_side_notify', {
-            method: 'POST',
-            body: t('ntfy_visitor')
-          }).catch(() => {});
-        })
-        .catch((err) => {
-          console.error('❌ Presence chyba:', err.message);
-        });
+      if (myPresenceRef || window._presenceBusy) return; // už registrováno / probíhá
+      window._presenceBusy = true;
+      // v4.5.4: počkat na stav přihlášení, admin se nepočítá
+      window._authReady.then((u) => {
+        window._presenceBusy = false;
+        if (window._isAdminNow(u)) return;
+        if (myPresenceRef) return;
+        myPresenceRef = push(presenceRef);
+        set(myPresenceRef, { ts: serverTimestamp() })
+          .then(() => {
+            onDisconnect(myPresenceRef).remove();
+            console.log('✅ Presence zaregistrována');
+            fetch('https://ntfy.sh/kladyx_dark_side_notify', {
+              method: 'POST',
+              body: t('ntfy_visitor')
+            }).catch(() => {});
+          })
+          .catch((err) => {
+            console.error('❌ Presence chyba:', err.message);
+          });
+      });
     });
 
     // Úspora Firebase downloadu: úklid starých presence záznamů neběží u každého návštěvníka.
@@ -4413,15 +4431,17 @@ if (document.readyState === 'loading') {
 
   // Notifikace při návštěvě – přeskočí admina (edit-mode i uložený token)
   setTimeout(() => {
-    if (document.body.classList.contains('edit-mode')) return;
-    if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
-    fetch('https://ntfy.sh/kladyxland-visit-8417', {
-      method: 'POST',
-      body: 'Novy navstevnik na KLADYXLAND!'
-    }).catch(() => {});
+    // v4.5.4: počkat na stav přihlášení, admin se nepočítá
+    Promise.resolve(window._authReady).then((u) => {
+      if (window._isAdminNow && window._isAdminNow(u)) return;
+      fetch('https://ntfy.sh/kladyxland-visit-8417', {
+        method: 'POST',
+        body: 'Novy navstevnik na KLADYXLAND!'
+      }).catch(() => {});
+    });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.3';
+  const CURRENT_VERSION = '4.5.4';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
@@ -4597,16 +4617,15 @@ if (document.readyState === 'loading') {
 
   // Ntfy záloha – přeskočí admina (localStorage i sessionStorage token)
   window.addEventListener('load', function() {
-    if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
-    if (document.body.classList.contains('edit-mode')) return;
     setTimeout(function() {
-      // Znovu zkontrolovat po 2s – auto-login mohl proběhnout mezitím
-      if (localStorage.getItem('kladyx_rp') || sessionStorage.getItem('kladyx_rp')) return;
-      if (document.body.classList.contains('edit-mode')) return;
-      fetch('https://ntfy.sh/kladyxland-visitors', {
-        method: 'POST',
-        body: t('ntfy_visitor')
-      }).catch(() => {});
+      // v4.5.4: počkat na stav přihlášení, admin se nepočítá
+      Promise.resolve(window._authReady).then(function(u) {
+        if (window._isAdminNow && window._isAdminNow(u)) return;
+        fetch('https://ntfy.sh/kladyxland-visitors', {
+          method: 'POST',
+          body: t('ntfy_visitor')
+        }).catch(() => {});
+      });
     }, 2000);
   });
 
