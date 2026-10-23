@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.5 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.6 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -3228,7 +3228,7 @@ if (document.readyState === 'loading') {
 
   // ── ODHLÁŠENÍ ──────────────────────────────────────────────────────
   function copyLink() {
-    const url = 'https://kladyx.github.io/kladyxland/';
+    const url = 'https://kladyx.github.io/kladyxland/\nEmail : kovalcikmichal@kladyx.cz';
     navigator.clipboard.writeText(url).then(() => {
       const msg = document.getElementById('copy-msg');
       msg.textContent = t('link_copied');
@@ -4441,7 +4441,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.5';
+  const CURRENT_VERSION = '4.5.6';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
