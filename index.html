@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.6 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.7 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -1095,7 +1095,7 @@
         }).catch(e => console.warn('send-push error:', e));
       }
     }
-    onValue(liveRef, snap => applyLiveState(snap.val() === true));
+    onValue(liveRef, snap => { window._manualLive = (snap.val() === true); applyLiveState(window._manualLive); });
     
     // ── AUTO DETECT OBS STREAM (status/obs/state) ────────────────────────────
     // Když v OBS klikneš "Vysílat", bridge to detekuje a zapíše state: "online"
@@ -1112,7 +1112,7 @@
         }
         console.log('OBS LIVE DETECTED → ON AIR AUTO ENABLED');
       } else if (obsState === 'offline') {
-        applyLiveState(false);
+        if (!window._manualLive) applyLiveState(false);
         if (bridgeStatusEl) {
           bridgeStatusEl.textContent = t('bridge_offline');
           bridgeStatusEl.classList.remove('online');
@@ -4441,7 +4441,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.6';
+  const CURRENT_VERSION = '4.5.7';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
