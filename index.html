@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.7 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.8 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -999,6 +999,7 @@
       _presenceLive = state;
       _setCounterVisible(!state);
       if (!state && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
+      if (!state && _wasLive && chatOn === false && document.body.classList.contains('edit-mode')) { set(chatOnRef, true).catch(() => {}); }
       document.body.classList.toggle('live-on', state);
       // Admin ON AIR banner
       const banner = document.getElementById('admin-onair-banner');
@@ -1903,6 +1904,12 @@
     let chatCount = -1;
 
     let chatUnsub = null;
+    // Chat se připojí až když ho návštěvník otevře (nebo admin vstoupí do edit-mode)
+    let chatSectionOpened = false;
+    window._openChat = function() {
+      chatSectionOpened = true;
+      if (chatOn && !chatUnsub) attachChatListener();
+    };
 
     function attachChatListener() {
       // Úspora Firebase downloadu: historii načti jednou, potom poslouchej pouze jednotlivé změny.
@@ -1975,7 +1982,7 @@
         btn.style.color = chatOn ? '#2ecc71' : '#e74c3c';
         btn.style.borderColor = chatOn ? 'rgba(46,204,113,.4)' : 'rgba(231,76,60,.4)';
       }
-      if (chatOn && !chatUnsub) attachChatListener();
+      if (chatOn && chatSectionOpened && !chatUnsub) attachChatListener();
       else if (!chatOn && chatUnsub) { chatUnsub(); chatUnsub = null; }
     });
 
@@ -3114,6 +3121,7 @@ if (document.readyState === 'loading') {
 
   function enableEdit(section){
     document.body.classList.add('edit-mode');
+    if(window._openChat) window._openChat();
         // Update admin banner
         const _b = document.getElementById('admin-onair-banner');
         if (_b && window._isLive) _b.style.display = 'block';
@@ -3566,6 +3574,7 @@ if (document.readyState === 'loading') {
     if(name==='galerie' && !galleryLoaded) loadGalleryLazy();
     if(name==='hardware' && !hwLoaded) loadHwLazy();
     if(name==='honor' && !honorLoaded) loadHonorLazy();
+    if(name==='chat' && window._openChat) window._openChat();
     setLang(curLang);
   }
 
@@ -4441,7 +4450,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.7';
+  const CURRENT_VERSION = '4.5.8';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
