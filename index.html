@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.9 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.6.0 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -1977,6 +1977,11 @@
       chatOn = snap.val() !== false;
       const sec = document.getElementById('s-chat');
       if (sec) sec.style.display = chatOn ? 'block' : 'none';
+      // tlačítka Chat (menu + ikona) se schovají, když je chat vypnutý – stejně jako Hardware/Galerie
+      const nbChat = document.getElementById('nb-chat');
+      if (nbChat) nbChat.style.display = chatOn ? '' : 'none';
+      document.querySelectorAll('a.cbtn[onclick*="chat"]').forEach(a => { a.style.display = chatOn ? '' : 'none'; });
+      if (!chatOn) { if (sec) sec.classList.remove('on'); if (nbChat) nbChat.classList.remove('on'); }
       const btn = document.getElementById('chat-toggle-btn');
       if (btn) {
         btn.textContent = chatOn ? t('chat_on') : t('chat_off');
@@ -4451,7 +4456,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.9';
+  const CURRENT_VERSION = '4.6.0';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
