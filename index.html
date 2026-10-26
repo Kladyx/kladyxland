@@ -598,7 +598,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.5.8 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.5.9 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -1000,6 +1000,7 @@
       _setCounterVisible(!state);
       if (!state && (_wasLive || !_presenceCountDone)) { _presenceCountDone = true; refreshPresenceCount(); }
       if (!state && _wasLive && chatOn === false && document.body.classList.contains('edit-mode')) { set(chatOnRef, true).catch(() => {}); }
+      if (state && !_wasLive && chatOn === true && document.body.classList.contains('edit-mode')) { set(chatOnRef, false).catch(() => {}); }
       document.body.classList.toggle('live-on', state);
       // Admin ON AIR banner
       const banner = document.getElementById('admin-onair-banner');
@@ -4450,7 +4451,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.5.8';
+  const CURRENT_VERSION = '4.5.9';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
