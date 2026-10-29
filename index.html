@@ -475,6 +475,11 @@
     .edit-mode #hw-dyn-imgs .hw-eye{display:block;}
     #hw-dyn-imgs .hw-hidden{display:none;}
     .edit-mode #hw-dyn-imgs .hw-hidden{display:block;opacity:.35;}
+    .gallery-item .hw-eye{display:none;position:absolute;top:4px;right:36px;background:rgba(0,120,255,.7);color:#fff;border:none;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;line-height:0;}
+    .gallery-item .hw-eye svg{width:16px;height:16px;display:block;}
+    .edit-mode .gallery-item .hw-eye{display:block;}
+    .gallery-item.hw-hidden{display:none;}
+    .edit-mode .gallery-item.hw-hidden{display:block;opacity:.35;}
     #hw-dyn-imgs .hw-order-btn{display:none;background:rgba(0,120,255,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
     .edit-mode #hw-dyn-imgs .hw-order-btn{display:block;}
     .hw-order-save{display:none;width:100%;margin:10px 0;padding:10px;background:rgba(0,180,80,.7);color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:700;cursor:pointer;}
@@ -603,7 +608,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.6.1 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.6.2 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -3364,6 +3369,7 @@ if (document.readyState === 'loading') {
   function toggleHwHidden(name, div, btn, e) {
     if (e) e.stopPropagation();
     if (!name) return;
+    if (!window._hwHiddenLoaded) { alert('Seznam skrytých se nenačetl, zkus to za chvíli znovu.'); return; }
     var list = (window._hwHidden || []).slice();
     var i = list.indexOf(name);
     var nowHidden = i === -1;
@@ -3623,14 +3629,16 @@ if (document.readyState === 'loading') {
 
   // Seznam skrytých HW obrázků z Firebase (jednorázový get, bez listeneru). Při chybě = nic neskryto.
   function _hwLoadHidden(cb) {
-    window._hwHidden = [];
+    if (window._hwHiddenLoaded) { cb(); return; }
+    window._hwHidden = window._hwHidden || [];
     try {
       window.dbGet(window.dbRef(window.db, 'hwImageHidden')).then(function(snap) {
         var v = snap.exists() ? snap.val() : null;
         window._hwHidden = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.keys(v).map(function(k) { return v[k]; }) : []);
+        window._hwHiddenLoaded = true;
         cb();
-      }).catch(function() { window._hwHidden = []; cb(); });
-    } catch (e) { window._hwHidden = []; cb(); }
+      }).catch(function() { cb(); });
+    } catch (e) { cb(); }
   }
 
   function loadHwLazy() {
@@ -3691,8 +3699,8 @@ if (document.readyState === 'loading') {
                 return ia - ib;
               });
             }
-            renderGallery(items);
-          }).catch(function() { renderGallery(items); });
+            _hwLoadHidden(function() { renderGallery(items); });
+          }).catch(function() { _hwLoadHidden(function() { renderGallery(items); }); });
         }
       })
       .catch(e => { console.warn('galleryGitHub:', e); galleryLoaded = false; });
@@ -3735,8 +3743,8 @@ if (document.readyState === 'loading') {
               return ia - ib;
             });
           }
-          renderHonor(items);
-        }).catch(function() { renderHonor(items); });
+          _hwLoadHidden(function() { renderHonor(items); });
+        }).catch(function() { _hwLoadHidden(function() { renderHonor(items); }); });
       })
       .catch(e => { console.warn('honorGitHub:', e); honorLoaded = false; if (grid) grid.innerHTML = ''; });
   }
@@ -3771,6 +3779,16 @@ if (document.readyState === 'loading') {
       delBtn.textContent = '✕';
       delBtn.onclick = function(ev) { deleteHonorImage(item.key, item.path, ev); };
       div.appendChild(delBtn);
+      // 👁 skrýt/odkrýt (viditelné jen v edit-mode přes CSS)
+      var _hKey = 'honor/' + (item.name || '');
+      var _hHid = (window._hwHidden || []).indexOf(_hKey) !== -1;
+      if (_hHid) div.classList.add('hw-hidden');
+      var hEye = document.createElement('button');
+      hEye.className = 'hw-eye';
+      hEye.title = 'Skrýt / odkrýt';
+      hEye.innerHTML = _hHid ? HW_EYE_OFF : HW_EYE_ON;
+      hEye.onclick = function(ev) { toggleHwHidden(_hKey, div, hEye, ev); };
+      div.appendChild(hEye);
       // ▲▼ pořadí (jen edit-mode přes CSS)
       var upBtn = document.createElement('button');
       upBtn.className = 'gal-order-btn';
@@ -3987,6 +4005,16 @@ if (document.readyState === 'loading') {
         div.innerHTML = '<img src="'+item.url+'" alt="'+item.name+'" loading="lazy" onclick="openLightbox('+idx+')"/>'
           + capHtml + delBtn;
       }
+      // 👁 skrýt/odkrýt (viditelné jen v edit-mode přes CSS)
+      var _gKey = 'gallery/' + (item.name || '');
+      var _gHid = (window._hwHidden || []).indexOf(_gKey) !== -1;
+      if (_gHid) div.classList.add('hw-hidden');
+      var gEye = document.createElement('button');
+      gEye.className = 'hw-eye';
+      gEye.title = 'Skrýt / odkrýt';
+      gEye.innerHTML = _gHid ? HW_EYE_OFF : HW_EYE_ON;
+      gEye.onclick = function(ev) { toggleHwHidden(_gKey, div, gEye, ev); };
+      div.appendChild(gEye);
       // ▲▼ tlačítka pro řazení (edit-mode only)
       var upBtn = document.createElement('button');
       upBtn.className = 'gal-order-btn';
@@ -4079,9 +4107,19 @@ if (document.readyState === 'loading') {
       lb.dataset.hwMode = '';
     }
   }
+  function _galItemHidden(it) {
+    if (!it || document.body.classList.contains('edit-mode')) return false;
+    return (window._hwHidden || []).indexOf('gallery/' + (it.name || '')) !== -1;
+  }
   function navLightbox(dir, e) {
     if (e) { e.stopPropagation(); }
-    lightboxIndex = (lightboxIndex + dir + galleryItems.length) % galleryItems.length;
+    var n = galleryItems.length;
+    if (!n) return;
+    var idx = lightboxIndex;
+    for (var k = 0; k < n; k++) {
+      idx = (idx + dir + n) % n;
+      if (!_galItemHidden(galleryItems[idx])) { lightboxIndex = idx; break; }
+    }
     showLightboxMedia(lightboxIndex);
   }
   document.addEventListener('keydown', function(e) {
@@ -4499,7 +4537,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.6.1';
+  const CURRENT_VERSION = '4.6.2';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
