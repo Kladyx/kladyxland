@@ -470,6 +470,11 @@
     .edit-mode .gallery-item .gal-del{display:block;}
     #hw-dyn-imgs .hw-del{display:none;position:absolute;top:4px;right:4px;background:rgba(255,40,40,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
     .edit-mode #hw-dyn-imgs .hw-del{display:block;}
+    #hw-dyn-imgs .hw-eye{display:none;position:absolute;top:4px;right:36px;background:rgba(0,120,255,.7);color:#fff;border:none;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;line-height:0;}
+    #hw-dyn-imgs .hw-eye svg{width:16px;height:16px;display:block;}
+    .edit-mode #hw-dyn-imgs .hw-eye{display:block;}
+    #hw-dyn-imgs .hw-hidden{display:none;}
+    .edit-mode #hw-dyn-imgs .hw-hidden{display:block;opacity:.35;}
     #hw-dyn-imgs .hw-order-btn{display:none;background:rgba(0,120,255,.7);color:#fff;border:none;font-size:.7rem;padding:3px 7px;border-radius:2px;cursor:pointer;z-index:2;}
     .edit-mode #hw-dyn-imgs .hw-order-btn{display:block;}
     .hw-order-save{display:none;width:100%;margin:10px 0;padding:10px;background:rgba(0,180,80,.7);color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:700;cursor:pointer;}
@@ -598,7 +603,7 @@
           document.body.appendChild(box);
         }
         var a = read();
-        box.textContent = 'DIAG v4.6.0 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
+        box.textContent = 'DIAG v4.6.1 (' + a.length + ')  [klepni sem = smazat]\n' + a.join('\n');
         box.onclick = function(){ try { localStorage.removeItem(KEY); } catch(e){} render(); };
         box.scrollTop = box.scrollHeight;
       }
@@ -3319,6 +3324,15 @@ if (document.readyState === 'loading') {
       delBtn.setAttribute('data-path', entry.path || '');
       delBtn.onclick = function(ev) { deleteHwImage(this.getAttribute('data-sha'), this.getAttribute('data-path'), ev); };
       div.appendChild(delBtn);
+      // 👁 skrýt/odkrýt (viditelné jen v edit-mode přes CSS)
+      var _hwHid = (window._hwHidden || []).indexOf(entry.name) !== -1;
+      if (_hwHid) div.classList.add('hw-hidden');
+      var eyeBtn = document.createElement('button');
+      eyeBtn.className = 'hw-eye';
+      eyeBtn.title = 'Skrýt / odkrýt';
+      eyeBtn.innerHTML = _hwHid ? HW_EYE_OFF : HW_EYE_ON;
+      eyeBtn.onclick = function(ev) { toggleHwHidden(entry.name, div, eyeBtn, ev); };
+      div.appendChild(eyeBtn);
       // ▲▼ tlačítka (viditelná jen v edit-mode přes CSS)
       var upBtn = document.createElement('button');
       upBtn.className = 'hw-order-btn';
@@ -3345,6 +3359,23 @@ if (document.readyState === 'loading') {
     wrap.parentNode.insertBefore(saveBtn, wrap.nextSibling);
   }
 
+  var HW_EYE_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var HW_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="3" y1="21" x2="21" y2="3"/></svg>';
+  function toggleHwHidden(name, div, btn, e) {
+    if (e) e.stopPropagation();
+    if (!name) return;
+    var list = (window._hwHidden || []).slice();
+    var i = list.indexOf(name);
+    var nowHidden = i === -1;
+    if (nowHidden) list.push(name); else list.splice(i, 1);
+    window.dbSet(window.dbRef(window.db, 'hwImageHidden'), list).then(function() {
+      window._hwHidden = list;
+      div.classList.toggle('hw-hidden', nowHidden);
+      btn.innerHTML = nowHidden ? HW_EYE_OFF : HW_EYE_ON;
+    }).catch(function(err) {
+      alert('Chyba ukládání: ' + err.message);
+    });
+  }
   function moveHwImage(div, direction) {
     var wrap = div.parentNode;
     var children = Array.from(wrap.children);
@@ -3590,6 +3621,18 @@ if (document.readyState === 'loading') {
   let galleryLoaded = false;
   let hwLoaded = false;
 
+  // Seznam skrytých HW obrázků z Firebase (jednorázový get, bez listeneru). Při chybě = nic neskryto.
+  function _hwLoadHidden(cb) {
+    window._hwHidden = [];
+    try {
+      window.dbGet(window.dbRef(window.db, 'hwImageHidden')).then(function(snap) {
+        var v = snap.exists() ? snap.val() : null;
+        window._hwHidden = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.keys(v).map(function(k) { return v[k]; }) : []);
+        cb();
+      }).catch(function() { window._hwHidden = []; cb(); });
+    } catch (e) { window._hwHidden = []; cb(); }
+  }
+
   function loadHwLazy() {
     hwLoaded = true;
     const wrap = document.getElementById('hw-dyn-imgs');
@@ -3613,10 +3656,10 @@ if (document.readyState === 'loading') {
             });
           }
           window._hwItems = items;
-          if (typeof renderHwImages === 'function') renderHwImages(items);
+          _hwLoadHidden(function() { if (typeof renderHwImages === 'function') renderHwImages(items); });
         }).catch(function() {
           window._hwItems = items;
-          if (typeof renderHwImages === 'function') renderHwImages(items);
+          _hwLoadHidden(function() { if (typeof renderHwImages === 'function') renderHwImages(items); });
         });
       })
       .catch(e => { console.warn('hwGitHub:', e); hwLoaded = false; if(wrap) wrap.innerHTML = ''; });
@@ -4456,7 +4499,7 @@ if (document.readyState === 'loading') {
     });
   }, 5000);
 
-  const CURRENT_VERSION = '4.6.0';
+  const CURRENT_VERSION = '4.6.1';
 
   // Auto-login při načtení stránky – admin režim řídí onAuthStateChanged (ne localStorage příznak)
   window.addEventListener('load', async function() {
